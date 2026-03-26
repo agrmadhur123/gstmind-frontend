@@ -515,14 +515,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
   border:none;min-height:24px;
   word-break:break-word;
 }
-.stream-cursor{
-  display:inline-block;
-  width:2px;height:1em;
-  background:var(--accent);
-  margin-left:2px;
-  vertical-align:text-bottom;
-  animation:blink .7s step-end infinite;
-}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .sb-done{color:var(--text);font-size:14px;line-height:1.85}
 .sb-done .sb-para{margin-bottom:12px}
@@ -1967,7 +1959,7 @@ async function send(){
       <div class="msg-inner">
         <div class="av">G</div>
         <div class="msg-body" id="mb_${msgId}">
-          <div class="stream-bubble" id="sb_${msgId}"><span class="stream-cursor">▍</span></div>
+          <div class="stream-bubble" id="sb_${msgId}"></div>
         </div>
       </div>`;
     msgsEl().appendChild(streamDiv);
@@ -1988,13 +1980,10 @@ async function send(){
     // 1. #sb_done_${msgId} — already-rendered content (stable DOM)
     // 2. #sb_live_${msgId} — current paragraph being typed (text node)
     streamEl.innerHTML = '<div id="sb_done_'+msgId+'" class="sb-done"></div>' +
-      '<span id="sb_live_'+msgId+'" class="sb-live"></span>' +
-      '<span class="stream-cursor" id="sb_cur_'+msgId+'">▍</span>';
+      '<span id="sb_live_'+msgId+'" class="sb-live"></span>';
 
     const doneEl  = document.getElementById('sb_done_'+msgId);
     const liveEl  = document.getElementById('sb_live_'+msgId);
-    const curEl   = document.getElementById('sb_cur_'+msgId);
-
     function appendToken(token){
       fullText += token;
       pendingParagraph += token;
