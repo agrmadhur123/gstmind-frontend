@@ -1634,10 +1634,10 @@ function fullContentHash(text){
 
 // ── KB UPLOAD SYSTEM (clean rewrite) ──
 
-async function readFileText(file){
+async function readFileText(file, onProgress){
   const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
   if(isPDF){
-    return await extractPDFText(file);
+    return await extractPDFText(file, onProgress);
   }
   return new Promise(resolve=>{
     const r=new FileReader();
@@ -1647,18 +1647,26 @@ async function readFileText(file){
   });
 }
 
-async function extractPDFText(file){
+async function extractPDFText(file, onProgress){
   try{
     if(typeof pdfjsLib === 'undefined') return '';
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    const totalPages = pdf.numPages;
     let fullText = '';
-    const maxPages = Math.min(pdf.numPages, 15); // First 15 pages enough for metadata
-    for(let i=1; i<=maxPages; i++){
+
+    // Extract ALL pages — needed for complete content
+    // Large docs (200+ pages) process in batches to keep UI responsive
+    for(let i=1; i<=totalPages; i++){
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       const pageText = content.items.map(item=>item.str).join(' ');
       fullText += pageText + '\n';
+      // Yield to browser every 20 pages to show progress
+      if(i % 20 === 0){
+        if(onProgress) onProgress(i, totalPages);
+        await new Promise(r=>setTimeout(r,5));
+      }
     }
     return fullText.trim();
   } catch(e){
@@ -1743,8 +1751,14 @@ async function kbProcessBulk(files){
     await new Promise(r=>setTimeout(r,15));
 
     try{
-      const content=await readFileText(f);
+      // Show page-level progress for large PDFs
+      let content = await readFileText(f, (page, total)=>{
+        fileEl.textContent = `📄 ${f.name} — reading page ${page} of ${total}...`;
+      });
       if(!content||content.trim().length<30){errors++;continue;}
+      const wordCount = content.split(/\s+/).filter(w=>w).length;
+      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words extracted`;
+      await new Promise(r=>setTimeout(r,10));
       const meta=autoExtractDocMeta(content);
       const identity=extractDocIdentity(content);
       const dupeResult=isDuplicateContent(content,meta.docName);
@@ -1767,11 +1781,21 @@ async function kbProcessBulk(files){
         await new Promise(r=>setTimeout(r,15));
         continue;
       }
+      // Warn if very large — localStorage has ~5MB total limit
+      const MAX_CHARS = 200000; // ~400 chunks per document max
+      const storedContent = content.length > MAX_CHARS
+        ? content.slice(0, MAX_CHARS) + '\n\n[NOTE: Document truncated at 200,000 characters due to storage limits. Full text: ' + content.length.toLocaleString() + ' chars / ~' + Math.ceil(content.split(/\s+/).length/400) + ' chunks]'
+        : content;
+      if(content.length > MAX_CHARS){
+        fileEl.textContent = `⚠ ${meta.docName} — large doc, storing first 200K chars of ${content.length.toLocaleString()}`;
+        await new Promise(r=>setTimeout(r,30));
+      }
       adminDocs.push({
         id:'d'+Date.now()+Math.random(),
         name:meta.docName,type:meta.docType,
-        content,text:content,
-        chunks:Math.ceil(content.split(/\s+/).length/400),
+        content:storedContent, text:storedContent,
+        chunks:Math.ceil(content.split(/\s+/).length/400), // show TRUE chunk count
+        totalChars: content.length,
         date:meta.docDate||new Date().toLocaleDateString('en-IN'),
         builtin:false,
         contentHash:fullContentHash(content),
