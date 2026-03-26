@@ -480,7 +480,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .chip:hover{border-color:var(--accent-border);color:var(--accent);background:var(--accent-light)}
 
 /* MSG ROW */
-.msg-row{padding:4px 0;animation:fadeUp .22s ease}
+.msg-row{padding:16px 0;animation:fadeUp .3s ease}
+.msg-row.bot:hover{background:rgba(0,0,0,.015)}
+.msg-row.bot{transition:background .15s}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .msg-inner{max-width:720px;margin:0 auto;padding:0 24px;display:flex;gap:14px}
 .msg-row.user .msg-inner{flex-direction:row-reverse}
@@ -496,22 +498,22 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 }
 .msg-body{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
 .msg-row.user .msg-body{align-items:flex-end}
-.bubble{padding:13px 17px;font-size:14px;line-height:1.75;white-space:pre-wrap;max-width:100%}
+.bubble{padding:4px 0;font-size:14px;line-height:1.85;white-space:pre-wrap;max-width:100%}
 .msg-row.user .bubble{
   background:var(--text);color:#f5f0e8;
   border-radius:18px 18px 4px 18px;max-width:80%;
 }
 .msg-row.bot .bubble{
-  background:var(--surface);color:var(--text);
-  border:1px solid var(--border);border-radius:4px 18px 18px 18px;
+  background:transparent;color:var(--text);
+  border:none;padding-left:0;padding-right:0;
 }
 
 /* ── STREAMING ── */
 .stream-bubble{
-  padding:13px 17px;font-size:14px;line-height:1.75;
-  background:var(--surface);color:var(--text);
-  border:1px solid var(--border);border-radius:4px 18px 18px 18px;
-  min-height:40px;
+  padding:4px 0;font-size:14px;line-height:1.85;
+  background:transparent;color:var(--text);
+  border:none;min-height:24px;
+  word-break:break-word;
 }
 .stream-cursor{
   display:inline-block;
@@ -522,6 +524,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
   animation:blink .7s step-end infinite;
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.sb-done{color:var(--text);font-size:14px;line-height:1.85}
+.sb-done .sb-para{margin-bottom:12px}
+.sb-live{color:var(--text);font-size:14px;line-height:1.85;white-space:pre-wrap}
 
 
 /* ── STREAMING MARKDOWN ── */
@@ -1971,19 +1976,48 @@ async function send(){
     const streamEl = document.getElementById('sb_'+msgId);
     let fullText = '';
     let queryCountFromServer = null;
-    let renderScheduled = false;
 
-    // Smooth render — use requestAnimationFrame to avoid flickering
-    // Only re-render when browser is ready, not on every token
-    function scheduleRender(){
-      if(renderScheduled) return;
-      renderScheduled = true;
-      requestAnimationFrame(()=>{
-        renderScheduled = false;
-        // Smooth streaming: render markdown-lite inline, keep cursor at end
-        streamEl.innerHTML = formatStreaming(fullText) + '<span class="stream-cursor">▍</span>';
-        scrollBot();
-      });
+    // ── FLICKER-FREE STREAMING ──
+    // Key insight: never re-render what's already shown.
+    // We maintain a "rendered" cursor and only append NEW text.
+    // Markdown is parsed ONLY at paragraph/sentence boundaries.
+    let renderedLen = 0;         // how many chars are already in the DOM
+    let pendingParagraph = '';   // accumulate current paragraph
+
+    // The stream container has two children:
+    // 1. #sb_done_${msgId} — already-rendered content (stable DOM)
+    // 2. #sb_live_${msgId} — current paragraph being typed (text node)
+    streamEl.innerHTML = '<div id="sb_done_'+msgId+'" class="sb-done"></div>' +
+      '<span id="sb_live_'+msgId+'" class="sb-live"></span>' +
+      '<span class="stream-cursor" id="sb_cur_'+msgId+'">▍</span>';
+
+    const doneEl  = document.getElementById('sb_done_'+msgId);
+    const liveEl  = document.getElementById('sb_live_'+msgId);
+    const curEl   = document.getElementById('sb_cur_'+msgId);
+
+    function appendToken(token){
+      fullText += token;
+      pendingParagraph += token;
+
+      // If we hit a paragraph break — render the completed paragraph as HTML
+      // and move it to the stable "done" area. New paragraph starts fresh.
+      if(token.includes('\n\n') || (pendingParagraph.length > 600 && token.includes('\n'))){
+        const parts = pendingParagraph.split('\n\n');
+        // Render all complete paragraphs to done area
+        for(let i=0; i<parts.length-1; i++){
+          const p = document.createElement('div');
+          p.className = 'sb-para';
+          p.innerHTML = formatStreaming(parts[i]);
+          doneEl.appendChild(p);
+        }
+        // Keep the last (incomplete) part as the live text
+        pendingParagraph = parts[parts.length-1];
+      }
+
+      // Live text: just use textContent — NO innerHTML, NO flicker
+      // Shows raw text as it arrives, smooth as typing
+      liveEl.textContent = pendingParagraph;
+      scrollBot();
     }
 
     const reader = res.body.getReader();
@@ -2006,8 +2040,7 @@ async function send(){
           if(event.type === 'meta'){
             queryCountFromServer = event.query_count;
           } else if(event.type === 'text'){
-            fullText += event.text;
-            scheduleRender(); // smooth — no flicker
+            appendToken(event.text);
           } else if(event.type === 'done'){
             break;
           } else if(event.type === 'error'){
