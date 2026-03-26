@@ -12,7 +12,7 @@
   --sidebar-border:#e0d8cc;
   --sidebar-hover:#e8e0d0;
   --chat-bg:#faf8f4;
-  --surface:#fff;
+  --surface:#faf8f5;
   --border:#e8e2d8;
   --border2:#d8d0c4;
   --accent:#b07030;
@@ -505,6 +505,24 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
   background:var(--surface);color:var(--text);
   border:1px solid var(--border);border-radius:4px 18px 18px 18px;
 }
+
+/* ── STREAMING ── */
+.stream-bubble{
+  padding:13px 17px;font-size:14px;line-height:1.75;
+  background:var(--surface);color:var(--text);
+  border:1px solid var(--border);border-radius:4px 18px 18px 18px;
+  min-height:40px;
+}
+.stream-cursor{
+  display:inline-block;
+  width:2px;height:1em;
+  background:var(--accent);
+  margin-left:2px;
+  vertical-align:text-bottom;
+  animation:blink .7s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
 .notice-img{max-width:240px;max-height:180px;border:1px solid var(--border);border-radius:8px;object-fit:contain;display:block;margin-bottom:6px}
 .notice-file-chip{display:inline-flex;align-items:center;gap:7px;background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--accent);margin-bottom:6px;font-family:'DM Mono',monospace}
 
@@ -1912,21 +1930,80 @@ async function send(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
       body:JSON.stringify({messages:history, system:sys, mode, query_text:queryText})
     });
-    const data = await res.json(); delEl(tid);
+
     if(!res.ok){
-      if(res.status===429){showUpgrade();return;}
+      const data = await res.json().catch(()=>({}));
+      delEl(tid);
+      if(res.status===429){showUpgrade();busy=false;document.getElementById('sendBtn').disabled=false;return;}
       addErrMsg('Error: '+(data.detail||'Something went wrong. Please try again.'));
-    } else {
-      const raw = data.answer||'Unable to generate a response.';
-      history.push({role:'assistant',content:raw});
-      renderBotRow(raw,hasRAG,retrieved);
-      // Update query count from server response
-      user.queryCount = data.query_count||((user.queryCount||0)+1);
-      saveUser(user); updateQueryMeter(user);
-      if(user.plan==='free'&&user.queryCount>=FREE_LIMIT)setTimeout(showUpgrade,1200);
-      else if(user.plan==='free'&&user.queryCount>=FREE_LIMIT-3)showToast(`${FREE_LIMIT-user.queryCount} free quer${FREE_LIMIT-user.queryCount===1?'y':'ies'} remaining`);
+      busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
-  }catch(e){delEl(tid);addErrMsg('Connection error. Please check your internet connection.');}
+
+    // ── STREAMING RESPONSE ──
+    // Remove thinking indicator and create streaming bubble
+    delEl(tid);
+    const msgId = 'm'+Date.now();
+    const streamDiv = document.createElement('div');
+    streamDiv.className = 'msg-row bot';
+    streamDiv.id = msgId;
+    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body">
+      <div class="stream-bubble" id="sb_${msgId}"></div>
+    </div></div>`;
+    msgsEl().appendChild(streamDiv);
+    scrollBot();
+
+    const streamEl = document.getElementById('sb_'+msgId);
+    let fullText = '';
+    let queryCountFromServer = null;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line
+
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if(!raw) continue;
+        try{
+          const event = JSON.parse(raw);
+          if(event.type === 'meta'){
+            queryCountFromServer = event.query_count;
+          } else if(event.type === 'text'){
+            fullText += event.text;
+            // Render incrementally with cursor
+            streamEl.innerHTML = formatStreaming(fullText) + '<span class="stream-cursor">▍</span>';
+            scrollBot();
+          } else if(event.type === 'done'){
+            break;
+          } else if(event.type === 'error'){
+            addErrMsg('AI service error. Please try again.');
+          }
+        } catch(e){}
+      }
+    }
+
+    // ── FINALIZE: Replace stream bubble with full rendered answer ──
+    streamDiv.remove();
+    history.push({role:'assistant',content:fullText});
+    renderBotRow(fullText, hasRAG, retrieved);
+
+    // Update query count
+    user.queryCount = queryCountFromServer || (user.queryCount||0)+1;
+    saveUser(user); updateQueryMeter(user);
+    if(user.plan==='free'&&user.queryCount>=FREE_LIMIT) setTimeout(showUpgrade,1200);
+    else if(user.plan==='free'&&user.queryCount>=FREE_LIMIT-3) showToast(`${FREE_LIMIT-user.queryCount} free quer${FREE_LIMIT-user.queryCount===1?'y':'ies'} remaining`);
+
+  }catch(e){
+    delEl(tid);
+    addErrMsg('Connection error. Please check your internet connection.');
+  }
   busy=false;document.getElementById('sendBtn').disabled=false;
 }
 
@@ -2015,10 +2092,39 @@ function addUserRow(txt,attach){
   msgsEl().appendChild(d);scrollBot();
 }
 
+
+// Lightweight formatter for streaming — fast, no heavy parsing
+function formatStreaming(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/¹|²|³|⁴|⁵|⁶|⁷|⁸|⁹/g, m=>`<sup>${m}</sup>`)
+    .replace(/\n/g,'<br>');
+}
+
 function addThinkRow(){
   const id='tk'+Date.now();
   const d=document.createElement('div');d.className='msg-row bot';d.id=id;
-  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="think-bub"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-txt">Searching knowledge base and drafting answer…</span></div></div></div>`;
+  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="think-bub"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-txt" id="thinkTxt">Searching knowledge base…</span></div></div></div>`;
+  // Cycle through meaningful loading messages
+  const thinkMsgs = [
+    'Searching knowledge base…',
+    'Analyzing GST provisions…',
+    'Checking relevant circulars…',
+    'Cross-referencing sections…',
+    'Reviewing applicable rules…',
+    'Drafting legal analysis…',
+  ];
+  let thinkIdx = 0;
+  const thinkInterval = setInterval(()=>{
+    thinkIdx = (thinkIdx+1) % thinkMsgs.length;
+    const el = document.getElementById('thinkTxt');
+    if(el) el.textContent = thinkMsgs[thinkIdx];
+    else clearInterval(thinkInterval);
+  }, 1800);
+  d._thinkInterval = thinkInterval;
   msgsEl().appendChild(d);scrollBot();return id;
 }
 
