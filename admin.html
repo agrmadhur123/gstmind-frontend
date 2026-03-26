@@ -1476,19 +1476,32 @@ function exportUsers(){
 
 // ── SMART DEDUP — extracts circular/notification no + date ──
 function extractDocIdentity(text){
-  const t = text.slice(0, 3000);
-  const circularMatch = t.match(/circular\s*no\.?\s*([\d\/\-]+\s*(?:gst|cgst|igst|customs)?)/i);
-  const notifMatch = t.match(/notification\s*no\.?\s*([\d\/\-]+\s*(?:central\s*tax|integrated\s*tax|union\s*territory|customs|gst)?)/i);
-  const instrMatch = t.match(/(?:instruction|order|corrigendum)\s*no\.?\s*([\d\/\-]+)/i);
-  const fnoMatch = t.match(/f\.?\s*no\.?\s*([\w\/\-\.]+)/i);
-  const dateMatch = t.match(/dated?[:\s]+([\d]{1,2}[\.\/\-][\d]{1,2}[\.\/\-][\d]{2,4}|[\d]{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+[\d]{4})/i);
-  const yearMatch = t.match(/\b(20[1-3][0-9])\b/);
-  const refNo = (circularMatch?.[1] || notifMatch?.[1] || instrMatch?.[1] || fnoMatch?.[1] || '').trim().toLowerCase().replace(/\s+/g,'');
-  const date = (dateMatch?.[1] || '').trim().toLowerCase().replace(/\s+/g,'');
+  // Use header only (600 chars) to avoid matching referenced circulars in body text
+  const header = text.slice(0, 300); // 300 chars only — prevents body-text circular refs from matching
+  const t = text.slice(0, 3000); // for year/date fallback only
+
+  // Detect distinct variants first
+  const isCorrigendum = /corrigendum/i.test(header);
+  const isAmendment = /^\s*amendment/im.test(header);
+  const isMasterCircular = /master\s*circular/i.test(header);
+  const isDistinctVariant = isCorrigendum || isAmendment || isMasterCircular;
+
+  // Space-tolerant regex — handles PDF.js "16/16/  2017" with spaces
+  const circularMatch = header.match(/circular\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*(?:\s*[\-\/]\s*[a-zA-Z]+)?)/i);
+  const notifMatch = header.match(/notification\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*)/i);
+  const instrMatch = header.match(/instruction\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*)/i);
+  const yearMatch = header.match(/\b(20[1-3][0-9])\b/);
+
+  // Remove spaces when building refNo for comparison
+  const refNo = (circularMatch?.[1]||notifMatch?.[1]||instrMatch?.[1]||'')
+    .replace(/\s+/g,'').replace(/[\-\/]+$/,'').toLowerCase();
   const year = yearMatch?.[1] || '';
-  const docType = circularMatch ? 'circular' : notifMatch ? 'notification' : instrMatch ? 'instruction' : 'other';
-  return { refNo, date, year, docType };
+  const docType = circularMatch?'circular':notifMatch?'notification':instrMatch?'instruction':'other';
+
+  return { refNo, year, docType, isDistinctVariant,
+    variantType: isCorrigendum?'corrigendum':isAmendment?'amendment':isMasterCircular?'master-circular':'original' };
 }
+
 
 // ── AUTO EXTRACT DOCUMENT NAME, TYPE AND DATE FROM CONTENT ──
 function autoExtractDocMeta(text){
@@ -1498,23 +1511,26 @@ function autoExtractDocMeta(text){
 
 
   // ── Circular No. — header only, captures full number including -GST suffix
-  const circM = t.match(/circular\s*no\.?\s*([\d\/]+(?:[\-\/][\d]+)*(?:[\-\/][a-zA-Z]+)?)/i);
-  if(circM){ docType='CBIC Circular'; docName='Circular No. '+circM[1].trim().replace(/[\-\/]+$/,'').toUpperCase(); }
+  const circM = hdr.match(/circular\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*(?:\s*[\-\/]\s*[a-zA-Z]+)?)/i);
+  if(circM){ docType='CBIC Circular'; docName='Circular No. '+circM[1].replace(/\s+/g,'').replace(/[\-\/]+$/,'').toUpperCase(); }
 
   // ── Notification No. — captures number + type suffix
-  const notifM = t.match(/notification\s*no\.?\s*([\d\/]+(?:[\-\/][\d]+)*(?:\s*[-\u2013]\s*(?:central\s*tax|integrated\s*tax|union\s*territory|customs|gst|ct|it|rate)[\w\s\(\)]*)?)/i);
+  const notifM = hdr.match(/notification\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*(?:\s*[-\u2013]\s*(?:central\s*tax|integrated\s*tax|union\s*territory|customs|gst|ct|it|rate)[\w\s\(\)]*)?)/i);
   if(notifM && !circM){
-    const val = notifM[1].trim().replace(/[\-\/]+$/,'').replace(/\s*[-\u2013]\s*$/,'').replace(/\s+/g,' ');
-    docType='CBIC Notification'; docName='Notification No. '+val.toUpperCase();
+    const val = notifM[1].replace(/\s+/g,'').replace(/[\-\/]+$/,'').replace(/[-–]+(?=[A-Z])/,'-');
+    // Re-attach type suffix cleanly
+    const typeSuffix = notifM[1].match(/[-–]\s*(?:central\s*tax|integrated\s*tax|union\s*territory|customs|gst|ct|it|rate)[\w\s\(\)]*/i);
+    const cleanVal = val.replace(/[a-zA-Z]+$/,'') + (typeSuffix ? typeSuffix[0].replace(/\s+/g,' ').trim() : '');
+    docType='CBIC Notification'; docName='Notification No. '+cleanVal.toUpperCase();
   }
 
   // ── Instruction No.
-  const instrM = t.match(/instruction\s*no\.?\s*([\d\/]+(?:[\-\/][\d]+)*(?:[\-\/][a-zA-Z]+)?)/i);
-  if(instrM && !circM && !notifM){ docType='CBIC Circular'; docName='Instruction No. '+instrM[1].trim().replace(/[\-\/]+$/,'').toUpperCase(); }
+  const instrM = hdr.match(/instruction\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*(?:\s*[\-\/]\s*[a-zA-Z]+)?)/i);
+  if(instrM && !circM && !notifM){ docType='CBIC Circular'; docName='Instruction No. '+instrM[1].replace(/\s+/g,'').replace(/[\-\/]+$/,'').toUpperCase(); }
 
   // ── Corrigendum
-  const corrM = t.match(/corrigendum\s*to\s*(?:circular|notification|instruction)\s*no\.?\s*([\d\/\-]+)/i);
-  if(corrM){ docType='CBIC Circular'; docName='Corrigendum to Circular No. '+corrM[1].trim().replace(/[\-\/]+$/,'').toUpperCase(); }
+  const corrM = hdr.match(/corrigendum\s*to\s*(?:circular|notification|instruction)\s*no\.?\s*(\d+(?:\s*[\-\/]\s*\d+)*)/i);
+  if(corrM){ docType='CBIC Circular'; docName='Corrigendum to Circular No. '+corrM[1].replace(/\s+/g,'').replace(/[\-\/]+$/,'').toUpperCase(); }
 
   // ── Amendment / Addendum
   const amendM = t.match(/amendment\s*to\s*(?:circular|notification)\s*no\.?\s*([\d\/\-]+)/i);
@@ -1566,30 +1582,32 @@ function autoExtractDocMeta(text){
 
 function isDuplicateContent(text, nameHint){
   const newId = extractDocIdentity(text);
-
-  // Check all existing docs
   const allDocs = [...adminDocs, ...BUILTIN_KB];
+
+  // RULE: Two documents are duplicates ONLY if they have the SAME variantType
+  // "Corrigendum to Circular No. 23/23/2017" ≠ "Circular No. 23/23/2017"
+  // "Amendment to Circular No. X" ≠ "Circular No. X"
+  // Only exact same document type + same number + same year = duplicate
+
   for(const d of allDocs){
     const existId = d.docIdentity || extractDocIdentity(d.content || d.text || '');
 
-    // Match by ref number + year (strongest signal)
+    // variantType must match — 'original' vs 'corrigendum' are always different docs
+    const newVariant = newId.variantType || 'original';
+    const existVariant = existId.variantType || 'original';
+    if(newVariant !== existVariant) continue;
+
+    // Same ref number + year + docType = duplicate
     if(newId.refNo && existId.refNo &&
        newId.refNo === existId.refNo &&
        newId.year && existId.year &&
-       newId.year === existId.year){
-      return { name: d.name, reason: `Same ${newId.docType} number (${newId.refNo}) and year (${newId.year})` };
-    }
-
-    // Match by ref number + exact date
-    if(newId.refNo && existId.refNo &&
-       newId.refNo === existId.refNo &&
-       newId.date && existId.date &&
-       newId.date === existId.date){
-      return { name: d.name, reason: `Same ${newId.docType} number and date (${newId.date})` };
+       newId.year === existId.year &&
+       newId.docType === existId.docType){
+      return { name: d.name, reason: `Same ${newVariant==='original'?'':newVariant+' '}${newId.docType} number (${newId.refNo.toUpperCase()}) and year (${newId.year})` };
     }
   }
 
-  // Fallback: full content hash for non-numbered documents
+  // Fallback: byte-for-byte identical content
   const hash = fullContentHash(text);
   for(const d of allDocs){
     const existHash = d.contentHash || fullContentHash(d.content || d.text || '');
