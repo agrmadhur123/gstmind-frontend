@@ -519,6 +519,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .sb-done{color:var(--text);font-size:14px;line-height:1.85}
 .sb-done .sb-para{margin-bottom:12px}
 .sb-live{color:var(--text);font-size:14px;line-height:1.85;white-space:pre-wrap}
+.stream-raw{
+  font-size:14px;line-height:1.85;color:var(--text);
+  white-space:pre-wrap;word-break:break-word;
+  font-family:inherit;
+}
 
 
 /* ── STREAMING MARKDOWN ── */
@@ -1969,44 +1974,24 @@ async function send(){
     let fullText = '';
     let queryCountFromServer = null;
 
-    // ── FLICKER-FREE STREAMING ──
-    // Key insight: never re-render what's already shown.
-    // We maintain a "rendered" cursor and only append NEW text.
-    // Markdown is parsed ONLY at paragraph/sentence boundaries.
-    let renderedLen = 0;         // how many chars are already in the DOM
-    let pendingParagraph = '';   // accumulate current paragraph
+    // ── PURE TEXT STREAMING — zero flicker ──
+    // Strategy: stream ONLY as plain text into a single text node.
+    // No HTML parsing, no innerHTML, no re-renders during streaming.
+    // One final render at the end converts to full markdown.
+    // This is how Claude.ai achieves flicker-free streaming.
 
-    // The stream container has two children:
-    // 1. #sb_done_${msgId} — already-rendered content (stable DOM)
-    // 2. #sb_live_${msgId} — current paragraph being typed (text node)
-    streamEl.innerHTML = '<div id="sb_done_'+msgId+'" class="sb-done"></div>' +
-      '<span id="sb_live_'+msgId+'" class="sb-live"></span>';
+    // Single pre element for raw text — browser handles it natively
+    const textNode = document.createTextNode('');
+    const pre = document.createElement('div');
+    pre.className = 'stream-raw';
+    pre.appendChild(textNode);
+    streamEl.appendChild(pre);
 
-    const doneEl  = document.getElementById('sb_done_'+msgId);
-    const liveEl  = document.getElementById('sb_live_'+msgId);
-    function appendToken(token){
-      fullText += token;
-      pendingParagraph += token;
-
-      // If we hit a paragraph break — render the completed paragraph as HTML
-      // and move it to the stable "done" area. New paragraph starts fresh.
-      if(token.includes('\n\n') || (pendingParagraph.length > 600 && token.includes('\n'))){
-        const parts = pendingParagraph.split('\n\n');
-        // Render all complete paragraphs to done area
-        for(let i=0; i<parts.length-1; i++){
-          const p = document.createElement('div');
-          p.className = 'sb-para';
-          p.innerHTML = formatStreaming(parts[i]);
-          doneEl.appendChild(p);
-        }
-        // Keep the last (incomplete) part as the live text
-        pendingParagraph = parts[parts.length-1];
-      }
-
-      // Live text: just use textContent — NO innerHTML, NO flicker
-      // Shows raw text as it arrives, smooth as typing
-      liveEl.textContent = pendingParagraph;
-      scrollBot();
+    // Throttle scroll to every 150ms — prevents jank from too many reflows
+    let lastScroll = 0;
+    function throttledScroll(){
+      const now = Date.now();
+      if(now - lastScroll > 150){ lastScroll = now; scrollBot(); }
     }
 
     const reader = res.body.getReader();
@@ -2029,7 +2014,10 @@ async function send(){
           if(event.type === 'meta'){
             queryCountFromServer = event.query_count;
           } else if(event.type === 'text'){
-            appendToken(event.text);
+            fullText += event.text;
+            // Direct text node append — fastest possible DOM operation
+            textNode.textContent = fullText;
+            throttledScroll();
           } else if(event.type === 'done'){
             break;
           } else if(event.type === 'error'){
