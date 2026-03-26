@@ -523,6 +523,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
+
+/* ── STREAMING MARKDOWN ── */
+.stream-bubble .sh1{font-size:16px;font-weight:700;color:var(--text);margin:10px 0 4px}
+.stream-bubble .sh2{font-size:15px;font-weight:600;color:var(--text);margin:8px 0 4px}
+.stream-bubble .sh3{font-size:14px;font-weight:600;color:var(--text);margin:6px 0 2px}
+.stream-bubble .sbul{padding:2px 0 2px 16px;position:relative;line-height:1.6}
+.stream-bubble .sbul::before{content:'•';position:absolute;left:4px;color:var(--accent);font-weight:700}
+.stream-bubble strong{font-weight:600;color:var(--text)}
+.stream-bubble em{font-style:italic;color:var(--text2)}
+.stream-bubble sup{font-size:10px;vertical-align:super;color:var(--accent);font-weight:600}
+
 .notice-img{max-width:240px;max-height:180px;border:1px solid var(--border);border-radius:8px;object-fit:contain;display:block;margin-bottom:6px}
 .notice-file-chip{display:inline-flex;align-items:center;gap:7px;background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--accent);margin-bottom:6px;font-family:'DM Mono',monospace}
 
@@ -1939,22 +1950,41 @@ async function send(){
       busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
 
-    // ── STREAMING RESPONSE ──
-    // Remove thinking indicator and create streaming bubble
+    // ── STREAMING RESPONSE — Claude.ai style ──
     delEl(tid);
+
+    // Create the message row immediately
     const msgId = 'm'+Date.now();
     const streamDiv = document.createElement('div');
     streamDiv.className = 'msg-row bot';
     streamDiv.id = msgId;
-    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body">
-      <div class="stream-bubble" id="sb_${msgId}"></div>
-    </div></div>`;
+    streamDiv.innerHTML = `
+      <div class="msg-inner">
+        <div class="av">G</div>
+        <div class="msg-body" id="mb_${msgId}">
+          <div class="stream-bubble" id="sb_${msgId}"><span class="stream-cursor">▍</span></div>
+        </div>
+      </div>`;
     msgsEl().appendChild(streamDiv);
     scrollBot();
 
     const streamEl = document.getElementById('sb_'+msgId);
     let fullText = '';
     let queryCountFromServer = null;
+    let renderScheduled = false;
+
+    // Smooth render — use requestAnimationFrame to avoid flickering
+    // Only re-render when browser is ready, not on every token
+    function scheduleRender(){
+      if(renderScheduled) return;
+      renderScheduled = true;
+      requestAnimationFrame(()=>{
+        renderScheduled = false;
+        // Smooth streaming: render markdown-lite inline, keep cursor at end
+        streamEl.innerHTML = formatStreaming(fullText) + '<span class="stream-cursor">▍</span>';
+        scrollBot();
+      });
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1965,7 +1995,7 @@ async function send(){
       if(done) break;
       buffer += decoder.decode(value, {stream:true});
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep incomplete line
+      buffer = lines.pop();
 
       for(const line of lines){
         if(!line.startsWith('data: ')) continue;
@@ -1977,19 +2007,19 @@ async function send(){
             queryCountFromServer = event.query_count;
           } else if(event.type === 'text'){
             fullText += event.text;
-            // Render incrementally with cursor
-            streamEl.innerHTML = formatStreaming(fullText) + '<span class="stream-cursor">▍</span>';
-            scrollBot();
+            scheduleRender(); // smooth — no flicker
           } else if(event.type === 'done'){
             break;
           } else if(event.type === 'error'){
+            streamDiv.remove();
             addErrMsg('AI service error. Please try again.');
           }
         } catch(e){}
       }
     }
 
-    // ── FINALIZE: Replace stream bubble with full rendered answer ──
+    // ── FINALIZE ──
+    // Swap stream bubble → fully rendered answer with citations, actions etc.
     streamDiv.remove();
     history.push({role:'assistant',content:fullText});
     renderBotRow(fullText, hasRAG, retrieved);
@@ -2093,15 +2123,31 @@ function addUserRow(txt,attach){
 }
 
 
-// Lightweight formatter for streaming — fast, no heavy parsing
+// Smooth streaming formatter — renders markdown progressively without flicker
 function formatStreaming(text){
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
-    .replace(/¹|²|³|⁴|⁵|⁶|⁷|⁸|⁹/g, m=>`<sup>${m}</sup>`)
-    .replace(/\n/g,'<br>');
+  if(!text) return '';
+  // Escape HTML
+  let t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Bold **text**
+  t = t.replace(/\*\*([^*\n]+?)\*\*/g,'<strong>$1</strong>');
+  // Italic *text*
+  t = t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  // Headers ### ## #
+  t = t.replace(/^###\s+(.+)$/gm,'<div class="sh3">$1</div>');
+  t = t.replace(/^##\s+(.+)$/gm,'<div class="sh2">$1</div>');
+  t = t.replace(/^#\s+(.+)$/gm,'<div class="sh1">$1</div>');
+  // Superscript footnotes ¹²³⁴⁵
+  t = t.replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g,'<sup>$1</sup>');
+  // Bullet points — * or - at line start
+  t = t.replace(/^[\*\-]\s+(.+)$/gm,'<div class="sbul">$1</div>');
+  // Numbered lists
+  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div class="sbul"><span style="opacity:.5;margin-right:6px">$1.</span>$2</div>');
+  // Line breaks
+  t = t.replace(/\n\n/g,'<div style="height:8px"></div>');
+  t = t.replace(/\n/g,'<br>');
+
+  return t;
 }
 
 function addThinkRow(){
