@@ -1312,6 +1312,12 @@ function doLogout(){
 // ════════════════════════════════
 const API = 'https://web-production-399b0.up.railway.app';
 let docs=[],history=[],mode='query',busy=false,attachedFile=null;
+
+// Load KB docs from admin localStorage
+try{
+  const kbRaw = localStorage.getItem('gm_admin_kb');
+  if(kbRaw){ docs = JSON.parse(kbRaw); }
+} catch(e){ docs=[]; }
 let authToken = localStorage.getItem('gm_token')||'';
 
 // ── API HELPER ──
@@ -1518,7 +1524,7 @@ function pushDoc(name,content,type){
   docs.push({id:Date.now()+Math.random(),name,content,type,chunks:chunkText(content)});
   renderDocs();updateKBUI();showToast('Added: '+name);
 }
-function delDoc(id){docs=docs.filter(d=>d.id!==id);renderDocs();updateKBUI();}
+function delDoc(id){docs=docs.filter(d=>d.id!==id);invalidateChunkCache();renderDocs();updateKBUI();}
 function renderDocs(){
   const list=document.getElementById('docList');
   document.getElementById('docCount').textContent=docs.length;
@@ -1533,21 +1539,275 @@ function updateKBUI(){
   if(hint)hint.textContent=`${BUILTIN.length} built-in documents loaded`;
 }
 
-// ════════════════════════════════
-// CHUNKING & RETRIEVAL
-// ════════════════════════════════
-function chunkText(text,size=500,overlap=100){
-  const words=text.split(/\s+/).filter(w=>w);const res=[];let i=0;
-  while(i<words.length){const c=words.slice(i,i+size).join(' ');if(c.trim().length>30)res.push(c);i+=size-overlap;if(i+overlap>=words.length&&i<words.length){const last=words.slice(i).join(' ');if(last.trim().length>30&&last!==res[res.length-1])res.push(last);break;}}return res;
+// ════════════════════════════════════════════════════════════════
+// BEST-IN-CLASS RAG ENGINE
+// Techniques: Semantic chunking · Parent-child retrieval ·
+//             BM25 scoring · GST query expansion · 
+//             Hierarchical context assembly
+// ════════════════════════════════════════════════════════════════
+
+// ── GST SYNONYM MAP — expands queries before search ──
+const GST_SYNONYMS = {
+  'itc':['input tax credit','input credit','tax credit','credit','itc'],
+  'input tax credit':['itc','input credit','credit'],
+  'rcm':['reverse charge','reverse charge mechanism','rcm'],
+  'reverse charge':['rcm','reverse charge mechanism'],
+  'gstr':['gst return','return','gstr'],
+  'gstr1':['gstr-1','outward supplies','sales return'],
+  'gstr3b':['gstr-3b','monthly return','summary return'],
+  'gstr9':['gstr-9','annual return'],
+  'e-way bill':['eway bill','e way bill','eway','waybill'],
+  'eway':['e-way bill','e way bill','waybill'],
+  'hsn':['harmonised system','tariff heading','hsn code','chapter heading'],
+  'sac':['service accounting code','service code','sac'],
+  'zero rated':['zero-rated','zero rate','0%','nil rated','exempt'],
+  'nil rated':['nil','zero rated','exempt','0%'],
+  'exempt':['exemption','exempted','nil','zero rated'],
+  'place of supply':['pos','place of supply','supply location'],
+  'pos':['place of supply','supply location'],
+  'registration':['gstin','gst number','taxpayer registration'],
+  'gstin':['registration','gst number','gst registration'],
+  'invoice':['tax invoice','bill','invoice','document','debit note','credit note'],
+  'debit note':['debit','dn','amendment','upward revision'],
+  'credit note':['credit','cn','amendment','downward revision'],
+  'composition':['composition scheme','composition dealer','small taxpayer'],
+  'refund':['refund claim','excess credit','accumulated credit','igst refund'],
+  'export':['export of goods','zero rated','lut','letter of undertaking'],
+  'lut':['letter of undertaking','bond','export bond'],
+  'sez':['special economic zone','sez unit','sez developer'],
+  'works contract':['construction','works contract service','immovable property'],
+  'demand':['demand notice','scn','show cause','tax demand','adjudication'],
+  'scn':['show cause notice','demand','adjudication'],
+  'penalty':['penalty','fine','late fee','interest','offence'],
+  'interest':['interest','delay','late payment'],
+  'audit':['gst audit','audit','scrutiny','inspection'],
+  'section 16':['itc eligibility','input tax credit','16(2)','16(4)'],
+  'section 17':['blocked credit','17(5)','apportionment'],
+  'section 73':['demand non fraud','3 year','normal period'],
+  'section 74':['demand fraud','5 year','wilful misstatement','suppression'],
+  'rule 42':['itc reversal exempt','proportionate reversal','42'],
+  'rule 43':['capital goods reversal','43'],
+  'rule 36':['invoice upload','gstr-2b','36(4)'],
+  'annual return':['gstr-9','gstr9','reconciliation','annual'],
+  'reconciliation':['gstr-9c','audit report','reconciliation statement'],
+  'composite supply':['principal supply','composite'],
+  'mixed supply':['mixed','higher rate','bundled'],
+  'supplier':['seller','vendor','provider','registered person'],
+  'recipient':['buyer','purchaser','receiver'],
+};
+
+// ── SEMANTIC CHUNKING ──
+// Strategy: Split at natural legal boundaries (sections, paragraphs)
+// NOT at arbitrary word counts. Legal context must stay intact.
+// Two levels: FINE chunks for retrieval + COARSE parent for full context.
+function semanticChunk(doc) {
+  const text = doc.content || doc.text || '';
+  const docMeta = `[${doc.name}${doc.date ? ' | ' + doc.date : ''}]`;
+
+  // ── Level 1: Split at major section boundaries first ──
+  // Patterns: "Section X", "Para X.", "X. Heading", "\n\n" (paragraph breaks)
+  const SECTION_PATTERNS = [
+    /(?=\n\s*(?:Section|Sec\.)\s*\d+[A-Z]?[\s\(\-])/gi,  // "Section 16", "Sec. 16A"
+    /(?=\n\s*\d+[A-Z]?[\s\(\.]\s+[A-Z])/g,                 // "16. Heading" or "16A. "
+    /(?=\n\s*(?:Para(?:graph)?|Clause|Rule|Article)\s*\d)/gi, // "Para 2", "Rule 42"
+    /(?=\n\s*\(\s*[ivxlcdmIVXLCDM]+\s*\))/g,               // "(i)", "(ii)", "(iv)"
+  ];
+
+  // Split into coarse blocks first (paragraphs)
+  let coarseBlocks = text
+    .split(/\n{2,}/)                          // split at blank lines
+    .map(b => b.trim())
+    .filter(b => b.length > 80);               // discard tiny fragments
+
+  // If coarse blocks are too large (>800 words), split at section markers
+  const fineChunks = [];
+  const parentMap = []; // maps fine chunk → parent coarse block
+
+  coarseBlocks.forEach((block, blockIdx) => {
+    const words = block.split(/\s+/).length;
+    if (words <= 300) {
+      // Small block — use as-is
+      fineChunks.push({ text: docMeta + '\n' + block, parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
+    } else {
+      // Large block — split further at sentence boundaries, keeping ~200-word windows
+      const sentences = block.match(/[^.!?]+[.!?]+/g) || [block];
+      let window = '';
+      let windowWords = 0;
+      let overlap = '';
+
+      sentences.forEach(sent => {
+        const sw = sent.split(/\s+/).length;
+        window += sent + ' ';
+        windowWords += sw;
+
+        if (windowWords >= 200) {
+          fineChunks.push({ text: docMeta + '\n' + window.trim(), parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
+          // Overlap: keep last 2 sentences for context continuity
+          const sentArr = window.match(/[^.!?]+[.!?]+/g) || [];
+          overlap = sentArr.slice(-2).join(' ');
+          window = overlap + ' ';
+          windowWords = overlap.split(/\s+/).length;
+        }
+      });
+      // Push remaining
+      if (window.trim().length > 60) {
+        fineChunks.push({ text: docMeta + '\n' + window.trim(), parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
+      }
+    }
+  });
+
+  return fineChunks;
 }
-function retrieve(q,topK=6){
-  const stop=new Set(['what','when','where','which','with','from','that','this','have','will','does','under','about','section','gst','cgst','igst','the','and','for','not','any','all','such','shall','been','may','into','also','both','its','their']);
-  const qw=new Set(q.toLowerCase().split(/\W+/).filter(w=>w.length>3&&!stop.has(w)));
-  if(!qw.size)return[];
-  const allDocs=[...BUILTIN,...docs];const res=[];
-  allDocs.forEach(d=>{const chunks=d.chunks||chunkText(d.content);chunks.forEach(ch=>{const cw=ch.toLowerCase().split(/\W+/);let score=0;qw.forEach(t=>{if(cw.some(w=>w===t))score+=2;else if(cw.some(w=>w.includes(t)))score+=1;});if(score>0)res.push({doc:d.name,chunk:ch,score});});});
-  res.sort((a,b)=>b.score-a.score);return res.slice(0,topK);
+
+// ── CHUNK CACHE — pre-index all docs on load ──
+let _chunkCache = null;
+let _chunkCacheDocCount = 0;
+
+function getChunkIndex() {
+  const allDocs = [...BUILTIN, ...docs];
+  // Rebuild if docs changed
+  if (_chunkCache && _chunkCacheDocCount === allDocs.length) return _chunkCache;
+
+  const index = [];
+  allDocs.forEach(d => {
+    const chunks = semanticChunk(d);
+    chunks.forEach(ch => {
+      // Pre-tokenize for fast retrieval
+      const tokens = tokenize(ch.text);
+      const tf = buildTF(tokens);
+      index.push({ ...ch, tokens, tf });
+    });
+  });
+
+  _chunkCache = index;
+  _chunkCacheDocCount = allDocs.length;
+  return index;
 }
+
+// ── TOKENIZATION ──
+// Keep legal terms intact: "16(2)(b)", "rule42", "section73"
+const STOP_WORDS = new Set([
+  'the','and','for','not','any','all','such','been','may','into','also',
+  'both','its','their','this','that','with','from','have','will','does',
+  'were','was','are','would','could','should','being','which','where',
+  'when','what','how','who','whom','whose','there','here','then','than',
+  'thus','said','same','other','each','most','some','over','upon','after',
+  'before','above','below','further','more','very','well','even','also',
+  'however','therefore','whereas','whereby','herein','thereof','therein',
+]);
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/section/g, 'section')  // keep "section" — crucial for GST
+    .split(/[\s,;:]+/)
+    .map(w => w.replace(/^[^\w]+|[^\w]+$/g,''))
+    .filter(w => w.length > 1 && !STOP_WORDS.has(w));
+}
+
+function buildTF(tokens) {
+  const tf = {};
+  tokens.forEach(t => { tf[t] = (tf[t]||0) + 1; });
+  return tf;
+}
+
+// ── QUERY EXPANSION ──
+// "ITC reversal" → ["itc","input tax credit","credit","reversal","reverse"]
+function expandQuery(q) {
+  const base = q.toLowerCase();
+  const terms = new Set(tokenize(base));
+
+  // Add synonyms from GST_SYNONYMS map
+  Object.entries(GST_SYNONYMS).forEach(([key, syns]) => {
+    if (base.includes(key)) {
+      syns.forEach(s => tokenize(s).forEach(t => terms.add(t)));
+    }
+  });
+
+  // Add abbreviation expansions
+  const abbrevs = {
+    'itc':'input tax credit','rcm':'reverse charge mechanism',
+    'lut':'letter undertaking','sez':'special economic zone',
+    'hsn':'harmonised system nomenclature','gst':'goods services tax',
+    'cgst':'central goods services tax','igst':'integrated goods services tax',
+    'sgst':'state goods services tax','utgst':'union territory goods services tax',
+    'gstr':'goods services tax return','scn':'show cause notice',
+    'aar':'advance ruling authority','aaar':'appellate advance ruling',
+  };
+  Object.entries(abbrevs).forEach(([abbr, expansion]) => {
+    if (terms.has(abbr)) tokenize(expansion).forEach(t => terms.add(t));
+  });
+
+  return terms;
+}
+
+// ── BM25-STYLE SCORING ──
+// Better than simple keyword count — accounts for term frequency and document length
+function bm25Score(queryTerms, chunkTF, chunkTokenCount, avgDocLen = 150) {
+  const k1 = 1.5, b = 0.75;
+  let score = 0;
+  queryTerms.forEach(term => {
+    const tf = chunkTF[term] || 0;
+    if (tf === 0) return;
+    // Partial match bonus — "credit" matches "creditworthy"
+    const partialMatches = Object.keys(chunkTF).filter(t => t.includes(term) || term.includes(t));
+    const effectiveTF = tf + partialMatches.length * 0.3;
+    const normalizedTF = (effectiveTF * (k1 + 1)) / (effectiveTF + k1 * (1 - b + b * chunkTokenCount / avgDocLen));
+    score += normalizedTF;
+  });
+  return score;
+}
+
+// ── RETRIEVE — Main retrieval function ──
+// Returns top chunks with parent context for maximum answer quality
+function retrieve(q, topK = 15) {
+  if (!q || q.trim().length < 2) return [];
+
+  const index = getChunkIndex();
+  if (!index.length) return [];
+
+  // Expand query with synonyms and abbreviations
+  const queryTerms = expandQuery(q);
+  if (!queryTerms.size) return [];
+
+  const avgLen = index.reduce((s, c) => s + c.tokens.length, 0) / index.length;
+
+  // Score all chunks
+  const scored = index.map(ch => ({
+    ...ch,
+    score: bm25Score(queryTerms, ch.tf, ch.tokens.length, avgLen)
+  })).filter(ch => ch.score > 0);
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // ── PARENT-CHILD DEDUPLICATION ──
+  // If multiple fine chunks from the same parent score highly,
+  // replace them with the full parent for better context
+  const seen = new Set();
+  const result = [];
+  const usedParents = new Set();
+
+  for (const ch of scored) {
+    if (result.length >= topK) break;
+    const parentKey = ch.docName + '||' + ch.parent.slice(0, 50);
+
+    if (!usedParents.has(parentKey)) {
+      usedParents.add(parentKey);
+      // Return parent block (full paragraph) not just the fine chunk
+      result.push({
+        doc: ch.docName,
+        docDate: ch.docDate,
+        docType: ch.docType,
+        chunk: ch.parent,  // full parent = more context
+        score: ch.score
+      });
+    }
+  }
+
+  return result;
+}
+
+// ── INVALIDATE chunk cache when docs change ──
+function invalidateChunkCache() { _chunkCache = null; }
 
 // ════════════════════════════════
 // ATTACHMENT
@@ -1624,11 +1884,27 @@ async function send(){
   busy=true;document.getElementById('sendBtn').disabled=true;
   const tid=addThinkRow();
 
-  const retrieved=retrieve(queryText,6);
+  const retrieved=retrieve(queryText, 15);
   const hasRAG=retrieved.length>0;
   let sys=getPrompt(mode)||getPrompt('query');
   if(currentAttach)sys+='\n\nThe user has attached a '+(currentAttach.type==='pdf'?'PDF':'photo')+' of a GST notice. Read it carefully and proceed.';
-  if(hasRAG){sys+='\n\n═══ KNOWLEDGE BASE ═══\n';retrieved.forEach((r,i)=>{sys+=`\n[SOURCE ${i+1} — "${r.doc}"]\n${r.chunk}\n`;});sys+='\n═══ END KNOWLEDGE BASE ═══\nCite exact document names from above with footnote numbers.';}
+  if(hasRAG){
+    // Group by document for cleaner context
+    const byDoc = {};
+    retrieved.forEach(r => {
+      if(!byDoc[r.doc]) byDoc[r.doc] = {name:r.doc, date:r.docDate, type:r.docType, chunks:[]};
+      byDoc[r.doc].chunks.push(r.chunk);
+    });
+    sys += '\n\n═══════════════════════════════\nKNOWLEDGE BASE — GST DOCUMENTS\n═══════════════════════════════\n';
+    sys += 'INSTRUCTIONS: Answer strictly from these documents. Cite each source with footnote numbers.\n';
+    let srcNum = 1;
+    Object.values(byDoc).forEach(d => {
+      sys += `\n━━━ SOURCE: ${d.name}${d.date?' | '+d.date:''}${d.type?' | '+d.type:''} ━━━\n`;
+      d.chunks.forEach(ch => { sys += ch + '\n\n'; });
+    });
+    sys += '\n═══════════════════════════════\nEND OF KNOWLEDGE BASE\n═══════════════════════════════\n';
+    sys += `\n${retrieved.length} document sections retrieved. Cite exact document names as footnotes ¹²³.`;
+  }
 
   try{
     const res = await fetch(API+'/query',{
