@@ -1166,7 +1166,7 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
 
 
 <!-- FORGOT PASSWORD MODAL -->
-<div class="modal-overlay" id="forgotModal" onclick="if(event.target===this)document.getElementById('forgotModal').classList.remove('show')">
+<div class="modal-bg" id="forgotModal" onclick="if(event.target===this)document.getElementById('forgotModal').classList.remove('show')">
   <div class="modal" style="max-width:380px">
     <div class="modal-title">Reset Password</div>
     <div class="modal-sub" id="forgotModalSub">Enter your registered email address and we will send you a reset link.</div>
@@ -1294,7 +1294,13 @@ async function doSignup(){
     const res = await apiCall('/auth/signup/email','POST',{fname,lname,email,password:pass,profession:prof});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    localStorage.setItem('gm_user', JSON.stringify({...res.user, fname, lname, name:fname+' '+lname}));
+    const signupUserData = {
+      ...res.user,
+      fname, lname, name: fname+' '+lname,
+      queryCount: res.user.query_count || 0,
+      queryLimit: res.user.query_limit || 10,
+    };
+    localStorage.setItem('gm_user', JSON.stringify(signupUserData));
     showToast('Account created! Welcome to GSTMind.');
     showPage('app');
   } catch(e){
@@ -1316,9 +1322,26 @@ async function doLogin(){
     const res = await apiCall('/auth/login/email','POST',{email,password:pass});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    localStorage.setItem('gm_user', JSON.stringify(res.user));
+    // Map server snake_case → app camelCase
+    const userData = {
+      ...res.user,
+      queryCount: res.user.query_count || 0,
+      queryLimit: res.user.query_limit || 10,
+    };
+    localStorage.setItem('gm_user', JSON.stringify(userData));
     err.classList.remove('show');
     showToast('Welcome back, '+(res.user.fname||'')+'!');
+    // Fetch fresh user data from server to get accurate query count
+    try{
+      const freshUser = await apiCall('/auth/me','GET',null,true);
+      const freshData = {
+        ...userData,
+        queryCount: freshUser.query_count || userData.queryCount,
+        queryLimit: freshUser.query_limit || userData.queryLimit,
+        plan: freshUser.plan || userData.plan,
+      };
+      localStorage.setItem('gm_user', JSON.stringify(freshData));
+    } catch(e){ /* use login data if fetch fails */ }
     showPage('app');
   } catch(e){
     err.textContent = e.message==='Invalid email or password' ? 'Incorrect email or password.' : (e.message||'Login failed.');
@@ -1890,7 +1913,10 @@ function newChat(){
 async function send(){
   if(busy)return;
   const user=getUser();
-  if(user.plan==='free'&&(user.queryCount||0)>=(user.queryLimit||10)){showUpgrade();return;}
+  if(user.plan==='free'&&(user.queryCount||0)>=(user.queryLimit||10)){
+    showUpgrade();
+    return;
+  }
   // API key handled securely by backend server
   const q=document.getElementById('qi').value.trim();
   if(!q&&!attachedFile){showToast('Please type a query or attach a notice file.');return;}
@@ -1974,26 +2000,96 @@ async function send(){
     let fullText = '';
     let queryCountFromServer = null;
 
-    // ── PURE TEXT STREAMING — zero flicker ──
-    // Strategy: stream ONLY as plain text into a single text node.
-    // No HTML parsing, no innerHTML, no re-renders during streaming.
-    // One final render at the end converts to full markdown.
-    // This is how Claude.ai achieves flicker-free streaming.
+    // ══════════════════════════════════════════════════════
+    // CLAUDE.AI-STYLE SMOOTH STREAMING
+    // ══════════════════════════════════════════════════════
+    // The key technique: TOKEN QUEUE + rAF DRAIN
+    //
+    // Problem: Network delivers 10-20 tokens per burst
+    //          → text jumps in visible chunks
+    // Solution: Queue all incoming tokens, then drain the
+    //          queue at exactly 60fps via requestAnimationFrame
+    //          → browser renders exactly 1 frame per drain
+    //          → looks like smooth character-by-character typing
+    //
+    // Secondary: appendData() not textContent=
+    //          appendData only touches the new bytes
+    //          textContent= replaces entire string → reflow
+    // ══════════════════════════════════════════════════════
 
-    // Single pre element for raw text — browser handles it natively
-    const textNode = document.createTextNode('');
-    const pre = document.createElement('div');
-    pre.className = 'stream-raw';
-    pre.appendChild(textNode);
-    streamEl.appendChild(pre);
+    // Create a single text node — most efficient DOM for streaming
+    const streamTextNode = document.createTextNode('');
+    const streamPre = document.createElement('div');
+    streamPre.className = 'stream-raw';
+    streamPre.appendChild(streamTextNode);
+    streamEl.appendChild(streamPre);
 
-    // Throttle scroll to every 150ms — prevents jank from too many reflows
-    let lastScroll = 0;
-    function throttledScroll(){
+    // Token queue — network pushes here, rAF drains
+    const tokenQueue = [];
+    let rafId = null;
+    let streamDone = false;
+    let lastScrollTime = 0;
+
+    // Chars to show per rAF frame (~60fps)
+    // At 60fps × 8 chars = 480 chars/sec = natural reading speed
+    const CHARS_PER_FRAME = 8;
+
+    function drainQueue(){
+      if(tokenQueue.length === 0){
+        if(streamDone){
+          // All tokens shown — finalize
+          finalizeStream();
+          return;
+        }
+        rafId = null;
+        return;
+      }
+
+      // Drain CHARS_PER_FRAME characters this frame
+      let charsThisFrame = 0;
+      while(tokenQueue.length > 0 && charsThisFrame < CHARS_PER_FRAME){
+        const token = tokenQueue[0];
+        if(charsThisFrame + token.length <= CHARS_PER_FRAME){
+          // Whole token fits this frame
+          streamTextNode.appendData(token);
+          fullText += token;
+          tokenQueue.shift();
+          charsThisFrame += token.length;
+        } else {
+          // Partial token — split it
+          const part = token.slice(0, CHARS_PER_FRAME - charsThisFrame);
+          streamTextNode.appendData(part);
+          fullText += part;
+          tokenQueue[0] = token.slice(CHARS_PER_FRAME - charsThisFrame);
+          charsThisFrame = CHARS_PER_FRAME;
+        }
+      }
+
+      // Scroll — only every 200ms to avoid constant reflow
       const now = Date.now();
-      if(now - lastScroll > 150){ lastScroll = now; scrollBot(); }
+      if(now - lastScrollTime > 200){ lastScrollTime = now; scrollBot(); }
+
+      // Schedule next frame
+      rafId = requestAnimationFrame(drainQueue);
     }
 
+    function finalizeStream(){
+      // Smooth finalize — replace stream div with full rendered answer
+      // Use opacity transition to avoid flash
+      streamDiv.style.transition = 'opacity 0.15s';
+      streamDiv.style.opacity = '0';
+      setTimeout(()=>{
+        streamDiv.remove();
+        history.push({role:'assistant', content:fullText});
+        renderBotRow(fullText, hasRAG, retrieved);
+        // Fade in the final rendered row
+        const finalRow = msgsEl().lastElementChild;
+        if(finalRow){ finalRow.style.opacity='0'; finalRow.style.transition='opacity 0.15s'; requestAnimationFrame(()=>{ finalRow.style.opacity='1'; }); }
+        scrollBot();
+      }, 150);
+    }
+
+    // ── READ STREAM FROM SERVER ──
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -2014,13 +2110,13 @@ async function send(){
           if(event.type === 'meta'){
             queryCountFromServer = event.query_count;
           } else if(event.type === 'text'){
-            fullText += event.text;
-            // Direct text node append — fastest possible DOM operation
-            textNode.textContent = fullText;
-            throttledScroll();
+            // Push to queue — rAF will drain smoothly
+            tokenQueue.push(event.text);
+            if(!rafId) rafId = requestAnimationFrame(drainQueue);
           } else if(event.type === 'done'){
             break;
           } else if(event.type === 'error'){
+            if(rafId) cancelAnimationFrame(rafId);
             streamDiv.remove();
             addErrMsg('AI service error. Please try again.');
           }
@@ -2028,11 +2124,9 @@ async function send(){
       }
     }
 
-    // ── FINALIZE ──
-    // Swap stream bubble → fully rendered answer with citations, actions etc.
-    streamDiv.remove();
-    history.push({role:'assistant',content:fullText});
-    renderBotRow(fullText, hasRAG, retrieved);
+    // Signal stream complete — rAF will finalize after queue empties
+    streamDone = true;
+    if(!rafId && tokenQueue.length === 0) finalizeStream();
 
     // Update query count
     user.queryCount = queryCountFromServer || (user.queryCount||0)+1;
@@ -2480,7 +2574,13 @@ async function verifyLoginOTP() {
     const res = await apiCall('/auth/otp/verify','POST',{phone, code:entered, is_signup:false});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    localStorage.setItem('gm_user', JSON.stringify(res.user));
+    // Map server snake_case → app camelCase
+    const userData = {
+      ...res.user,
+      queryCount: res.user.query_count || 0,
+      queryLimit: res.user.query_limit || 10,
+    };
+    localStorage.setItem('gm_user', JSON.stringify(userData));
     err.classList.remove('show');
     clearInterval(otpTimers['login']);
     showToast('Welcome back, '+(res.user.fname||'')+'!');
@@ -2537,7 +2637,13 @@ async function verifySignupOTP() {
     const res = await apiCall('/auth/otp/verify','POST',{phone, code:entered, fname, lname, profession:prof, is_signup:true});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    localStorage.setItem('gm_user', JSON.stringify(res.user));
+    // Map server snake_case → app camelCase
+    const userData = {
+      ...res.user,
+      queryCount: res.user.query_count || 0,
+      queryLimit: res.user.query_limit || 10,
+    };
+    localStorage.setItem('gm_user', JSON.stringify(userData));
     err.classList.remove('show');
     clearInterval(otpTimers['signup']);
     showToast('Account created! Welcome to GSTMind, '+fname+'!');
