@@ -296,15 +296,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .app-sidebar{transition:width .25s ease}
 .app-sidebar.collapsed{width:0;overflow:hidden;border-right:none}
 .sidebar-toggle{
-  position:absolute;top:14px;left:14px;
-  width:28px;height:28px;border-radius:6px;
+  /* Sits inside the topbar on the left edge — never overlaps content */
+  width:34px;height:34px;border-radius:8px;
   background:none;border:1px solid var(--border);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--text3);transition:all .15s;z-index:10;
+  font-size:14px;color:var(--text3);
+  transition:all .15s;flex-shrink:0;
 }
-.sidebar-toggle:hover{background:var(--sidebar-hover);color:var(--text)}
-.sidebar-toggle.sidebar-open{left:270px}
-.app-topbar{position:relative;padding-left:52px}
+.sidebar-toggle:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent-border)}
+.app-topbar{position:relative;padding-left:8px;gap:8px}
 
 /* ════════════════════════════════
    MAIN APP (User Chat)
@@ -472,13 +472,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
   padding:40px 20px;
 }
 .empty-icon{
-  width:54px;height:54px;background:var(--text);
+  width:54px;height:54px;background:var(--accent-light);
+  border:1px solid var(--accent-border);
   display:flex;align-items:center;justify-content:center;
   border-radius:12px;
 }
 .empty-icon span{
   font-family:'Cormorant Garamond',serif;
-  font-size:26px;font-weight:700;color:var(--sidebar-bg);
+  font-size:26px;font-weight:700;color:var(--accent);
 }
 .empty-title{
   font-family:'Cormorant Garamond',serif;
@@ -1050,7 +1051,6 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
 <!-- ════ MAIN APP ════ -->
 <div class="page" id="page-app">
   <div class="app-shell">
-      <button class="sidebar-toggle sidebar-open" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
 
     <!-- SIDEBAR -->
     <div class="app-sidebar" id="appSidebar">
@@ -1105,6 +1105,7 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
     <!-- MAIN -->
     <div class="app-main">
       <div class="app-topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
         <div class="mode-pills">
           <button class="mode-pill active" onclick="setMode('query',this)">GST Query</button>
           <button class="mode-pill" onclick="setMode('draft',this)">Notice Draft</button>
@@ -1503,8 +1504,8 @@ function initApp(){
   if(localStorage.getItem('gm_sidebar_collapsed')==='1'){
     const sb=document.getElementById('appSidebar');
     const btn=document.getElementById('sidebarToggle');
-    if(sb){sb.classList.add('collapsed');}
-    if(btn){btn.style.left='14px';btn.textContent='☰';btn.classList.remove('sidebar-open');}
+    if(sb)sb.classList.add('collapsed');
+    if(btn)btn.textContent='☰';
   }
 
   // Set user info
@@ -1531,6 +1532,8 @@ function initApp(){
 
   renderBuiltin();
   updateKBUI();
+  renderTrendingChips();
+  loadChatHistory();
 
   // Show/hide trial bar
   const tw=document.getElementById('trialWarning');
@@ -1561,8 +1564,6 @@ function toggleSidebar(){
   const btn = document.getElementById('sidebarToggle');
   if(!sb || !btn) return;
   const collapsed = sb.classList.toggle('collapsed');
-  btn.classList.toggle('sidebar-open', !collapsed);
-  btn.style.left = collapsed ? '14px' : '270px';
   btn.textContent = collapsed ? '☰' : '✕';
   localStorage.setItem('gm_sidebar_collapsed', collapsed?'1':'0');
 }
@@ -1976,15 +1977,15 @@ async function send(){
   // Short follow-ups like "time limit?" won't find anything alone
   // So we combine with the last user message for better retrieval
   let enrichedQuery = queryText;
-  if(queryText.trim().split(/\s+/).length <= 4 && history.length >= 2){
-    // Short query — prepend last user message as context
-    const lastUserMsg = history.slice().reverse().find(h=>h.role==='user');
+  if(queryText.trim().split(/\s+/).length <= 5 && history.length >= 2){
+    // Short follow-up — combine with last user message for better retrieval
+    const lastUserMsg = history.slice(-4).reverse().find(h=>h.role==='user');
     if(lastUserMsg){
       const lastText = typeof lastUserMsg.content === 'string'
-        ? lastUserMsg.content
-        : (lastUserMsg.content.find?.(c=>c.type==='text')?.text || '');
+        ? lastUserMsg.content.slice(0,200) // cap at 200 chars
+        : (lastUserMsg.content?.find?.(x=>x.type==='text')?.text||'').slice(0,200);
       if(lastText && lastText !== queryText){
-        enrichedQuery = lastText + ' ' + queryText;
+        enrichedQuery = lastText.trim() + ' ' + queryText;
       }
     }
   }
@@ -2018,7 +2019,12 @@ async function send(){
     const res = await fetch(API+'/query',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
-      body:JSON.stringify({messages:history, system:sys, mode, query_text:queryText})
+      body:JSON.stringify({
+        // Send last 6 messages max to avoid context overflow
+        // Full history is in browser — Claude only needs recent context
+        messages: history.slice(-6),
+        system:sys, mode, query_text:queryText
+      })
     });
 
     if(!res.ok){
@@ -2237,7 +2243,6 @@ function renderChatInSidebar(){
   const list=document.getElementById('histList');
   const empty=list.querySelector('[style*="color:var(--light)"]');
   if(empty)empty.remove();
-  // Remove existing entry for this chat if any
   const existing=document.getElementById('chat_'+currentChatId);
   if(existing)existing.remove();
 
@@ -2247,9 +2252,44 @@ function renderChatInSidebar(){
   d.innerHTML=`
     <div class="hist-q">${esc(currentChatTitle)}</div>
     <div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
-  d.onclick=()=>{}; // clicking a past chat could restore it — future feature
+  d.onclick=()=>{};
   list.prepend(d);
   if(list.children.length>30)list.removeChild(list.lastChild);
+
+  // Persist chat history to localStorage
+  saveChatHistory();
+}
+
+function saveChatHistory(){
+  try{
+    const chats = JSON.parse(localStorage.getItem('gm_chat_history')||'[]');
+    // Update or add current chat
+    const idx = chats.findIndex(ch=>ch.id===currentChatId);
+    const entry = {id:currentChatId, title:currentChatTitle, count:currentChatQueryCount, time:getCurrentTime(), date:new Date().toLocaleDateString('en-IN')};
+    if(idx>=0) chats[idx]=entry; else chats.unshift(entry);
+    // Keep last 30 chats
+    localStorage.setItem('gm_chat_history', JSON.stringify(chats.slice(0,30)));
+  }catch(e){}
+}
+
+function loadChatHistory(){
+  try{
+    const chats = JSON.parse(localStorage.getItem('gm_chat_history')||'[]');
+    if(!chats.length) return;
+    const list = document.getElementById('histList');
+    const empty = list.querySelector('[style*="color:var(--light)"]');
+    if(empty)empty.remove();
+    chats.forEach(ch=>{
+      const d=document.createElement('div');
+      d.className='hist-item';
+      d.id='chat_'+ch.id;
+      d.innerHTML=`
+        <div class="hist-q">${esc(ch.title)}</div>
+        <div class="hist-m">${ch.count} quer${ch.count===1?'y':'ies'} · ${ch.date||ch.time}</div>`;
+      d.onclick=()=>{};
+      list.appendChild(d);
+    });
+  }catch(e){}
 }
 
 // ── QUERY LOG (powers trending chips) ──
