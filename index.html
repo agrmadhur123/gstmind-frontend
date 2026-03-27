@@ -2207,17 +2207,18 @@ async function send(){
         try{
           const event = JSON.parse(raw);
           if(event.type === 'meta'){
+            // Meta event — update query count and sources, NO text to render
             queryCountFromServer = event.query_count;
-            // Backend sends sources used for retrieval
             if(event.sources && event.sources.length > 0){
               retrieved = event.sources.map(s => ({doc: s.doc, score: s.score, chunk:'', docDate:'', docType:''}));
               hasRAG = true;
             }
-            // Sources from server KB retrieval
-            if(event.sources) event.sources.forEach(s=>{ if(!retrieved.find(r=>r.doc===s.doc)) retrieved.push({doc:s.doc,chunk:'',score:s.score}); });
-            // Push to queue — rAF will drain smoothly
-            tokenQueue.push(event.text);
-            if(!rafId) rafId = requestAnimationFrame(drainQueue);
+          } else if(event.type === 'text'){
+            // Text event — push to render queue
+            if(event.text){
+              tokenQueue.push(event.text);
+              if(!rafId) rafId = requestAnimationFrame(drainQueue);
+            }
           } else if(event.type === 'done'){
             break;
           } else if(event.type === 'waiting'){
