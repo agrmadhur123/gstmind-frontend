@@ -291,6 +291,21 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .plan-opt-price{font-size:11px;color:var(--text3);margin-top:2px}
 .plan-opt.selected .plan-opt-name{color:var(--accent)}
 
+
+/* ── SIDEBAR COLLAPSE ── */
+.app-sidebar{transition:width .25s ease}
+.app-sidebar.collapsed{width:0;overflow:hidden;border-right:none}
+.sidebar-toggle{
+  position:absolute;top:14px;left:14px;
+  width:28px;height:28px;border-radius:6px;
+  background:none;border:1px solid var(--border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--text3);transition:all .15s;z-index:10;
+}
+.sidebar-toggle:hover{background:var(--sidebar-hover);color:var(--text)}
+.sidebar-toggle.sidebar-open{left:270px}
+.app-topbar{position:relative;padding-left:52px}
+
 /* ════════════════════════════════
    MAIN APP (User Chat)
 ════════════════════════════════ */
@@ -500,8 +515,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .msg-row.user .msg-body{align-items:flex-end}
 .bubble{padding:4px 0;font-size:14px;line-height:1.85;white-space:pre-wrap;max-width:100%}
 .msg-row.user .bubble{
-  background:var(--text);color:#f5f0e8;
+  background:var(--accent);color:#fff;
   border-radius:18px 18px 4px 18px;max-width:80%;
+  padding:10px 16px;
 }
 .msg-row.bot .bubble{
   background:transparent;color:var(--text);
@@ -1043,9 +1059,10 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
 <!-- ════ MAIN APP ════ -->
 <div class="page" id="page-app">
   <div class="app-shell">
+      <button class="sidebar-toggle sidebar-open" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
 
     <!-- SIDEBAR -->
-    <div class="app-sidebar">
+    <div class="app-sidebar" id="appSidebar">
       <div class="app-brand">
         <div class="app-brand-icon"><span>G</span></div>
         <div>
@@ -1075,11 +1092,11 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
       </div>
 
       <button class="new-chat" onclick="newChat()">
-        <span style="font-size:16px;color:var(--text3)">+</span> New Query
+        <span style="font-size:16px;color:var(--text3)">+</span> New Chat
       </button>
 
       <div class="sidebar-scroll">
-        <div class="sb-label">Recent Queries</div>
+        <div class="sb-label">Recent Chats</div>
         <div id="histList"><div style="font-size:11.5px;color:var(--light);padding:4px">No queries yet.</div></div>
       </div>
 
@@ -1491,6 +1508,13 @@ REFERENCES:
 function initApp(){
   const user=JSON.parse(localStorage.getItem('gm_user')||'null');
   if(!user){showPage('login');return;}
+  // Restore sidebar state
+  if(localStorage.getItem('gm_sidebar_collapsed')==='1'){
+    const sb=document.getElementById('appSidebar');
+    const btn=document.getElementById('sidebarToggle');
+    if(sb){sb.classList.add('collapsed');}
+    if(btn){btn.style.left='14px';btn.textContent='☰';btn.classList.remove('sidebar-open');}
+  }
 
   // Set user info
   const initials=(user.fname?.[0]||'')+(user.lname?.[0]||'');
@@ -1540,6 +1564,18 @@ function saveUser(u){localStorage.setItem('gm_user',JSON.stringify(u));}
 // ════════════════════════════════
 // MODALS
 // ════════════════════════════════
+
+function toggleSidebar(){
+  const sb = document.getElementById('appSidebar');
+  const btn = document.getElementById('sidebarToggle');
+  if(!sb || !btn) return;
+  const collapsed = sb.classList.toggle('collapsed');
+  btn.classList.toggle('sidebar-open', !collapsed);
+  btn.style.left = collapsed ? '14px' : '270px';
+  btn.textContent = collapsed ? '☰' : '✕';
+  localStorage.setItem('gm_sidebar_collapsed', collapsed?'1':'0');
+}
+
 function showUpgrade(){document.getElementById('upgradeModal').classList.add('show');}
 function hideUpgrade(){document.getElementById('upgradeModal').classList.remove('show');}
 function showSettings(){document.getElementById('settingsModal').classList.add('show');}
@@ -1898,6 +1934,10 @@ function autoR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeig
 function useChip(el){document.getElementById('qi').value=el.textContent.replace(/^\d+/,'').replace(/\d+×$/,'').trim();send();}
 function newChat(){
   history=[];
+  // Start new chat session
+  currentChatId = 'c'+Date.now();
+  currentChatTitle = '';
+  currentChatQueryCount = 0;
   document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState">
     <div class="empty-icon"><span>G</span></div>
     <div class="empty-title" id="emptyGreet">How can I help you today?</div>
@@ -1974,7 +2014,18 @@ async function send(){
       const data = await res.json().catch(()=>({}));
       delEl(tid);
       if(res.status===429){showUpgrade();busy=false;document.getElementById('sendBtn').disabled=false;return;}
-      addErrMsg('Error: '+(data.detail||'Something went wrong. Please try again.'));
+      if(res.status===401){showPage('login');busy=false;document.getElementById('sendBtn').disabled=false;return;}
+      addErrMsg('Error '+(res.status)+': '+(data.detail||'Something went wrong. Please try again.'));
+      busy=false;document.getElementById('sendBtn').disabled=false;return;
+    }
+    // Check content type — if not event-stream, backend may have returned JSON error
+    const ct = res.headers.get('content-type')||'';
+    if(!ct.includes('event-stream')){
+      const text = await res.text().catch(()=>'');
+      delEl(tid);
+      let detail = 'AI service error. Please try again.';
+      try{ detail = JSON.parse(text).detail || detail; }catch(e){}
+      addErrMsg(detail);
       busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
 
@@ -2141,17 +2192,51 @@ async function send(){
   busy=false;document.getElementById('sendBtn').disabled=false;
 }
 
+// Chat session tracking — each "New Chat" creates a new session
+let currentChatId = 'c'+Date.now();
+let currentChatTitle = '';
+let currentChatQueryCount = 0;
+
 function addToHistory(q){
-  const t=q.length>52?q.slice(0,52)+'…':q;
-  const now=new Date();
-  const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const list=document.getElementById('histList');
-  const empty=list.querySelector('[style*="color:var(--light)"]');if(empty)empty.remove();
-  const d=document.createElement('div');d.className='hist-item';
-  d.innerHTML=`<div class="hist-q">${esc(t)}</div><div class="hist-m">${time} · ${mode==='query'?'Query':'Draft'}</div>`;
-  d.onclick=()=>{document.getElementById('qi').value=q;};
-  list.prepend(d);if(list.children.length>20)list.removeChild(list.lastChild);
   logQuery(q);
+  currentChatQueryCount++;
+
+  // First query of session becomes the chat title
+  if(currentChatQueryCount === 1){
+    currentChatTitle = q.length > 48 ? q.slice(0,48)+'…' : q;
+    renderChatInSidebar();
+  } else {
+    // Update query count on existing sidebar item
+    const item = document.getElementById('chat_'+currentChatId);
+    if(item){
+      const meta = item.querySelector('.hist-m');
+      if(meta) meta.textContent = currentChatQueryCount+' queries · '+getCurrentTime();
+    }
+  }
+}
+
+function getCurrentTime(){
+  const now=new Date();
+  return now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+}
+
+function renderChatInSidebar(){
+  const list=document.getElementById('histList');
+  const empty=list.querySelector('[style*="color:var(--light)"]');
+  if(empty)empty.remove();
+  // Remove existing entry for this chat if any
+  const existing=document.getElementById('chat_'+currentChatId);
+  if(existing)existing.remove();
+
+  const d=document.createElement('div');
+  d.className='hist-item';
+  d.id='chat_'+currentChatId;
+  d.innerHTML=`
+    <div class="hist-q">${esc(currentChatTitle)}</div>
+    <div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
+  d.onclick=()=>{}; // clicking a past chat could restore it — future feature
+  list.prepend(d);
+  if(list.children.length>30)list.removeChild(list.lastChild);
 }
 
 // ── QUERY LOG (powers trending chips) ──
