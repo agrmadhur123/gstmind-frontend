@@ -499,18 +499,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--chat-bg)
 .msg-row.bot:hover{background:rgba(0,0,0,.015)}
 .msg-row.bot{transition:background .15s}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.msg-inner{max-width:720px;margin:0 auto;padding:0 24px;display:flex;gap:14px}
-.msg-row.user .msg-inner{flex-direction:row-reverse}
-.av{
-  width:32px;height:32px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:600;flex-shrink:0;margin-top:2px;
-}
-.msg-row.user .av{background:var(--text);color:var(--sidebar-bg)}
-.msg-row.bot .av{
-  background:var(--accent);color:#fff;
-  font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;
-}
+.msg-inner{max-width:720px;margin:0 auto;padding:0 32px;display:flex;gap:0}
+.msg-row.user .msg-inner{justify-content:flex-end}
+.av{display:none}
 .msg-body{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
 .msg-row.user .msg-body{align-items:flex-end}
 .bubble{padding:4px 0;font-size:14px;line-height:1.85;white-space:pre-wrap;max-width:100%}
@@ -1981,9 +1972,29 @@ async function send(){
   busy=true;document.getElementById('sendBtn').disabled=true;
   const tid=addThinkRow();
 
-  const retrieved=retrieve(queryText, 15);
+  // Build enriched query for retrieval using conversation context
+  // Short follow-ups like "time limit?" won't find anything alone
+  // So we combine with the last user message for better retrieval
+  let enrichedQuery = queryText;
+  if(queryText.trim().split(/\s+/).length <= 4 && history.length >= 2){
+    // Short query — prepend last user message as context
+    const lastUserMsg = history.slice().reverse().find(h=>h.role==='user');
+    if(lastUserMsg){
+      const lastText = typeof lastUserMsg.content === 'string'
+        ? lastUserMsg.content
+        : (lastUserMsg.content.find?.(c=>c.type==='text')?.text || '');
+      if(lastText && lastText !== queryText){
+        enrichedQuery = lastText + ' ' + queryText;
+      }
+    }
+  }
+  const retrieved=retrieve(enrichedQuery, 15);
   const hasRAG=retrieved.length>0;
   let sys=getPrompt(mode)||getPrompt('query');
+  // Add conversation context hint if this is a follow-up
+  if(history.length > 2){
+    sys += '\n\nThis is a follow-up conversation. The user may ask short follow-up questions that refer to earlier messages. Use the full conversation history above to understand context.';
+  }
   if(currentAttach)sys+='\n\nThe user has attached a '+(currentAttach.type==='pdf'?'PDF':'photo')+' of a GST notice. Read it carefully and proceed.';
   if(hasRAG){
     // Group by document for cleaner context
@@ -2187,7 +2198,9 @@ async function send(){
 
   }catch(e){
     delEl(tid);
-    addErrMsg('Connection error. Please check your internet connection.');
+    // Retry once automatically for network errors
+    console.error('Query error:', e.message);
+    addErrMsg('Connection error — '+e.message+'. Please try again.');
   }
   busy=false;document.getElementById('sendBtn').disabled=false;
 }
