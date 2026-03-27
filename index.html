@@ -2038,62 +2038,23 @@ async function send(){
   busy=true;document.getElementById('sendBtn').disabled=true;
   const tid=addThinkRow();
 
-  // Build enriched query for retrieval using conversation context
-  // Short follow-ups like "time limit?" won't find anything alone
-  // So we combine with the last user message for better retrieval
-  let enrichedQuery = queryText;
-  if(queryText.trim().split(/\s+/).length <= 5 && history.length >= 2){
-    // Short follow-up — combine with last user message for better retrieval
-    const lastUserMsg = history.slice(-4).reverse().find(h=>h.role==='user');
-    if(lastUserMsg){
-      const lastText = typeof lastUserMsg.content === 'string'
-        ? lastUserMsg.content.slice(0,200) // cap at 200 chars
-        : (lastUserMsg.content?.find?.(x=>x.type==='text')?.text||'').slice(0,200);
-      if(lastText && lastText !== queryText){
-        enrichedQuery = lastText.trim() + ' ' + queryText;
-      }
-    }
-  }
-  // For follow-up queries use fewer chunks — history provides context
+  // ── Backend handles ALL retrieval and system prompt building ──
+  // No client-side RAG — backend fetches from Supabase, builds context, calls Claude
   const isFollowUp = history.length > 2;
-  const numChunks = isFollowUp ? 6 : 10; // Keep under 30k token/min rate limit
-  const retrieved=retrieve(enrichedQuery, numChunks);
-  const hasRAG=retrieved.length>0;
-  let sys=getPrompt(mode)||getPrompt('query');
-  // Add conversation context hint if this is a follow-up
-  if(history.length > 2){
-    sys += '\n\nThis is a follow-up conversation. The user may ask short follow-up questions that refer to earlier messages. Use the full conversation history above to understand context.';
-  }
-  if(currentAttach)sys+='\n\nThe user has attached a '+(currentAttach.type==='pdf'?'PDF':'photo')+' of a GST notice. Read it carefully and proceed.';
-  if(hasRAG){
-    // Group by document
-    const byDoc = {};
-    retrieved.forEach(r => {
-      if(!byDoc[r.doc]) byDoc[r.doc] = {name:r.doc, date:r.docDate, type:r.docType, chunks:[]};
-      byDoc[r.doc].chunks.push(r.chunk);
-    });
-
-    sys += '\n\nKNOWLEDGE BASE:\n';
-    Object.values(byDoc).forEach(d => {
-      sys += `[${d.name}]\n`;
-      d.chunks.forEach(ch => {
-        // Compress chunk before sending — remove redundant whitespace and boilerplate
-        const compressed = compressChunk(ch);
-        sys += compressed + '\n';
-      });
-    });
-    sys += '\nCite document names as footnotes ¹²³.';
-  }
+  let retrieved = []; // will be populated from backend meta event
+  let hasRAG = false;
 
   try{
     const res = await fetch(API+'/query',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
       body:JSON.stringify({
-        // Send last 6 messages max to avoid context overflow
-        // Full history is in browser — Claude only needs recent context
         messages: compressHistory(history),
-        system:sys, mode, query_text:queryText
+        system: mode === 'draft' ? getPrompt('draft') : '', // draft mode uses custom prompt
+        mode,
+        query_text: queryText,
+        is_followup: isFollowUp,
+        has_attachment: !!currentAttach
       })
     });
 
@@ -2247,7 +2208,13 @@ async function send(){
           const event = JSON.parse(raw);
           if(event.type === 'meta'){
             queryCountFromServer = event.query_count;
-          } else if(event.type === 'text'){
+            // Backend sends sources used for retrieval
+            if(event.sources && event.sources.length > 0){
+              retrieved = event.sources.map(s => ({doc: s.doc, score: s.score, chunk:'', docDate:'', docType:''}));
+              hasRAG = true;
+            }
+            // Sources from server KB retrieval
+            if(event.sources) event.sources.forEach(s=>{ if(!retrieved.find(r=>r.doc===s.doc)) retrieved.push({doc:s.doc,chunk:'',score:s.score}); });
             // Push to queue — rAF will drain smoothly
             tokenQueue.push(event.text);
             if(!rafId) rafId = requestAnimationFrame(drainQueue);
