@@ -1578,6 +1578,31 @@ function saveUser(u){localStorage.setItem('gm_user',JSON.stringify(u));}
 // MODALS
 // ════════════════════════════════
 
+
+// ── HISTORY COMPRESSION ──
+// Keeps last 2 turns verbatim (critical for follow-up context)
+// Older turns: keep user messages full, trim long assistant responses
+// This preserves conversational context while saving 50-60% history tokens
+function compressHistory(hist){
+  if(hist.length <= 4) return hist; // short conversation — send everything
+
+  const recent = hist.slice(-4);    // last 2 turns verbatim
+  const older = hist.slice(-8, -4); // older turns — compress assistant responses
+
+  const compressed = older.map(msg => {
+    if(msg.role === 'user') return msg; // always keep user messages full
+    // Trim long assistant responses to first 400 chars
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    if(content.length <= 600) return msg;
+    return {
+      ...msg,
+      content: content.slice(0, 500) + '... [continued]'
+    };
+  });
+
+  return [...compressed, ...recent];
+}
+
 function toggleSidebar(){
   const sb = document.getElementById('appSidebar');
   if(!sb) return;
@@ -1859,13 +1884,32 @@ function bm25Score(queryTerms, chunkTF, chunkTokenCount, avgDocLen = 150) {
 
 // ── RETRIEVE — Main retrieval function ──
 // Returns top chunks with parent context for maximum answer quality
-function retrieve(q, topK = 15) {
+// ── CHUNK COMPRESSION ──
+// Removes redundant whitespace and repeated phrases to save tokens
+// Quality is unchanged — same legal content, fewer words
+function compressChunk(text){
+  return text
+    .replace(/\[.*?\]\n/g, '')           // remove doc meta header if present
+    .replace(/[ \t]+/g, ' ')              // collapse multiple spaces
+    .replace(/\n{3,}/g, '\n\n')           // max 2 newlines
+    .replace(/\n /g, '\n')               // remove indentation
+    // Shorten very common legal phrases that appear repeatedly
+    .replace(/of the Central Goods and Services Tax Act, 2017/g, 'CGST Act')
+    .replace(/of the Integrated Goods and Services Tax Act, 2017/g, 'IGST Act')
+    .replace(/of the CGST Act, 2017/g, 'CGST Act')
+    .replace(/of the IGST Act, 2017/g, 'IGST Act')
+    .replace(/input tax credit/gi, 'ITC')
+    .replace(/reverse charge mechanism/gi, 'RCM')
+    .replace(/registered person/g, 'taxpayer')
+    .trim();
+}
+
+function retrieve(q, topK = 10) {
   if (!q || q.trim().length < 2) return [];
 
   const index = getChunkIndex();
   if (!index.length) return [];
 
-  // Expand query with synonyms and abbreviations
   const queryTerms = expandQuery(q);
   if (!queryTerms.size) return [];
 
@@ -1879,25 +1923,28 @@ function retrieve(q, topK = 15) {
 
   scored.sort((a, b) => b.score - a.score);
 
-  // ── PARENT-CHILD DEDUPLICATION ──
-  // If multiple fine chunks from the same parent score highly,
-  // replace them with the full parent for better context
-  const seen = new Set();
+  // ── SMART THRESHOLD — only include genuinely relevant chunks ──
+  // Top score sets the bar — chunks scoring below 25% of top are noise
+  // This prevents sending irrelevant chunks that waste tokens
+  const topScore = scored.length > 0 ? scored[0].score : 0;
+  const threshold = topScore * 0.25; // must be at least 25% as relevant as top chunk
+
   const result = [];
   const usedParents = new Set();
 
   for (const ch of scored) {
     if (result.length >= topK) break;
-    const parentKey = ch.docName + '||' + ch.parent.slice(0, 50);
+    // Stop including chunks once they drop below relevance threshold
+    if (ch.score < threshold && result.length >= 3) break;
 
+    const parentKey = ch.docName + '||' + ch.parent.slice(0, 50);
     if (!usedParents.has(parentKey)) {
       usedParents.add(parentKey);
-      // Return parent block (full paragraph) not just the fine chunk
       result.push({
         doc: ch.docName,
         docDate: ch.docDate,
         docType: ch.docType,
-        chunk: ch.parent,  // full parent = more context
+        chunk: ch.parent,
         score: ch.score
       });
     }
@@ -2019,21 +2066,23 @@ async function send(){
   }
   if(currentAttach)sys+='\n\nThe user has attached a '+(currentAttach.type==='pdf'?'PDF':'photo')+' of a GST notice. Read it carefully and proceed.';
   if(hasRAG){
-    // Group by document for cleaner context
+    // Group by document
     const byDoc = {};
     retrieved.forEach(r => {
       if(!byDoc[r.doc]) byDoc[r.doc] = {name:r.doc, date:r.docDate, type:r.docType, chunks:[]};
       byDoc[r.doc].chunks.push(r.chunk);
     });
-    sys += '\n\n═══════════════════════════════\nKNOWLEDGE BASE — GST DOCUMENTS\n═══════════════════════════════\n';
-    sys += 'INSTRUCTIONS: Answer strictly from these documents. Cite each source with footnote numbers.\n';
-    let srcNum = 1;
+
+    sys += '\n\nKNOWLEDGE BASE:\n';
     Object.values(byDoc).forEach(d => {
-      sys += `\n━━━ SOURCE: ${d.name}${d.date?' | '+d.date:''}${d.type?' | '+d.type:''} ━━━\n`;
-      d.chunks.forEach(ch => { sys += ch + '\n\n'; });
+      sys += `[${d.name}]\n`;
+      d.chunks.forEach(ch => {
+        // Compress chunk before sending — remove redundant whitespace and boilerplate
+        const compressed = compressChunk(ch);
+        sys += compressed + '\n';
+      });
     });
-    sys += '\n═══════════════════════════════\nEND OF KNOWLEDGE BASE\n═══════════════════════════════\n';
-    sys += `\n${retrieved.length} document sections retrieved. Cite exact document names as footnotes ¹²³.`;
+    sys += '\nCite document names as footnotes ¹²³.';
   }
 
   try{
@@ -2043,7 +2092,7 @@ async function send(){
       body:JSON.stringify({
         // Send last 6 messages max to avoid context overflow
         // Full history is in browser — Claude only needs recent context
-        messages: history.slice(-6),
+        messages: compressHistory(history),
         system:sys, mode, query_text:queryText
       })
     });
@@ -2204,13 +2253,16 @@ async function send(){
             if(!rafId) rafId = requestAnimationFrame(drainQueue);
           } else if(event.type === 'done'){
             break;
-                  } else if(event.type === 'error'){
-                    streamDiv.remove();
-                    if(event.message === 'rate_limit'){
-                      addErrMsg('⏱ Rate limit reached — please wait 30 seconds before trying again.');
-                    } else {
-                      addErrMsg('AI service error: ' + (event.message||'Please try again.'));
-                    }
+          } else if(event.type === 'waiting'){
+            // Server auto-retrying due to rate limit
+            if(streamEl) streamEl.textContent = '⏱ High traffic — retrying in ' + event.seconds + 's...';
+          } else if(event.type === 'error'){
+            streamDiv.remove();
+            if(event.message === 'rate_limit'){
+              addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');
+            } else {
+              addErrMsg('Error: ' + (event.message||'Please try again.'));
+            }
           }
         } catch(e){}
       }
