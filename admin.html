@@ -538,19 +538,64 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         <div class="login-logo-tag">Admin Panel</div>
       </div>
     </div>
-    <div class="login-title">Admin Login</div>
-    <div class="login-sub">Restricted access. Admin credentials required.</div>
-    <div class="login-err" id="loginErr">Incorrect username or password.</div>
-    <label class="lbl">Username</label>
-    <input class="inp" type="text" id="adminUser" placeholder="admin" onkeydown="if(event.key==='Enter')adminLogin()"/>
-    <label class="lbl">Password</label>
-    <input class="inp" type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/>
-    <button class="login-btn" onclick="adminLogin()">Access Admin Panel</button>
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:14px">Default: admin / gstmind@admin123</div>
+
+    <!-- Step 1: Email -->
+    <div id="adminStep1">
+      <div class="login-title">Admin Login</div>
+      <div class="login-sub">Enter your admin email to receive a one-time password.</div>
+      <div class="login-err" id="loginErr" style="display:none">Error. Please try again.</div>
+      <label class="lbl">Admin Email</label>
+      <input class="inp" type="email" id="adminEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')adminSendOTP()"/>
+      <button class="login-btn" onclick="adminSendOTP()" id="adminSendBtn">Send OTP →</button>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e5e0d8;text-align:center">
+        <span style="font-size:12px;color:#999">First time? </span>
+        <span style="font-size:12px;color:#c9a96e;cursor:pointer;font-weight:500" onclick="showAdminSignup()">Create admin account</span>
+      </div>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div id="adminStep2" style="display:none">
+      <div class="login-title">Enter OTP</div>
+      <div class="login-sub">6-digit code sent to <strong id="adminEmailShow"></strong></div>
+      <div class="login-err" id="loginOTPErr" style="display:none">Invalid OTP.</div>
+      <div style="display:flex;gap:8px;margin:16px 0">
+        <input class="inp" type="tel" maxlength="1" id="ao1" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+        <input class="inp" type="tel" maxlength="1" id="ao2" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+        <input class="inp" type="tel" maxlength="1" id="ao3" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+        <input class="inp" type="tel" maxlength="1" id="ao4" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+        <input class="inp" type="tel" maxlength="1" id="ao5" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+        <input class="inp" type="tel" maxlength="1" id="ao6" oninput="adminOTPInput(this)" style="text-align:center;font-size:20px;padding:10px;flex:1"/>
+      </div>
+      <button class="login-btn" onclick="adminVerifyOTP()" id="adminVerifyBtn">Verify & Login</button>
+      <div style="text-align:center;margin-top:10px;font-size:12px">
+        <span style="color:#c9a96e;cursor:pointer" onclick="showAdminStep1()">← Back</span>
+        &nbsp;·&nbsp;
+        <span style="color:#c9a96e;cursor:pointer" onclick="adminSendOTP()">Resend OTP</span>
+      </div>
+    </div>
+
+    <!-- Signup -->
+    <div id="adminSignup" style="display:none">
+      <div class="login-title">Create Admin Account</div>
+      <div class="login-sub">One-time setup. Requires invite code.</div>
+      <div class="login-err" id="signupErr" style="display:none">Error.</div>
+      <label class="lbl">First Name</label>
+      <input class="inp" type="text" id="adminFname" placeholder="First name"/>
+      <label class="lbl">Last Name</label>
+      <input class="inp" type="text" id="adminLname" placeholder="Last name"/>
+      <label class="lbl">Email</label>
+      <input class="inp" type="email" id="adminSignupEmail" placeholder="your@email.com"/>
+      <label class="lbl">Invite Code</label>
+      <input class="inp" type="text" id="adminInviteCode" placeholder="Get from GSTMind support"/>
+      <button class="login-btn" onclick="adminDoSignup()" id="adminSignupBtn">Create Account & Send OTP</button>
+      <div style="text-align:center;margin-top:10px">
+        <span style="font-size:12px;color:#c9a96e;cursor:pointer" onclick="showAdminStep1()">← Back to login</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ════ ADMIN SHELL ════ -->
+<!-- ════ ADMIN SHELL<!-- ════ ADMIN SHELL ════ -->
 <div class="shell" id="adminShell">
 
   <!-- SIDEBAR -->
@@ -1149,52 +1194,190 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 // ════════════════════════════════
 // ADMIN AUTH
 // ════════════════════════════════
-const ADMIN_CREDS = {user:'admin', pass:'gstmind@admin123'};
+const ADMIN_CREDS = {user:'admin', pass:''}; // Legacy — replaced by OTP
 const API = 'https://web-production-399b0.up.railway.app';
 // Admin Railway token — stored after admin logs in via API
 let adminApiToken = localStorage.getItem('gm_admin_api_token') || '';
 
 // Get/refresh API token for KB operations
 async function ensureApiToken(){
+  // Use existing token if available
   if(adminApiToken) return adminApiToken;
-  // Prompt for credentials to get API token
-  const email = prompt('Enter your GSTMind admin email to sync KB to server:');
-  if(!email) return null;
-  const pass = prompt('Enter password:');
-  if(!pass) return null;
-  try{
-    const res = await fetch(API+'/auth/login/email',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,password:pass})
-    });
-    const data = await res.json();
-    if(data.token){
-      adminApiToken = data.token;
-      localStorage.setItem('gm_admin_api_token', adminApiToken);
-      return adminApiToken;
-    }
-    showToast('Login failed: '+(data.detail||'Invalid credentials'),'error');
-    return null;
-  } catch(e){
-    showToast('Cannot connect to server','error');
-    return null;
-  }
+  
+  // Try stored token from previous session
+  const stored = localStorage.getItem('gm_admin_api_token');
+  if(stored){ adminApiToken = stored; return adminApiToken; }
+  
+  // No token — show helpful message instead of browser prompt
+  showToast('Please log out and log back in with your GSTMind email to enable server uploads','error');
+  return null;
 }
-let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
+// adminPass removed — auth now via OTP
 
-function adminLogin(){
-  const u = document.getElementById('adminUser').value.trim();
-  const p = document.getElementById('adminPass').value;
-  const err = document.getElementById('loginErr');
-  if(u === ADMIN_CREDS.user && p === adminPass){
-    err.classList.remove('show');
+// ════════════════════════════════
+// ADMIN AUTH — Email OTP
+// ════════════════════════════════
+let adminEmail = localStorage.getItem('gm_admin_email') || '';
+
+function showAdminStep1(){
+  document.getElementById('adminStep1').style.display='block';
+  document.getElementById('adminStep2').style.display='none';
+  document.getElementById('adminSignup').style.display='none';
+}
+function showAdminSignup(){
+  document.getElementById('adminStep1').style.display='none';
+  document.getElementById('adminStep2').style.display='none';
+  document.getElementById('adminSignup').style.display='block';
+}
+function adminOTPInput(el){
+  el.value = el.value.replace(/\D/g,'');
+  const inputs = ['ao1','ao2','ao3','ao4','ao5','ao6'].map(id=>document.getElementById(id));
+  const idx = inputs.indexOf(el);
+  if(el.value && idx < 5) inputs[idx+1].focus();
+  if(inputs.every(i=>i.value)) adminVerifyOTP();
+}
+function getAdminOTP(){
+  return ['ao1','ao2','ao3','ao4','ao5','ao6'].map(id=>document.getElementById(id).value).join('');
+}
+async function adminSendOTP(){
+  const email = document.getElementById('adminEmail').value.trim();
+  if(!email||!email.includes('@')){ showErr('loginErr','Please enter a valid email'); return; }
+  const btn = document.getElementById('adminSendBtn');
+  btn.textContent='Sending...'; btn.disabled=true;
+  hideErr('loginErr');
+  try{
+    const res = await fetch(API+'/auth/admin/otp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail||'Failed');
+    adminEmail = email;
+    localStorage.setItem('gm_admin_email', email);
+    document.getElementById('adminEmailShow').textContent = email;
+    document.getElementById('adminStep1').style.display='none';
+    document.getElementById('adminStep2').style.display='block';
+    ['ao1','ao2','ao3','ao4','ao5','ao6'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ao1').focus();
+    if(data.dev_otp){ showToast('Dev OTP: '+data.dev_otp,'info'); }
+  }catch(e){ showErr('loginErr', e.message); }
+  finally{ btn.textContent='Send OTP →'; btn.disabled=false; }
+}
+async function adminVerifyOTP(){
+  const otp = getAdminOTP();
+  if(otp.length!==6) return;
+  const btn = document.getElementById('adminVerifyBtn');
+  btn.textContent='Verifying...'; btn.disabled=true;
+  hideErr('loginOTPErr');
+  try{
+    const res = await fetch(API+'/auth/admin/otp/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:adminEmail,otp})});
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail||'Invalid OTP');
+    adminApiToken = data.token;
+    localStorage.setItem('gm_admin_api_token', adminApiToken);
     localStorage.setItem('gm_admin_session','1');
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('adminShell').style.display='flex';
     initAdmin();
-  } else {
-    err.classList.add('show');
+  }catch(e){
+    showErr('loginOTPErr', e.message);
+    ['ao1','ao2','ao3','ao4','ao5','ao6'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ao1').focus();
+  }
+  finally{ btn.textContent='Verify & Login'; btn.disabled=false; }
+}
+async function adminDoSignup(){
+  const fname=document.getElementById('adminFname').value.trim();
+  const lname=document.getElementById('adminLname').value.trim();
+  const email=document.getElementById('adminSignupEmail').value.trim();
+  const invite=document.getElementById('adminInviteCode').value.trim();
+  if(!fname||!lname||!email||!invite){ showErr('signupErr','Please fill all fields'); return; }
+  const btn=document.getElementById('adminSignupBtn');
+  btn.textContent='Creating...'; btn.disabled=true;
+  hideErr('signupErr');
+  try{
+    const res=await fetch(API+'/auth/admin/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fname,lname,email,invite_code:invite})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Signup failed');
+    adminEmail=email;
+    localStorage.setItem('gm_admin_email',email);
+    document.getElementById('adminEmail').value=email;
+    document.getElementById('adminEmailShow').textContent=email;
+    document.getElementById('adminSignup').style.display='none';
+    document.getElementById('adminStep2').style.display='block';
+    ['ao1','ao2','ao3','ao4','ao5','ao6'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ao1').focus();
+    if(data.dev_otp){ showToast('Dev OTP: '+data.dev_otp,'info'); }
+    else showToast('Account created! Check your email for OTP.','success');
+  }catch(e){ showErr('signupErr',e.message); }
+  finally{ btn.textContent='Create Account & Send OTP'; btn.disabled=false; }
+}
+function showErr(id,msg){ const el=document.getElementById(id); if(el){el.textContent=msg;el.style.display='block';} }
+function hideErr(id){ const el=document.getElementById(id); if(el)el.style.display='none'; }
+async function ensureApiToken(){
+  if(adminApiToken) return adminApiToken;
+  const stored=localStorage.getItem('gm_admin_api_token');
+  if(stored){ adminApiToken=stored; return adminApiToken; }
+  showToast('Session expired — please log in again','error');
+  adminLogout();
+  return null;
+}
+function adminLogout(){
+  adminApiToken='';
+  localStorage.removeItem('gm_admin_session');
+  localStorage.removeItem('gm_admin_api_token');
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('adminShell').style.display='none';
+  showAdminStep1();
+}
+
+// adminPass removed — auth now via OTP
+
+async function adminLogin(){
+  const u = document.getElementById('adminUser').value.trim();
+  const p = document.getElementById('adminPass').value;
+  const err = document.getElementById('loginErr');
+  const btn = document.querySelector('.login-btn');
+  
+  // Local admin check
+  const isLocalAdmin = (u === ADMIN_CREDS.user && p === adminPass);
+  const isEmailLogin = u.includes('@');
+  
+  if(!isLocalAdmin && !isEmailLogin){ err.classList.add('show'); return; }
+  
+  if(btn){ btn.textContent='Logging in...'; btn.disabled=true; }
+  
+  try{
+    // Always try Railway auth to get API token for Supabase uploads
+    const loginEmail = isEmailLogin ? u : (localStorage.getItem('gm_admin_email')||'');
+    const loginPass = p;
+    
+    if(loginEmail){
+      try{
+        const res = await fetch(API+'/auth/login/email',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email:loginEmail, password:loginPass})
+        });
+        const data = await res.json();
+        if(data.token){
+          adminApiToken = data.token;
+          localStorage.setItem('gm_admin_api_token', adminApiToken);
+          localStorage.setItem('gm_admin_email', loginEmail);
+          console.log('Railway auth: OK');
+        }
+      }catch(e){ console.log('Railway auth failed (will work offline):', e.message); }
+    }
+    
+    // Allow access if local credentials match OR Railway auth succeeded
+    if(isLocalAdmin || (isEmailLogin && adminApiToken)){
+      err.classList.remove('show');
+      localStorage.setItem('gm_admin_session','1');
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('adminShell').style.display='flex';
+      initAdmin();
+    } else {
+      err.classList.add('show');
+    }
+  } finally {
+    if(btn){ btn.textContent='Access Admin Panel'; btn.disabled=false; }
   }
 }
 
@@ -1205,22 +1388,36 @@ function adminLogout(){
 }
 
 // Auto-login if session exists
-window.onload = () => {
-  if(localStorage.getItem('gm_admin_session')==='1'){
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('adminShell').style.display='flex';
-    initAdmin();
+window.onload = async () => {
+  const token = localStorage.getItem('gm_admin_api_token');
+  const session = localStorage.getItem('gm_admin_session');
+  if(token && session==='1'){
+    try{
+      const res = await fetch(API+'/auth/admin/me',{headers:{'Authorization':'Bearer '+token}});
+      if(res.ok){
+        adminApiToken = token;
+        document.getElementById('loginWrap').style.display='none';
+        document.getElementById('adminShell').style.display='flex';
+        initAdmin();
+        return;
+      }
+    }catch(e){}
+    localStorage.removeItem('gm_admin_session');
+    localStorage.removeItem('gm_admin_api_token');
   }
-  // Load master key
+  const savedEmail = localStorage.getItem('gm_admin_email');
+  if(savedEmail && document.getElementById('adminEmail'))
+    document.getElementById('adminEmail').value = savedEmail;
   const mk = localStorage.getItem('gm_master_key')||'';
-  if(mk) document.getElementById('stg-master-key').value = mk;
-  updateApiKeyStatus(mk);
+  const mkEl = document.getElementById('stg-master-key');
+  if(mk && mkEl) mkEl.value = mk;
+  if(typeof updateApiKeyStatus === 'function') updateApiKeyStatus(mk);
 };
 
 // ════════════════════════════════
 // BUILT-IN KB DOCS
 // ════════════════════════════════
-const BUILTIN_KB = []; // All docs now in Supabase — no hardcoded built-ins
+const BUILTIN_KB = []; // All docs in Supabase // All docs now in Supabase — no hardcoded built-ins
 let adminDocs = JSON.parse(localStorage.getItem('gm_admin_kb')||'[]');
 let skippedDocs = JSON.parse(localStorage.getItem('gm_skipped_kb')||'[]');
 let currentKBTab = 'all';
@@ -1764,7 +1961,7 @@ async function kbProcessBulk(files){
   // Get API token for uploading to server
   const token = await ensureApiToken();
   if(!token){
-    showToast('Could not authenticate — documents not uploaded to server','error');
+    showToast('⚠ Not connected to server — log out and log back in with your GSTMind email','error');
     prog.style.display='none';
     return;
   }
@@ -1858,7 +2055,7 @@ async function kbProcessBulk(files){
         id: result.id,
         name: meta.docName,
         type: meta.docType,
-        content: content.slice(0,2000), // small preview for dedup only
+        content: content.slice(0,10000), // preview for dedup (full content in Supabase)
         contentHash: fullContentHash(content),
         docIdentity: identity,
         chunks: result.chunks,
@@ -1904,10 +2101,64 @@ async function uploadAllLocal(){
   });
 }
 
+
+async function reuploadWithContent(doc, content){
+  const token = await ensureApiToken();
+  if(!token) return;
+  showToast('Uploading to server...','info');
+  try{
+    const res = await fetch(API+'/kb/upload',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({
+        name:doc.name, type:doc.type, doc_date:doc.date||'',
+        content:content, doc_identity:doc.docIdentity||{}
+      })
+    });
+    if(res.ok){
+      const result = await res.json();
+      doc.id = result.id;
+      doc.chunks = result.chunks;
+      doc.supabase = true;
+      showToast(`✓ ${doc.name} — ${result.chunks} chunks on server`,'success');
+      renderKBList();
+      localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+    } else {
+      const err = await res.json().catch(()=>({}));
+      showToast('Upload failed: '+(err.detail||'Server error'),'error');
+    }
+  }catch(e){ showToast('Error: '+e.message,'error'); }
+}
+
+async function uploadAllLocal(){
+  const localDocs = adminDocs.filter(d=>!d.supabase && !d.builtin);
+  if(!localDocs.length){ showToast('All documents are already on server ✓','success'); return; }
+  const token = await ensureApiToken();
+  if(!token) return;
+  showToast(`Uploading ${localDocs.length} local docs to server...`,'info');
+  let done=0, failed=0;
+  for(const doc of localDocs){
+    if(doc.content && doc.content.length >= 500){
+      await reuploadWithContent(doc, doc.content);
+      done++;
+    } else {
+      failed++;
+    }
+    await new Promise(r=>setTimeout(r,200));
+  }
+  showToast(`✓ ${done} uploaded${failed?' · '+failed+' need file re-select':''}`, done>0?'success':'error');
+}
+
 function reuploadDoc(docId){
-  // Local docs only have a preview — need to re-select the original file
   const doc = adminDocs.find(d=>d.id===docId);
   if(!doc){ showToast('Document not found','error'); return; }
+  // If we have enough content stored, upload directly without asking for file
+  if(doc.content && doc.content.length >= 500 && !doc.content.includes('[NOTE: Document truncated')){
+    reuploadWithContent(doc, doc.content);
+    return;
+  }
+  // Otherwise need original file
+  showToast('Please select the original file to upload','info');
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.pdf,.txt';
