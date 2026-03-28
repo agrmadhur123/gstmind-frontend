@@ -617,6 +617,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         <div class="status-pill status-online"><div class="status-dot"></div>System Online</div>
 <button class="admin-theme-btn" id="adminThemeBtn" onclick="toggleAdminTheme()">☀️ Light</button>
         <button class="btn btn-ghost btn-sm" onclick="refreshData()">↺ Refresh</button>
+      <button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:11px" onclick="uploadAllLocal()" id="uploadAllBtn" style="display:none">↑ Upload All Local Docs</button>
       </div>
     </div>
 
@@ -1149,6 +1150,37 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 // ADMIN AUTH
 // ════════════════════════════════
 const ADMIN_CREDS = {user:'admin', pass:'gstmind@admin123'};
+const API = 'https://web-production-399b0.up.railway.app';
+// Admin Railway token — stored after admin logs in via API
+let adminApiToken = localStorage.getItem('gm_admin_api_token') || '';
+
+// Get/refresh API token for KB operations
+async function ensureApiToken(){
+  if(adminApiToken) return adminApiToken;
+  // Prompt for credentials to get API token
+  const email = prompt('Enter your GSTMind admin email to sync KB to server:');
+  if(!email) return null;
+  const pass = prompt('Enter password:');
+  if(!pass) return null;
+  try{
+    const res = await fetch(API+'/auth/login/email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})
+    });
+    const data = await res.json();
+    if(data.token){
+      adminApiToken = data.token;
+      localStorage.setItem('gm_admin_api_token', adminApiToken);
+      return adminApiToken;
+    }
+    showToast('Login failed: '+(data.detail||'Invalid credentials'),'error');
+    return null;
+  } catch(e){
+    showToast('Cannot connect to server','error');
+    return null;
+  }
+}
 let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
 
 function adminLogin(){
@@ -1188,14 +1220,7 @@ window.onload = () => {
 // ════════════════════════════════
 // BUILT-IN KB DOCS
 // ════════════════════════════════
-const BUILTIN_KB = [
-  {id:'b1',name:"CGST Act — ITC (S.16–18)",type:"GST Act Section",chunks:12,date:"2017-07-01",builtin:true},
-  {id:'b2',name:"CGST Act — Penalties (S.122–138)",type:"GST Act Section",chunks:8,date:"2017-07-01",builtin:true},
-  {id:'b3',name:"CGST Act — Scrutiny & Demand (S.61,73,74)",type:"GST Act Section",chunks:10,date:"2017-07-01",builtin:true},
-  {id:'b4',name:"CBIC — ITC Mismatch & GSTR-2B",type:"CBIC Circular",chunks:9,date:"2022-12-27",builtin:true},
-  {id:'b5',name:"IGST Act — Place of Supply & Zero Rating",type:"GST Act Section",chunks:7,date:"2017-07-01",builtin:true},
-  {id:'b6',name:"CGST Rules — Rule 42 & 43 ITC Reversal",type:"GST Rules",chunks:6,date:"2017-07-01",builtin:true}
-];
+const BUILTIN_KB = []; // All docs now in Supabase — no hardcoded built-ins
 let adminDocs = JSON.parse(localStorage.getItem('gm_admin_kb')||'[]');
 let skippedDocs = JSON.parse(localStorage.getItem('gm_skipped_kb')||'[]');
 let currentKBTab = 'all';
@@ -1296,7 +1321,7 @@ function refreshData(){
 
   // Nav counts
   document.getElementById('nav-user-count').textContent = users.length;
-  document.getElementById('nav-kb-count').textContent = BUILTIN_KB.length + adminDocs.length;
+  document.getElementById('nav-kb-count').textContent = adminDocs.length;
 
   // Plan bars
   const maxUsers = Math.max(users.length,1);
@@ -1736,6 +1761,14 @@ async function kbProcessBulk(files){
   statsEl.textContent='';
   await new Promise(r=>setTimeout(r,30));
 
+  // Get API token for uploading to server
+  const token = await ensureApiToken();
+  if(!token){
+    showToast('Could not authenticate — documents not uploaded to server','error');
+    prog.style.display='none';
+    return;
+  }
+
   const total=files.length;
   let added=0,dupes=0,errors=0;
 
@@ -1747,99 +1780,199 @@ async function kbProcessBulk(files){
     countEl.textContent=`${i+1} / ${total}`;
     fileEl.textContent='📄 '+f.name;
     statsEl.textContent=`✓ ${added} added  ⚠ ${dupes} duplicates  ✗ ${errors} errors`;
-    // Force browser repaint
     await new Promise(r=>setTimeout(r,15));
 
     try{
-      // Show page-level progress for large PDFs
+      // Step 1: Extract text with PDF.js (all pages, no limit)
       let content = await readFileText(f, (page, total)=>{
         fileEl.textContent = `📄 ${f.name} — reading page ${page} of ${total}...`;
       });
       if(!content||content.trim().length<30){errors++;continue;}
+
       const wordCount = content.split(/\s+/).filter(w=>w).length;
-      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words extracted`;
+      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words, uploading to server...`;
       await new Promise(r=>setTimeout(r,10));
-      const meta=autoExtractDocMeta(content);
-      const identity=extractDocIdentity(content);
-      const dupeResult=isDuplicateContent(content,meta.docName);
+
+      // Step 2: Extract metadata
+      const meta = autoExtractDocMeta(content);
+      const identity = extractDocIdentity(content);
+
+      // Step 3: Check duplicate locally first (fast)
+      const dupeResult = isDuplicateContent(content, meta.docName);
       if(dupeResult){
         dupes++;
         fileEl.textContent='⚠ Duplicate: '+f.name;
-        // Store skipped doc for review
         skippedDocs.push({
           id:'s'+Date.now()+Math.random(),
-          fileName: f.name,
-          name: meta.docName.replace(/[\-\/]+$/,'').trim(),
-          type: meta.docType,
-          date: meta.docDate||'',
-          reason: dupeResult.reason,
-          matchedDoc: dupeResult.name,
-          content: content.slice(0,5000), // keep first 5000 chars for review
-          skippedAt: new Date().toISOString()
+          fileName:f.name,
+          name:meta.docName.replace(/[\-\/]+$/,'').trim(),
+          type:meta.docType,
+          date:meta.docDate||'',
+          reason:dupeResult.reason,
+          matchedDoc:dupeResult.name,
+          content:content.slice(0,5000),
+          skippedAt:new Date().toISOString()
         });
-        localStorage.setItem('gm_skipped_kb', JSON.stringify(skippedDocs));
-        await new Promise(r=>setTimeout(r,15));
+        localStorage.setItem('gm_skipped_kb',JSON.stringify(skippedDocs));
         continue;
       }
-      // Warn if very large — localStorage has ~5MB total limit
-      const MAX_CHARS = 200000; // ~400 chunks per document max
-      const storedContent = content.length > MAX_CHARS
-        ? content.slice(0, MAX_CHARS) + '\n\n[NOTE: Document truncated at 200,000 characters due to storage limits. Full text: ' + content.length.toLocaleString() + ' chars / ~' + Math.ceil(content.split(/\s+/).length/400) + ' chunks]'
-        : content;
-      if(content.length > MAX_CHARS){
-        fileEl.textContent = `⚠ ${meta.docName} — large doc, storing first 200K chars of ${content.length.toLocaleString()}`;
-        await new Promise(r=>setTimeout(r,30));
-      }
-      adminDocs.push({
-        id:'d'+Date.now()+Math.random(),
-        name:meta.docName,type:meta.docType,
-        content:storedContent, text:storedContent,
-        chunks:Math.ceil(content.split(/\s+/).length/400), // show TRUE chunk count
-        totalChars: content.length,
-        date:meta.docDate||new Date().toLocaleDateString('en-IN'),
-        builtin:false,
-        contentHash:fullContentHash(content),
-        docIdentity:identity
-      });
-      added++;
-      fileEl.textContent='✓ '+meta.docName;
-      // Save every 3 files
-      if(added%3===0){
-        localStorage.setItem('gm_admin_kb',JSON.stringify(adminDocs));
-        renderKBList();
-      }
-      await new Promise(r=>setTimeout(r,15));
-    }catch(e){errors++;}
-  }
 
-  // Final save with size check
-  try{
-    localStorage.setItem('gm_admin_kb',JSON.stringify(adminDocs));
-  } catch(e){
-    // localStorage full — remove oldest docs until it fits
-    showToast('Storage limit reached — keeping most recent documents','error');
-    while(adminDocs.length > 0){
-      try{
-        localStorage.setItem('gm_admin_kb',JSON.stringify(adminDocs));
-        break;
-      } catch(e2){
-        adminDocs.shift(); // remove oldest
+      // Step 4: Upload to Railway → Supabase (NO size limit!)
+      const uploadRes = await fetch(API+'/kb/upload',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+token
+        },
+        body:JSON.stringify({
+          name: meta.docName,
+          type: meta.docType,
+          doc_date: meta.docDate||'',
+          content: content,  // full content — no truncation!
+          doc_identity: identity
+        })
+      });
+
+      if(!uploadRes.ok){
+        const err = await uploadRes.json().catch(()=>({}));
+        if(uploadRes.status === 401){
+          // Token expired — clear and retry
+          adminApiToken = '';
+          localStorage.removeItem('gm_admin_api_token');
+          showToast('Session expired — please re-authenticate','error');
+          break;
+        }
+        console.error('Upload failed:', err);
+        errors++;
+        fileEl.textContent = `✗ Failed: ${f.name} — ${err.detail||'Server error'}`;
+        await new Promise(r=>setTimeout(r,1000));
+        continue;
       }
+
+      const result = await uploadRes.json();
+      added++;
+      fileEl.textContent = `✓ ${meta.docName} — ${result.chunks} chunks stored`;
+
+      // Also keep minimal record in adminDocs for local dedup
+      adminDocs.push({
+        id: result.id,
+        name: meta.docName,
+        type: meta.docType,
+        content: content.slice(0,2000), // small preview for dedup only
+        contentHash: fullContentHash(content),
+        docIdentity: identity,
+        chunks: result.chunks,
+        date: meta.docDate||new Date().toLocaleDateString('en-IN'),
+        builtin: false,
+        supabase: true // flag that it's stored on server
+      });
+
+      if(added%5===0) renderKBList();
+      await new Promise(r=>setTimeout(r,50)); // small delay between uploads
+    }catch(e){
+      console.error('Error processing '+f.name+':', e);
+      errors++;
+      fileEl.textContent = `✗ Error: ${f.name}`;
     }
   }
+
   bar.style.width='100%';
   title.textContent='✓ Complete';
   countEl.textContent=`${total} / ${total}`;
   fileEl.textContent='All files processed';
-  statsEl.textContent=`✓ ${added} added  ⚠ ${dupes} duplicates skipped  ✗ ${errors} errors`;
+  statsEl.textContent=`✓ ${added} uploaded to server  ⚠ ${dupes} duplicates  ✗ ${errors} errors`;
   statsEl.style.color='var(--green)';
-  renderKBList();refreshData();
-  showToast(`Added ${added} documents${dupes>0?' · '+dupes+' duplicates skipped':''}`, 'success');
+  renderKBList();
+  refreshData();
+  showToast(`${added} documents uploaded to server${dupes>0?' · '+dupes+' duplicates skipped':''}`, 'success');
   setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},8000);
 }
 
 // Legacy function name kept for compatibility
 async function processBulkFiles(files){ return kbProcessBulk(files); }
+
+// Load KB documents from server and merge with local list
+
+async 
+async function uploadAllLocal(){
+  const localDocs = adminDocs.filter(d=>!d.supabase && !d.builtin);
+  if(!localDocs.length){ showToast('No local-only docs found','info'); return; }
+  showToast(`Select files for ${localDocs.length} local docs — upload them one by one`,'info');
+  // Guide user to use individual ↑ Upload buttons
+  document.querySelectorAll('[onclick^="reuploadDoc"]').forEach(btn=>{
+    btn.style.animation='pulse 1s ease 3';
+  });
+}
+
+function reuploadDoc(docId){
+  // Local docs only have a preview — need to re-select the original file
+  const doc = adminDocs.find(d=>d.id===docId);
+  if(!doc){ showToast('Document not found','error'); return; }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.txt';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const token = await ensureApiToken();
+    if(!token) return;
+    showToast('Reading file...','info');
+    try{
+      const content = await readFileText(file, (page, total) => {});
+      if(!content || content.trim().length < 30){
+        showToast('Could not extract text from file','error'); return;
+      }
+      showToast('Uploading to server...','info');
+      const res = await fetch(API+'/kb/upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({
+          name:doc.name, type:doc.type, doc_date:doc.date||'',
+          content:content, doc_identity:doc.docIdentity||{}
+        })
+      });
+      if(res.ok){
+        const result = await res.json();
+        doc.id = result.id;
+        doc.chunks = result.chunks;
+        doc.content = content.slice(0,2000);
+        doc.supabase = true;
+        showToast(`✓ ${doc.name} — ${result.chunks} chunks on server`,'success');
+        renderKBList();
+        localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+      } else {
+        const err = await res.json().catch(()=>({}));
+        showToast('Upload failed: '+(err.detail||'Server error'),'error');
+      }
+    }catch(err){ showToast('Error: '+err.message,'error'); }
+  };
+  input.click();
+}
+
+async function loadKBFromServer(){
+  if(!adminApiToken) return;
+  try{
+    const res = await fetch(API+'/kb/documents',{
+      headers:{'Authorization':'Bearer '+adminApiToken}
+    });
+    if(!res.ok) return;
+    const serverDocs = await res.json();
+    // Merge server docs into adminDocs (avoid duplicates)
+    serverDocs.forEach(sd=>{
+      const exists = adminDocs.find(d=>d.id===sd.id);
+      if(!exists){
+        adminDocs.push({
+          id:sd.id, name:sd.name, type:sd.type,
+          date:sd.doc_date||sd.created_at?.slice(0,10)||'',
+          chunks:sd.chunk_count||0, builtin:false, supabase:true
+        });
+      }
+    });
+    renderKBList();
+    document.getElementById('nav-kb-count').textContent = adminDocs.length;
+  }catch(e){ console.log('Could not load KB from server:', e); }
+}
+
 
 
 
@@ -2003,7 +2136,7 @@ function renderKBCategories(filter){
                       <div class="kb-icon" style="width:28px;height:28px;font-size:13px">${typeIcons[d.type||'Other']||'📄'}</div>
                       <div class="kb-info">
                         <div class="kb-name" style="font-size:12.5px">${esc(d.name)}</div>
-                        <div class="kb-meta" style="color:var(--accent)">${d.date||'—'}</div><div class="kb-meta">${d.type||''} · ${d.chunks||0} chunks${d.builtin?' · Built-in':''}</div>
+                        <div class="kb-meta" style="color:var(--accent)">${d.date||'—'}</div><div class="kb-meta">${d.type||''} · ${d.chunks||0} chunks${d.builtin?' · Built-in':''}<span style="color:${d.supabase?'#22c55e':'#f59e0b'};margin-left:6px;font-size:10px">${d.supabase?'● Server':'⚠ Local only'}</span></div>
                       </div>
                       <div style="display:flex;gap:5px;flex-shrink:0">
                         <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')">👁</button>
@@ -2059,7 +2192,7 @@ function closeDocViewer(){
 
 function renderKBList(filter=''){
   const allDocs = [...BUILTIN_KB,...adminDocs].filter(d=>!filter||d.name.toLowerCase().includes(filter.toLowerCase()));
-  document.getElementById('kb-count-label').textContent = `${BUILTIN_KB.length} built-in + ${adminDocs.length} added (${allDocs.length} total)`;
+  document.getElementById('kb-count-label').textContent = `${adminDocs.length} documents (${allDocs.length} total)`;
   document.getElementById('kbTabCount-all').textContent = allDocs.length;
   document.getElementById('kbTabCount-cat').textContent = allDocs.length;
   document.getElementById('kbTabCount-skipped').textContent = skippedDocs.length;
@@ -2071,13 +2204,18 @@ function renderKBList(filter=''){
       <div class="kb-icon">${d.type?.includes('Circular')?'📋':d.type?.includes('Rules')?'📜':d.type?.includes('AAR')?'⚖':d.type?.includes('Notification')?'🔔':'📄'}</div>
       <div class="kb-info">
         <div class="kb-name">${esc(d.name)}</div>
-        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${d.date||'Date unknown'}</span> · ${d.chunks||0} chunks${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}</div>
+        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${d.date||'Date unknown'}</span> · ${d.chunks||0} chunks${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}
+          <span style="margin-left:8px;font-size:10px;font-weight:600;color:${d.supabase||d.builtin?'#22c55e':'#f59e0b'}">${d.builtin?'● Built-in':d.supabase?'● Server':'⚠ Local only'}</span>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')">👁 View</button>
         ${d.builtin
-          ? `<span class="badge badge-active"><span class="badge-dot"></span>Built-in</span>`
-          : `<button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
+          ? ''
+          : !d.supabase
+            ? `<button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:10px" onclick="reuploadDoc('${d.id}')">↑ Upload</button>
+               <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
+            : `<button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
         }
       </div>
     </div>`).join('');
