@@ -1483,24 +1483,24 @@ function saveAllUsers(users){
 // ════════════════════════════════
 // INIT
 // ════════════════════════════════
-function initAdmin(){
+async function initAdmin(){
   loadAdminTheme();
   loadPrompts();
-  // Update skipped count badge on load
   if(skippedDocs.length>0){
     document.getElementById('kbTabCount-skipped').textContent = skippedDocs.length;
     document.getElementById('kbTabCount-skipped').style.cssText='background:var(--red-bg);color:var(--red)';
   }
-  // Save KB to localStorage before page unloads
   window.addEventListener('beforeunload', ()=>{
-    if(adminDocs.length > 0){
+    if(adminDocs.length > 0)
       localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
-    }
   });
   refreshData();
-  renderKBList();
+  renderKBList(); // show local data immediately
+
+  // Always load from server — source of truth
+  await loadKBFromServer();
+
   renderAnalytics();
-  // Update query log count badge
   const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
   const el = document.getElementById('query-log-count');
   if(el) el.textContent = Object.keys(log).length + ' unique questions';
@@ -1914,19 +1914,23 @@ async function kbOnDrop(e){
   if(!items||!items.length)return;
   const files=[];
   async function readEntry(entry){
-    if(!entry)return;
+    if(!entry) return;
     if(entry.isFile){
       await new Promise(res=>entry.file(f=>{
-        if(/\.(pdf|txt|doc)$/i.test(f.name))files.push(f);
+        if(/\.(pdf|txt|doc)$/i.test(f.name)) files.push(f);
         res();
       }));
     } else if(entry.isDirectory){
-      await new Promise(res=>{
-        entry.createReader().readEntries(async ents=>{
-          for(const en of ents)await readEntry(en);
-          res();
+      // readEntries only returns max 100 at a time — must loop to get all
+      const reader = entry.createReader();
+      const readBatch = () => new Promise(res=>{
+        reader.readEntries(async ents=>{
+          if(!ents.length){ res(); return; }
+          for(const en of ents) await readEntry(en);
+          readBatch().then(res); // keep reading until empty
         });
       });
+      await readBatch();
     }
   }
   for(let i=0;i<items.length;i++){
@@ -2096,9 +2100,12 @@ async function kbProcessBulk(files){
   fileEl.textContent='All files processed';
   statsEl.textContent=`✓ ${added} uploaded to server  ⚠ ${dupes} duplicates  ✗ ${errors} errors`;
   statsEl.style.color='var(--green)';
-  renderKBList();
+  // Reload from server to show correct state
+  await loadKBFromServer();
   refreshData();
-  showToast(`${added} documents uploaded to server${dupes>0?' · '+dupes+' duplicates skipped':''}`, 'success');
+  const summary = `✓ ${added} uploaded · ${dupes} skipped · ${errors} errors`;
+  showToast(summary, errors>0?'error':'success');
+  addUploadLog(errors>0?'error':'success','Batch complete: '+summary);
   setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},8000);
 }
 
@@ -2322,22 +2329,38 @@ async function loadKBFromServer(){
     const res = await fetch(API+'/kb/documents',{
       headers:{'Authorization':'Bearer '+adminApiToken}
     });
-    if(!res.ok) return;
+    if(!res.ok){ console.log('KB server load failed:', res.status); return; }
     const serverDocs = await res.json();
-    // Merge server docs into adminDocs (avoid duplicates)
-    serverDocs.forEach(sd=>{
-      const exists = adminDocs.find(d=>d.id===sd.id);
-      if(!exists){
-        adminDocs.push({
-          id:sd.id, name:sd.name, type:sd.type,
-          date:sd.doc_date||sd.created_at?.slice(0,10)||'',
-          chunks:sd.chunk_count||0, builtin:false, supabase:true
-        });
-      }
-    });
+    
+    // Server is source of truth — build fresh adminDocs from server
+    // Keep any local-only docs that aren't on server yet (content preview needed for dedup)
+    const serverIds = new Set(serverDocs.map(d=>d.id));
+    const localOnly = adminDocs.filter(d=>!d.supabase && !d.builtin && !serverIds.has(d.id));
+    
+    // Rebuild from server docs
+    const serverAdminDocs = serverDocs.map(sd=>({
+      id: sd.id,
+      name: sd.name,
+      type: sd.type||'',
+      date: sd.doc_date||sd.created_at?.slice(0,10)||'',
+      chunks: sd.chunk_count||0,
+      builtin: false,
+      supabase: true,
+      content: '', // not stored locally after server sync
+    }));
+    
+    // Merge: server docs + any still-local docs
+    adminDocs = [...serverAdminDocs, ...localOnly];
+    
+    // Save merged list
+    localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+    
     renderKBList();
-    document.getElementById('nav-kb-count').textContent = adminDocs.length;
-  }catch(e){ console.log('Could not load KB from server:', e); }
+    const countEl = document.getElementById('nav-kb-count');
+    if(countEl) countEl.textContent = adminDocs.length;
+    
+    console.log(`KB loaded: ${serverAdminDocs.length} from server, ${localOnly.length} local-only`);
+  }catch(e){ console.log('Could not load KB from server:', e.message); }
 }
 
 
