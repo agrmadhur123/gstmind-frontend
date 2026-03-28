@@ -994,11 +994,43 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
           <input class="form-input" type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
         </div>
         <button class="auth-btn" onclick="doLogin()">Log in to GSTMind</button>
+        <div class="auth-switch" style="margin-top:12px;font-size:12px">
+          <span class="auth-link" onclick="showForgotModal()">Forgot password?</span>
+          &nbsp;·&nbsp;
+          <span class="auth-link" onclick="showLoginOTP()">Login with OTP instead</span>
+        </div>
+        <div id="login-otp-section" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:14px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">We'll send a one-time password to your email</div>
+          <div id="login-otp-step1-wrap">
+            <button class="auth-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="sendLoginEmailOTP()">Send OTP to Email</button>
+          </div>
+          <div id="login-otp-step2-wrap" style="display:none">
+            <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:10px" id="login-otp-sent-msg"></div>
+            <div class="otp-boxes" id="login-otp-boxes" style="display:flex;gap:8px;margin-bottom:12px">
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+            </div>
+            <button class="auth-btn" onclick="verifyLoginEmailOTP()">Verify & Login</button>
+            <div style="margin-top:8px;font-size:11px" id="loginotp-timer-wrap"></div>
+          </div>
+        </div>
         <div class="auth-switch">
           Don't have an account? <span class="auth-link" onclick="showPage('signup')">Sign up free</span>
         </div>
         <div class="auth-switch" style="margin-top:8px">
           <span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span>
+        </div>
+        <!-- Hidden test login — for internal testing only -->
+        <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--light);text-align:center;margin-bottom:8px;letter-spacing:.05em">TESTING ACCESS</div>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" type="password" id="test-pass-input" placeholder="Test password" style="font-size:12px;padding:7px 10px"/>
+            <button onclick="doTestLogin()" style="padding:7px 14px;background:var(--text);color:var(--surface);border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap">Test →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1049,7 +1081,25 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
           </select>
         </div>
 
-        <button class="auth-btn" onclick="doSignup()">Create account — Start free</button>
+        <div id="signup-step1">
+          <button class="auth-btn" onclick="initiateSignup()">Continue — Verify Email</button>
+        </div>
+        <div id="signup-step2" style="display:none">
+          <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px">
+            OTP sent to <strong id="signup-email-show"></strong>
+          </div>
+          <label class="form-label">Enter 6-digit OTP</label>
+          <div class="otp-boxes" id="signup-otp-boxes" style="display:flex;gap:8px;margin:8px 0 16px">
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
+          </div>
+          <button class="auth-btn" onclick="doSignup()">Verify & Create Account</button>
+          <div style="margin-top:8px;font-size:11px;color:var(--light)" id="signup-timer-wrap"></div>
+        </div>
         <div class="auth-switch">
           Already have an account? <span class="auth-link" onclick="showPage('login')">Log in</span>
         </div>
@@ -1293,7 +1343,8 @@ function showPage(name){
 // ════════════════════════════════
 // AUTH (simulated with localStorage)
 // ════════════════════════════════
-async function doSignup(){
+// Step 1: validate form and send OTP
+async function initiateSignup(){
   const fname=document.getElementById('signup-fname').value.trim();
   const lname=document.getElementById('signup-lname').value.trim();
   const email=document.getElementById('signup-email').value.trim();
@@ -1310,26 +1361,61 @@ async function doSignup(){
     err.textContent='Please enter a valid email address.';err.classList.add('show');return;
   }
   err.classList.remove('show');
-  const btn=document.querySelector('#page-signup .auth-btn');
+  const btn=document.querySelector('#signup-step1 .auth-btn');
+  if(btn){btn.textContent='Sending OTP...';btn.disabled=true;}
+  try{
+    const res = await apiCall('/auth/email/otp/send','POST',{email});
+    document.getElementById('signup-email-show').textContent = email;
+    document.getElementById('signup-step1').style.display='none';
+    document.getElementById('signup-step2').style.display='block';
+    clearOTPBoxes('signup');
+    startTimer('signup', 120);
+    setTimeout(()=>document.getElementById('signup-otp-boxes').querySelector('.otp-box').focus(),100);
+    if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
+  }catch(e){
+    err.textContent = e.message||'Failed to send OTP. Please try again.';
+    err.classList.add('show');
+  }finally{
+    if(btn){btn.textContent='Continue →';btn.disabled=false;}
+  }
+}
+
+// Step 2: verify OTP and create account
+async function doSignup(){
+  const fname=document.getElementById('signup-fname').value.trim();
+  const lname=document.getElementById('signup-lname').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-pass').value;
+  const prof=document.getElementById('signup-prof').value;
+  const otp=getOTPValue('signup');
+  const err=document.getElementById('signup-error');
+  if(otp.length!==6){showToast('Please enter the complete 6-digit OTP.');return;}
+  const btn=document.querySelector('#signup-step2 .auth-btn');
   if(btn){btn.textContent='Creating account...';btn.disabled=true;}
   try{
-    const res = await apiCall('/auth/signup/email','POST',{fname,lname,email,password:pass,profession:prof});
+    // Verify OTP + create account in one call
+    const res = await apiCall('/auth/email/otp/verify','POST',{
+      phone:'email:'+email, code:otp,
+      is_signup:true, fname, lname, profession:prof
+    });
+    // Then set password separately
+    await apiCall('/auth/set-password','POST',{email, password:pass},{auth:false,token:res.token});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    const signupUserData = {
-      ...res.user,
-      fname, lname, name: fname+' '+lname,
-      queryCount: res.user.query_count || 0,
-      queryLimit: res.user.query_limit || 10,
+    const userData = {
+      ...res.user, fname, lname, name:fname+' '+lname,
+      queryCount:res.user.query_count||0,
+      queryLimit:res.user.query_limit||10,
     };
-    localStorage.setItem('gm_user', JSON.stringify(signupUserData));
+    localStorage.setItem('gm_user', JSON.stringify(userData));
     showToast('Account created! Welcome to GSTMind.');
     showPage('app');
-  } catch(e){
-    err.textContent = e.message || 'Signup failed. Please try again.';
+  }catch(e){
+    err.textContent=e.message||'Invalid OTP. Please try again.';
     err.classList.add('show');
-  } finally {
-    if(btn){btn.textContent='Create account — Start free';btn.disabled=false;}
+    clearOTPBoxes('signup');
+  }finally{
+    if(btn){btn.textContent='Verify & Create Account';btn.disabled=false;}
   }
 }
 
@@ -1421,20 +1507,7 @@ async function apiCall(endpoint, method='GET', body=null, auth=false, retry=true
 }
 const FREE_LIMIT=10;
 
-const BUILTIN=[
-  {name:"CGST Act — ITC (S.16–18)",content:`Section 16 CGST Act - Eligibility and conditions for ITC. 16(1) Every registered person shall be entitled to take credit of input tax charged on any supply of goods or services used in the course or furtherance of business. 16(2) No registered person shall be entitled to ITC unless (a) in possession of tax invoice; (b) received goods or services; (c) tax has been paid to government; (d) furnished return under section 39. 16(4) A registered person shall not take ITC after 30th November following end of financial year to which invoice pertains or furnishing of annual return, whichever is earlier. Section 17(5) ITC not available on motor vehicles except for further supply transport or training; goods for personal consumption; works contract for immovable property. Section 18 Availability of credit in special circumstances.`},
-  {name:"CGST Act — Penalties (S.122–138)",content:`Section 122 CGST Act - Penalty for offences. 122(1) Taxable person supplying without invoice, issuing false invoice, collecting tax but not paying to government shall be liable to penalty of ten thousand rupees or tax evaded whichever is greater. Section 125 General penalty up to twenty-five thousand rupees for contraventions. Section 127 Proper officer may impose penalty after reasonable opportunity of hearing.`},
-  {name:"CGST Act — Scrutiny & Demand (S.61,73,74)",content:`Section 61 CGST Act Scrutiny of returns. 61(1) Proper officer may scrutinize return to verify correctness. 61(2) In case of discrepancy officer shall inform registered person and seek explanation. Section 73 Demand for non-fraud cases limitation 3 years from due date of annual return. Section 74 Demand for fraud or wilful misstatement limitation 5 years from due date of annual return.`},
-  {name:"CBIC — ITC Mismatch & GSTR-2B",content:`ITC mismatch: Rule 36(4) CGST Rules restricts ITC to invoices uploaded by suppliers in GSTR-1. ITC over GSTR-2B must be reversed. Circular 183/15/2022-GST: ITC cannot be availed on invoices not in GSTR-2B unless supplier subsequently paid tax and filed return. Where supplier has not paid tax to government, recipient ITC shall be recovered under Section 16(2)(c) read with Rule 37A.`},
-  {name:"IGST Act — Place of Supply & Zero Rating",content:`Section 12 IGST Act Place of supply where both parties in India. 12(2)(a) made to registered person location of such person. Section 13 Where supplier or recipient outside India. 13(2) Location of recipient of services. Section 16 IGST Act Zero rated supply means export of goods or services or supply to SEZ developer or unit. Credit of input tax may be availed for zero-rated supplies.`},
-  {name:"CGST Rules — Rule 42 & 43 ITC Reversal",content:`Rule 42 CGST Rules ITC reversal for inputs used partly for exempt supply. ITC attributable to exempt supplies must be reversed monthly and adjusted annually. Rule 43 ITC reversal for capital goods used for exempt supplies. Proportionate reversal required where capital goods used for both taxable and exempt supplies.`},
-  {name:"CGST Act — Refund Provisions (S.54-58)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 54 CGST Act 2017 — Refund of tax. 54(1) Any person claiming refund of any tax and interest paid may make application before expiry of two years from the relevant date. The relevant date for exports is date of despatch/loading/receipt of payment. 54(3) Refund of unutilised ITC where credit accumulates due to: (a) zero rated supplies made without payment of integrated tax; (b) inverted duty structure where rate on inputs exceeds output rate. 54(6) Provisional refund of 90 percent may be granted within 7 days of acknowledgement where applicant is not under prosecution. 54(7) Refund order shall be made within 60 days of receipt of complete application. 54(8) No refund if amount is less than Rs 1000. Section 56 interest on delayed refund — if refund not made within 60 days, interest at 6 percent per annum from expiry of 60 days. Section 57 amounts not refundable credited to Consumer Welfare Fund.`},
-  {name:"CGST Act — Registration (S.22-30)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 22 CGST Act — Every supplier whose aggregate turnover exceeds Rs 20 lakhs (Rs 10 lakhs for special category states) in a financial year shall be liable to register. Section 24 — Compulsory registration irrespective of turnover: (i) persons making inter-state taxable supplies; (ii) casual taxable persons; (iii) persons required to pay tax under reverse charge; (iv) non-resident taxable persons; (v) persons required to deduct TDS under section 51; (vi) e-commerce operators; (vii) persons supplying through e-commerce operator. Section 25 — Application within 30 days of becoming liable. Section 29 — Cancellation by officer or suo motu. Section 30 — Revocation within 30 days of cancellation order.`},
-  {name:"CGST Act — Demand & Recovery (S.73-77)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 73 CGST Act — Determination of tax not paid in non-fraud cases. Proper officer shall issue show cause notice 3 months before time limit of 3 years from due date of annual return. If tax and interest paid before issue of notice no penalty. Penalty 10 percent of tax (minimum Rs 10,000) if paid after SCN. Section 74 — Fraud, wilful misstatement or suppression of facts. Time limit 5 years from due date of annual return. Penalty equal to 100 percent of tax. Reduced penalty: 15 percent if paid before SCN, 25 percent before order, 50 percent within 30 days of order. Section 75 — General provisions including opportunity of personal hearing. Section 76 — Tax collected but not deposited must be paid regardless of whether output supply is taxable.`},
-  {name:"CGST Act — Composition Scheme (S.10)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 10 CGST Act — Composition Levy. Registered persons with aggregate turnover up to Rs 1.5 crore (Rs 75 lakhs for special category states) may opt. Rates: manufacturers 1 percent, restaurants 5 percent, other suppliers 0.5 percent of turnover. Composition dealers cannot: collect tax from customers, claim ITC, make inter-state supplies, supply exempt goods, supply through e-commerce operators. Must file GSTR-4 annually and CMP-08 quarterly statement. Annual turnover limit calculated for preceding financial year. Option can be withdrawn voluntarily or cancelled by officer.`},
-  {name:"CGST Act — Time of Supply & Value (S.12-15)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 12 CGST Act — Time of supply of goods. Earliest of: date of issue of invoice or last date for issuing invoice; date of receipt of payment. Section 13 — Time of supply of services. Earliest of: date of invoice if issued within 30 days; date of provision of service; date of receipt of payment. Section 14 — Change in rate of tax: where invoice issued before change, rate applicable at time of supply. Section 15 — Value of taxable supply is the transaction value — price actually paid or payable. Includes: any taxes other than GST, packing charges, commission, subsidies linked to price. Excludes: discount given before or at time of supply if shown in invoice.`},
-  {name:"GST — Place of Supply (S.10-13 IGST Act)",type:"GST Act Section",date:"2017-07-01",builtin:true,content:`Section 10 IGST Act — Place of supply of goods. Where supply involves movement — place where movement terminates. Where delivered on direction of third party — location of such third party. Section 12 IGST Act — Services where both supplier and recipient in India. Services to registered person — location of recipient. Immovable property services — location of property. Restaurant and catering — location of supply. Event admission — where event held. Section 13 — Where supplier or recipient outside India. General rule — location of recipient. Where location of recipient not ascertainable — location of supplier. Section 16 IGST — Zero rated supply means: (a) export of goods or services; (b) supply to SEZ developer or unit. Exporter may pay IGST and claim refund, or export under LUT/Bond and claim unutilised ITC refund.`}
-];
+const BUILTIN=[];
 
 // Read prompts from admin settings if available
 function getPrompt(type){
@@ -1603,6 +1676,82 @@ function compressHistory(hist){
   return [...compressed, ...recent];
 }
 
+
+function showLoginOTP(){
+  const sec = document.getElementById('login-otp-section');
+  if(sec) sec.style.display = sec.style.display==='none' ? 'block' : 'none';
+}
+
+async function sendLoginEmailOTP(){
+  const email = document.getElementById('login-email').value.trim();
+  if(!email||!email.includes('@')){showToast('Please enter your email address above first.');return;}
+  const btn = document.querySelector('#login-otp-step1-wrap .auth-btn');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
+  try{
+    const res = await apiCall('/auth/email/otp/send','POST',{email});
+    document.getElementById('login-otp-sent-msg').textContent = 'OTP sent to '+email;
+    document.getElementById('login-otp-step1-wrap').style.display='none';
+    document.getElementById('login-otp-step2-wrap').style.display='block';
+    clearOTPBoxes('loginotp');
+    startTimer('loginotp', 120);
+    setTimeout(()=>document.getElementById('login-otp-boxes').querySelector('.otp-box').focus(),100);
+    if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
+  }catch(e){
+    showToast(e.message||'Failed to send OTP');
+  }finally{
+    if(btn){btn.textContent='Send OTP to Email';btn.disabled=false;}
+  }
+}
+
+async function verifyLoginEmailOTP(){
+  const email = document.getElementById('login-email').value.trim();
+  const otp = getOTPValue('loginotp');
+  if(otp.length!==6){showToast('Please enter the 6-digit OTP.');return;}
+  try{
+    const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:false});
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    const userData = {
+      ...res.user,
+      queryCount:res.user.query_count||0,
+      queryLimit:res.user.query_limit||10,
+    };
+    localStorage.setItem('gm_user', JSON.stringify(userData));
+    showToast('Welcome back, '+(res.user.fname||'')+'!');
+    showPage('app');
+  }catch(e){
+    showToast(e.message||'Invalid OTP');
+    clearOTPBoxes('loginotp');
+  }
+}
+
+
+async function doTestLogin(){
+  const pass = document.getElementById('test-pass-input').value;
+  if(!pass){ showToast('Enter test password'); return; }
+  try{
+    const res = await apiCall('/auth/test/login','POST',{
+      email:'test@gstmind.in',
+      password: pass
+    });
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    localStorage.setItem('gm_user', JSON.stringify({
+      ...res.user,
+      queryCount: 0,
+      queryLimit: 99999,
+    }));
+    showToast('Test login successful — unlimited access');
+    showPage('app');
+  }catch(e){
+    showToast(e.message||'Invalid test password');
+  }
+}
+
+function showForgotModal(){
+  document.getElementById('forgotModal').classList.add('show');
+}
+
 function toggleSidebar(){
   const sb = document.getElementById('appSidebar');
   if(!sb) return;
@@ -1656,11 +1805,11 @@ function renderDocs(){
   list.innerHTML=docs.map(d=>`<div class="doc-card"><div style="flex:1;min-width:0"><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">${d.chunks.length} chunks · ${d.type}</div></div><button class="doc-del" onclick="delDoc(${d.id})">✕</button></div>`).join('');
 }
 function renderBuiltin(){
-  document.getElementById('builtinList').innerHTML=BUILTIN.map(d=>`<div class="builtin-item"><div class="bi-dot"></div><div class="bi-name">${d.name}</div></div>`).join('');
+  document.getElementById('builtinList').innerHTML='<div style="font-size:12px;color:var(--light);padding:8px">All documents loaded from server knowledge base.</div>';
 }
 function updateKBUI(){
   const hint=document.getElementById('docHint');
-  if(hint)hint.textContent=`${BUILTIN.length} built-in documents loaded`;
+  if(hint)hint.textContent=`Knowledge base loaded from server`;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1788,7 +1937,7 @@ let _chunkCache = null;
 let _chunkCacheDocCount = 0;
 
 function getChunkIndex() {
-  const allDocs = [...BUILTIN, ...docs];
+  const allDocs = [...docs]; // All KB now from Supabase via backend
   // Rebuild if docs changed
   if (_chunkCache && _chunkCacheDocCount === allDocs.length) return _chunkCache;
 
@@ -2645,47 +2794,60 @@ function showForgotPassword(){
   document.getElementById('forgotModalSub').textContent='Enter your registered email address.';
 }
 
-function sendForgotOTP(){
+async function sendForgotOTP(){
   const email = document.getElementById('forgot-email').value.trim();
   if(!email || !email.includes('@')){showToast('Please enter a valid email address.');return;}
-  const users = JSON.parse(localStorage.getItem('gm_users')||'[]');
-  const user = users.find(u => u.email === email);
-  if(!user){showToast('No account found with this email.');return;}
-  forgotEmail = email;
-  const otp = generateOTP();
-  currentOTP['forgot'] = {otp, expires: Date.now() + 5*60*1000};
-  showToast('OTP for demo: ' + otp);
-  document.getElementById('forgot-phone-show').textContent = 'OTP sent to: ' + email;
-  document.getElementById('forgotStep1').style.display='none';
-  document.getElementById('forgotStep2').style.display='block';
-  clearOTPBoxes('forgot');
-  startTimer('forgot', 30);
-  setTimeout(()=>document.getElementById('forgot-otp-boxes').querySelector('.otp-box').focus(),100);
+  const btn = document.querySelector('#forgotStep1 .auth-btn');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
+  try{
+    const res = await apiCall('/auth/forgot/send','POST',{email});
+    forgotEmail = email;
+    document.getElementById('forgot-phone-show').textContent = 'OTP sent to: ' + email;
+    document.getElementById('forgotStep1').style.display='none';
+    document.getElementById('forgotStep2').style.display='block';
+    clearOTPBoxes('forgot');
+    startTimer('forgot', 120);
+    setTimeout(()=>document.getElementById('forgot-otp-boxes').querySelector('.otp-box').focus(),100);
+    showToast('OTP sent to your email');
+  }catch(e){
+    showToast(e.message||'Failed to send OTP. Please try again.','error');
+  }finally{
+    if(btn){btn.textContent='Send Reset OTP';btn.disabled=false;}
+  }
 }
 
-function verifyForgotOTPAndNext(){
+async function verifyForgotOTPAndNext(){
   const entered = getOTPValue('forgot');
   if(entered.length !== 6){showToast('Please enter the complete 6-digit OTP.');return;}
-  const session = currentOTP['forgot'];
-  if(!session || Date.now() > session.expires){showToast('OTP expired. Please try again.');return;}
-  if(entered !== session.otp){showToast('Incorrect OTP. Please try again.');clearOTPBoxes('forgot');return;}
-  document.getElementById('forgotStep2').style.display='none';
-  document.getElementById('forgotStep3').style.display='block';
+  try{
+    await apiCall('/auth/forgot/verify','POST',{email:forgotEmail, otp:entered});
+    currentOTP['forgot'] = {verified:true};
+    document.getElementById('forgotStep2').style.display='none';
+    document.getElementById('forgotStep3').style.display='block';
+  }catch(e){
+    showToast(e.message||'Invalid OTP. Please try again.');
+    clearOTPBoxes('forgot');
+  }
 }
 
-function resetPassword(){
+async function resetPassword(){
   const newPass = document.getElementById('forgot-new-pass').value;
   const confPass = document.getElementById('forgot-conf-pass').value;
   if(newPass.length < 8){showToast('Password must be at least 8 characters.');return;}
   if(newPass !== confPass){showToast('Passwords do not match.');return;}
-  const users = JSON.parse(localStorage.getItem('gm_users')||'[]');
-  const idx = users.findIndex(u => u.email === forgotEmail);
-  if(idx === -1){showToast('User not found.');return;}
-  users[idx].pass = newPass;
-  localStorage.setItem('gm_users', JSON.stringify(users));
-  document.getElementById('forgotModal').classList.remove('show');
-  showToast('Password reset successfully. Please log in.');
-  showPage('login');
+  if(!currentOTP['forgot']?.verified){showToast('Please verify OTP first.');return;}
+  const btn = document.querySelector('#forgotStep3 .auth-btn');
+  if(btn){btn.textContent='Resetting...';btn.disabled=true;}
+  try{
+    await apiCall('/auth/forgot/reset','POST',{email:forgotEmail, new_password:newPass});
+    document.getElementById('forgotModal').classList.remove('show');
+    showToast('Password reset successfully. Please log in.');
+    showPage('login');
+  }catch(e){
+    showToast(e.message||'Failed to reset password. Please try again.');
+  }finally{
+    if(btn){btn.textContent='Reset Password';btn.disabled=false;}
+  }
 }
 
 function switchAuthTab(page, method, btn) {
