@@ -662,7 +662,8 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         <div class="status-pill status-online"><div class="status-dot"></div>System Online</div>
 <button class="admin-theme-btn" id="adminThemeBtn" onclick="toggleAdminTheme()">☀️ Light</button>
         <button class="btn btn-ghost btn-sm" onclick="refreshData()">↺ Refresh</button>
-      <button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:11px" onclick="uploadAllLocal()" id="uploadAllBtn" style="display:none">↑ Upload All Local Docs</button>
+      <button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:11px" onclick="uploadAllLocal()" id="uploadAllBtn">↑ Sync Local → Server</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleUploadLog()" id="uploadLogBtn">📋 Upload Log</button>
       </div>
     </div>
 
@@ -886,6 +887,16 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         </div>
 
         <!-- ALL DOCS TAB -->
+      <!-- Upload Log Panel -->
+      <div id="uploadLogPanel" style="display:none;margin-bottom:16px;border:1px solid #333;border-radius:10px;overflow:hidden">
+        <div style="background:var(--surface);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">📋 Upload Activity Log</div>
+          <button class="btn btn-ghost btn-sm" onclick="clearUploadLog()">Clear</button>
+        </div>
+        <div id="uploadLogEntries" style="max-height:280px;overflow-y:auto;font-family:monospace;font-size:11px;padding:8px 12px;background:#111;color:#e0e0e0">
+          <div style="color:#666">No upload activity yet.</div>
+        </div>
+      </div>
         <div id="kbView-all" class="table-wrap">
           <div class="select-all-row">
             <input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this.checked)" title="Select all"/>
@@ -2014,18 +2025,27 @@ async function kbProcessBulk(files){
         continue;
       }
 
-      // Step 4: Upload to Railway → Supabase (NO size limit!)
+      // Step 4: Check if already on server (prevent re-upload)
+      if(isAlreadyOnServer(meta.docName, identity)){
+        dupes++;
+        fileEl.textContent = `⟳ Already on server: ${meta.docName}`;
+        addUploadLog('skip', `Already on server: ${meta.docName}`);
+        await new Promise(r=>setTimeout(r,15));
+        continue;
+      }
+
+      // Step 5: Upload to Railway → Supabase
+      fileEl.textContent = `↑ Uploading: ${meta.docName}`;
+      addUploadLog('info', `Uploading: ${meta.docName}`);
+      
       const uploadRes = await fetch(API+'/kb/upload',{
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+token
-        },
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
         body:JSON.stringify({
           name: meta.docName,
           type: meta.docType,
           doc_date: meta.docDate||'',
-          content: content,  // full content — no truncation!
+          content: content,
           doc_identity: identity
         })
       });
@@ -2033,39 +2053,36 @@ async function kbProcessBulk(files){
       if(!uploadRes.ok){
         const err = await uploadRes.json().catch(()=>({}));
         if(uploadRes.status === 401){
-          // Token expired — clear and retry
           adminApiToken = '';
           localStorage.removeItem('gm_admin_api_token');
-          showToast('Session expired — please re-authenticate','error');
+          showToast('Session expired — please log in again','error');
+          addUploadLog('error','Session expired — upload stopped');
           break;
         }
-        console.error('Upload failed:', err);
         errors++;
-        fileEl.textContent = `✗ Failed: ${f.name} — ${err.detail||'Server error'}`;
-        await new Promise(r=>setTimeout(r,1000));
+        const errMsg = err.detail||'Server error';
+        fileEl.textContent = `✗ Failed: ${f.name}`;
+        addUploadLog('error', `Failed: ${meta.docName}`, errMsg);
+        await new Promise(r=>setTimeout(r,500));
         continue;
       }
 
       const result = await uploadRes.json();
       added++;
-      fileEl.textContent = `✓ ${meta.docName} — ${result.chunks} chunks stored`;
+      fileEl.textContent = `✓ ${meta.docName} — ${result.chunks} chunks`;
+      addUploadLog('success', `Uploaded: ${meta.docName}`, `${result.chunks} chunks stored`);
 
-      // Also keep minimal record in adminDocs for local dedup
       adminDocs.push({
-        id: result.id,
-        name: meta.docName,
-        type: meta.docType,
-        content: content.slice(0,10000), // preview for dedup (full content in Supabase)
+        id: result.id, name: meta.docName, type: meta.docType,
+        content: content.slice(0,10000),
         contentHash: fullContentHash(content),
-        docIdentity: identity,
-        chunks: result.chunks,
+        docIdentity: identity, chunks: result.chunks,
         date: meta.docDate||new Date().toLocaleDateString('en-IN'),
-        builtin: false,
-        supabase: true // flag that it's stored on server
+        builtin: false, supabase: true
       });
 
-      if(added%5===0) renderKBList();
-      await new Promise(r=>setTimeout(r,50)); // small delay between uploads
+      if(added%5===0){ renderKBList(); localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs)); }
+      await new Promise(r=>setTimeout(r,300));
     }catch(e){
       console.error('Error processing '+f.name+':', e);
       errors++;
@@ -2130,23 +2147,122 @@ async function reuploadWithContent(doc, content){
   }catch(e){ showToast('Error: '+e.message,'error'); }
 }
 
+// ════════════════════════════════════════════════════════════════
+// UPLOAD MANAGER — Background queue with dedup, logging, persistence
+// ════════════════════════════════════════════════════════════════
+
+let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
+let uploadQueueRunning = false;
+let uploadQueue = [];
+
+function addUploadLog(type, message, detail=''){
+  const entry = {
+    type, // 'success','error','skip','info'
+    message,
+    detail,
+    time: new Date().toLocaleTimeString('en-IN'),
+    date: new Date().toLocaleDateString('en-IN')
+  };
+  uploadLog.unshift(entry);
+  if(uploadLog.length > 200) uploadLog = uploadLog.slice(0,200);
+  localStorage.setItem('gm_upload_log', JSON.stringify(uploadLog));
+  renderUploadLog();
+}
+
+function renderUploadLog(){
+  const el = document.getElementById('uploadLogEntries');
+  if(!el) return;
+  if(!uploadLog.length){ el.innerHTML='<div style="color:#666">No upload activity yet.</div>'; return; }
+  const colors = {success:'#4ade80',error:'#f87171',skip:'#fbbf24',info:'#60a5fa'};
+  el.innerHTML = uploadLog.map(e=>`
+    <div style="padding:3px 0;border-bottom:1px solid #333;display:flex;gap:8px">
+      <span style="color:#666;flex-shrink:0">${e.date} ${e.time}</span>
+      <span style="color:${colors[e.type]||'#e0e0e0'};flex-shrink:0">[${e.type.toUpperCase()}]</span>
+      <span style="color:#e0e0e0">${e.message}</span>
+      ${e.detail?`<span style="color:#888;font-size:10px">${e.detail}</span>`:''}
+    </div>
+  `).join('');
+}
+
+function toggleUploadLog(){
+  const panel = document.getElementById('uploadLogPanel');
+  if(!panel) return;
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  if(panel.style.display==='block') renderUploadLog();
+}
+
+function clearUploadLog(){
+  uploadLog = [];
+  localStorage.removeItem('gm_upload_log');
+  renderUploadLog();
+}
+
+// Check if doc is already on Supabase by name+identity
+function isAlreadyOnServer(docName, identity){
+  return adminDocs.some(d => 
+    d.supabase && (
+      d.name === docName ||
+      (d.docIdentity?.refNo && identity?.refNo && 
+       d.docIdentity.refNo === identity.refNo &&
+       d.docIdentity.year === identity.year &&
+       (d.docIdentity.variantType||'original') === (identity.variantType||'original'))
+    )
+  );
+}
+
 async function uploadAllLocal(){
-  const localDocs = adminDocs.filter(d=>!d.supabase && !d.builtin);
-  if(!localDocs.length){ showToast('All documents are already on server ✓','success'); return; }
+  const localDocs = adminDocs.filter(d=>!d.supabase && !d.builtin && d.content && d.content.length >= 100);
+  const alreadyServer = adminDocs.filter(d=>d.supabase && !d.builtin).length;
+  
+  if(!localDocs.length){ 
+    showToast(`All ${alreadyServer} documents already on server ✓`,'success');
+    addUploadLog('info',`Sync check: all ${alreadyServer} docs already on server`);
+    return; 
+  }
+  
   const token = await ensureApiToken();
   if(!token) return;
-  showToast(`Uploading ${localDocs.length} local docs to server...`,'info');
-  let done=0, failed=0;
+  
+  showToast(`Syncing ${localDocs.length} local docs to server (${alreadyServer} already there)...`,'info');
+  addUploadLog('info',`Starting sync: ${localDocs.length} docs to upload, ${alreadyServer} already on server`);
+  
+  let done=0, skipped=0, failed=0;
   for(const doc of localDocs){
-    if(doc.content && doc.content.length >= 500){
-      await reuploadWithContent(doc, doc.content);
-      done++;
-    } else {
+    try{
+      addUploadLog('info',`Uploading: ${doc.name}`);
+      const res = await fetch(API+'/kb/upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({
+          name:doc.name, type:doc.type||'', doc_date:doc.date||'',
+          content:doc.content, doc_identity:doc.docIdentity||{}
+        })
+      });
+      if(res.ok){
+        const result = await res.json();
+        doc.id = result.id;
+        doc.chunks = result.chunks;
+        doc.supabase = true;
+        done++;
+        addUploadLog('success',`Uploaded: ${doc.name}`,`${result.chunks} chunks`);
+      } else {
+        const err = await res.json().catch(()=>({}));
+        failed++;
+        addUploadLog('error',`Failed: ${doc.name}`, err.detail||'Server error');
+      }
+    }catch(e){
       failed++;
+      addUploadLog('error',`Error: ${doc.name}`, e.message);
     }
-    await new Promise(r=>setTimeout(r,200));
+    await new Promise(r=>setTimeout(r,300));
   }
-  showToast(`✓ ${done} uploaded${failed?' · '+failed+' need file re-select':''}`, done>0?'success':'error');
+  
+  localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+  renderKBList();
+  
+  const summary = `✓ ${done} uploaded${skipped?' · '+skipped+' skipped':''}${failed?' · '+failed+' failed':''}`;
+  showToast(summary, failed>0?'error':'success');
+  addUploadLog(failed>0?'error':'success', 'Sync complete: '+summary);
 }
 
 function reuploadDoc(docId){
