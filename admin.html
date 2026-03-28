@@ -659,7 +659,11 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         <div class="topbar-sub" id="topbarSub">Overview of GSTMind platform</div>
       </div>
       <div class="topbar-right">
-        <div class="status-pill status-online"><div class="status-dot"></div>System Online</div>
+        <div class="status-pill status-online" id="systemStatusPill" title="Click to check sync"><div class="status-dot" id="systemStatusDot"></div><span id="systemStatusText">Checking...</span></div>
+        <div id="kbSyncPill" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-family:monospace;background:#f0fdf4;border:1px solid #86efac;color:#166534;cursor:pointer" onclick="checkKBSync()" title="Click to refresh sync status">
+          <div id="kbSyncDot" style="width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
+          <span id="kbSyncText">KB Sync: Checking...</span>
+        </div>
 <button class="admin-theme-btn" id="adminThemeBtn" onclick="toggleAdminTheme()">☀️ Light</button>
         <button class="btn btn-ghost btn-sm" onclick="refreshData()">↺ Refresh</button>
       <button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:11px" onclick="uploadAllLocal()" id="uploadAllBtn">↑ Sync Local → Server</button>
@@ -1331,6 +1335,7 @@ async function ensureApiToken(){
   return null;
 }
 function adminLogout(){
+  stopSyncMonitor();
   adminApiToken='';
   localStorage.removeItem('gm_admin_session');
   localStorage.removeItem('gm_admin_api_token');
@@ -1504,6 +1509,8 @@ async function initAdmin(){
   const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
   const el = document.getElementById('query-log-count');
   if(el) el.textContent = Object.keys(log).length + ' unique questions';
+  // Start sync monitor — checks every 60 seconds
+  startSyncMonitor();
 }
 
 function refreshData(){
@@ -1999,10 +2006,36 @@ async function kbProcessBulk(files){
       let content = await readFileText(f, (page, total)=>{
         fileEl.textContent = `📄 ${f.name} — reading page ${page} of ${total}...`;
       });
-      if(!content||content.trim().length<30){errors++;continue;}
+      if(!content || content.trim().length < 30){
+        errors++;
+        fileEl.textContent = `⚠ Skipped (scanned/empty PDF): ${f.name}`;
+        addUploadLog('skip', `Skipped: ${f.name}`, 'Scanned PDF or no extractable text — use text-based PDF or OCR first');
+        skippedDocs.push({
+          id:'s'+Date.now()+Math.random(),
+          fileName:f.name,
+          name:f.name,
+          type:'Unknown',
+          date:'',
+          reason:'Scanned/image-based PDF — no text extractable',
+          matchedDoc:'',
+          content:'',
+          skippedAt:new Date().toISOString()
+        });
+        localStorage.setItem('gm_skipped_kb',JSON.stringify(skippedDocs));
+        await new Promise(r=>setTimeout(r,15));
+        continue;
+      }
 
       const wordCount = content.split(/\s+/).filter(w=>w).length;
-      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words, uploading to server...`;
+      // Warn if suspiciously low word count (may be partially scanned)
+      const pagesEst = Math.ceil(wordCount / 250);
+      if(wordCount < 100){
+        fileEl.textContent = `⚠ Very low text (${wordCount} words) — may be scanned: ${f.name}`;
+        addUploadLog('skip', `Low text warning: ${f.name}`, `Only ${wordCount} words extracted`);
+        errors++;
+        continue;
+      }
+      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words (~${pagesEst} pages), uploading...`;
       await new Promise(r=>setTimeout(r,10));
 
       // Step 2: Extract metadata
@@ -2106,6 +2139,7 @@ async function kbProcessBulk(files){
   const summary = `✓ ${added} uploaded · ${dupes} skipped · ${errors} errors`;
   showToast(summary, errors>0?'error':'success');
   addUploadLog(errors>0?'error':'success','Batch complete: '+summary);
+  await checkKBSync(); // Verify sync after upload
   setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},8000);
 }
 
@@ -2322,6 +2356,103 @@ function reuploadDoc(docId){
   };
   input.click();
 }
+
+
+// ════════════════════════════════════════════════════════════════
+// KB SYNC STATUS — Always in sync with Supabase
+// ════════════════════════════════════════════════════════════════
+
+let lastSyncTime = null;
+let syncCheckInterval = null;
+
+async function checkKBSync(){
+  const dot = document.getElementById('kbSyncDot');
+  const txt = document.getElementById('kbSyncText');
+  if(!dot||!txt) return;
+
+  // Show checking state
+  dot.style.background = '#fbbf24';
+  txt.textContent = 'KB Sync: Checking...';
+
+  if(!adminApiToken){
+    dot.style.background = '#f87171';
+    txt.textContent = 'KB Sync: Not logged in';
+    return;
+  }
+
+  try{
+    const res = await fetch(API+'/kb/documents',{
+      headers:{'Authorization':'Bearer '+adminApiToken}
+    });
+    if(!res.ok) throw new Error('Server error '+res.status);
+    
+    const serverDocs = await res.json();
+    const serverCount = serverDocs.length;
+    const localServerCount = adminDocs.filter(d=>d.supabase&&!d.builtin).length;
+    const localOnlyCount = adminDocs.filter(d=>!d.supabase&&!d.builtin).length;
+    
+    lastSyncTime = new Date();
+    const timeStr = lastSyncTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+    if(localOnlyCount > 0){
+      // Some docs not on server
+      dot.style.background = '#f59e0b';
+      txt.textContent = `KB Sync: ${localOnlyCount} pending ↑`;
+      txt.title = `${serverCount} on server, ${localOnlyCount} local-only — click "Sync Local → Server" to upload`;
+      document.getElementById('uploadAllBtn').style.display = 'inline-flex';
+    } else if(serverCount === 0){
+      dot.style.background = '#f87171';
+      txt.textContent = 'KB Sync: Empty — upload documents';
+    } else {
+      // All in sync
+      dot.style.background = '#22c55e';
+      txt.textContent = `KB Sync: ✓ ${serverCount} docs · ${timeStr}`;
+      document.getElementById('uploadAllBtn').style.display = 'none';
+    }
+
+    // Update system status too
+    const sysDot = document.getElementById('systemStatusDot');
+    const sysTxt = document.getElementById('systemStatusText');
+    if(sysDot&&sysTxt){ sysDot.style.background='#22c55e'; sysTxt.textContent='System Online'; }
+
+    // Rebuild adminDocs from server to stay in sync
+    const serverIds = new Set(serverDocs.map(d=>d.id));
+    const localOnly = adminDocs.filter(d=>!d.supabase&&!d.builtin);
+    const fromServer = serverDocs.map(sd=>({
+      id:sd.id, name:sd.name, type:sd.type||'',
+      date:sd.doc_date||'', chunks:sd.chunk_count||0,
+      builtin:false, supabase:true, content:''
+    }));
+    adminDocs = [...fromServer, ...localOnly];
+    localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+    
+    // Update KB count badge
+    const countEl = document.getElementById('nav-kb-count');
+    if(countEl) countEl.textContent = adminDocs.length;
+    
+    renderKBList();
+
+  }catch(e){
+    dot.style.background = '#f87171';
+    txt.textContent = 'KB Sync: Error — ' + e.message.slice(0,30);
+    const sysDot = document.getElementById('systemStatusDot');
+    const sysTxt = document.getElementById('systemStatusText');
+    if(sysDot&&sysTxt){ sysDot.style.background='#f87171'; sysTxt.textContent='Server Unreachable'; }
+  }
+}
+
+function startSyncMonitor(){
+  // Check sync immediately
+  checkKBSync();
+  // Then check every 60 seconds automatically
+  if(syncCheckInterval) clearInterval(syncCheckInterval);
+  syncCheckInterval = setInterval(checkKBSync, 60000);
+}
+
+function stopSyncMonitor(){
+  if(syncCheckInterval) clearInterval(syncCheckInterval);
+}
+
 
 async function loadKBFromServer(){
   if(!adminApiToken) return;
@@ -2554,26 +2685,52 @@ function toggleYear(header){
 
 // Update filterKB to also filter categories
 
-function viewDoc(id){
+async function viewDoc(id){
   const allDocs = [...BUILTIN_KB, ...adminDocs];
   const doc = allDocs.find(d=>d.id===id);
   if(!doc){ showToast('Document not found','error'); return; }
   document.getElementById('dvTitle').textContent = doc.name;
-  document.getElementById('dvMeta').textContent = doc.type + ' · ' + (doc.date||'') + ' · ' + (doc.chunks||0) + ' chunks';
+  document.getElementById('dvMeta').textContent = (doc.type||'Document') + ' · ' + (doc.date||'') + ' · ' + (doc.chunks||0) + ' chunks' + (doc.supabase?' · ● Server':'');
   const body = document.getElementById('dvBody');
-  const content = doc.content || doc.text || '';
-  if(content && content.length > 50){
-    // Highlight key terms
-    body.innerHTML = esc(content)
-      .replace(/(circular\s*no\.?\s*[\d\/\-]+)/gi, '<mark style="background:var(--accent-bg);color:var(--accent);padding:0 2px;border-radius:2px">$1</mark>')
-      .replace(/(notification\s*no\.?\s*[\d\/\-]+)/gi, '<mark style="background:var(--blue-bg);color:var(--blue);padding:0 2px;border-radius:2px">$1</mark>')
-      .replace(/(section\s+\d+[\w\(\)]*)/gi, '<mark style="background:var(--green-bg);color:var(--green);padding:0 2px;border-radius:2px">$1</mark>');
-  } else {
-    body.textContent = 'No text content available for this document. The file may be a scanned PDF or image-based PDF that cannot be read as text.';
-    body.style.color = 'var(--text3)';
-    body.style.fontStyle = 'italic';
-  }
+  body.textContent = 'Loading...';
+  body.style.color = 'var(--text3)';
+  body.style.fontStyle = 'normal';
   document.getElementById('docViewerModal').classList.add('show');
+
+  // Try local content first
+  let content = doc.content || doc.text || '';
+
+  // If not available locally and doc is on server — fetch first chunk
+  if((!content || content.length < 50) && doc.supabase && adminApiToken){
+    try{
+      const res = await fetch(API+'/kb/preview/'+doc.id, {
+        headers:{'Authorization':'Bearer '+adminApiToken}
+      });
+      if(res.ok){
+        const data = await res.json();
+        content = data.preview || '';
+        if(data.is_scanned){
+          body.innerHTML = '<div style="color:var(--red);margin-bottom:8px">⚠ Scanned PDF detected</div>' +
+            '<div style="color:var(--text3);font-style:italic;font-size:12px">This appears to be a scanned/image-based PDF. PDF.js cannot extract text from images. ' +
+            'The chunks stored may be empty or low-quality.<br><br>' +
+            'Please use a text-based PDF or run OCR on the document before uploading.</div>';
+          return;
+        }
+      }
+    }catch(e){ console.log('Preview fetch failed:', e.message); }
+  }
+
+  if(content && content.length > 50){
+    body.style.color = 'var(--text)';
+    body.innerHTML = esc(content.slice(0,5000) + (content.length>5000?'\n\n[Showing first 5000 chars...]':''))
+      .replace(/(circular\s*no\.?\s*[\d\/\-]+)/gi, '<mark style="background:var(--accent-light);color:var(--accent);padding:0 2px;border-radius:2px">$1</mark>')
+      .replace(/(notification\s*no\.?\s*[\d\/\-]+)/gi, '<mark style="background:#dbeafe;color:#1d4ed8;padding:0 2px;border-radius:2px">$1</mark>')
+      .replace(/(section\s+\d+[\w\(\)]*)/gi, '<mark style="background:#dcfce7;color:#166534;padding:0 2px;border-radius:2px">$1</mark>');
+  } else {
+    body.innerHTML = '<div style="color:var(--red);margin-bottom:8px">⚠ No text content found</div>' +
+      '<div style="color:var(--text3);font-style:italic;font-size:12px">This document appears to be a scanned/image-based PDF that cannot be read as text by PDF.js.<br><br>' +
+      'Consider: (1) Use a text-based PDF version, (2) Run OCR software first, (3) Delete this document and re-upload the correct version.</div>';
+  }
 }
 
 function closeDocViewer(){
@@ -2752,10 +2909,30 @@ function onKBFileUpload(e){
 }
 
 function deleteKBDoc(id){
-  confirmAction('Delete this document from the knowledge base?',()=>{
-    adminDocs=adminDocs.filter(d=>d.id!==id);
-    localStorage.setItem('gm_admin_kb',JSON.stringify(adminDocs));
-    renderKBList();refreshData();showToast('Document deleted','error');
+  const doc = adminDocs.find(d=>d.id===id);
+  const name = doc?.name || 'this document';
+  confirmAction(`Delete "${name.slice(0,60)}" from knowledge base?`, async ()=>{
+    if(doc?.supabase && adminApiToken){
+      try{
+        const res = await fetch(API+'/kb/documents/'+id,{
+          method:'DELETE',
+          headers:{'Authorization':'Bearer '+adminApiToken}
+        });
+        if(!res.ok){
+          const err = await res.json().catch(()=>({}));
+          showToast('Server delete failed: '+(err.detail||'Error'),'error');
+          return;
+        }
+      }catch(e){
+        showToast('Could not reach server','error');
+        return;
+      }
+    }
+    adminDocs = adminDocs.filter(d=>d.id!==id);
+    localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+    renderKBList(); refreshData();
+    showToast('Document deleted ✓','success');
+    setTimeout(checkKBSync, 500);
   });
 }
 
