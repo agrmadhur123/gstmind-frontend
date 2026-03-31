@@ -1236,6 +1236,9 @@ async function ensureApiToken(){
 let adminEmail = localStorage.getItem('gm_admin_email') || '';
 let lastSyncTime = null;
 let syncCheckInterval = null;
+let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
+let uploadQueueRunning = false;
+let uploadQueue = [];
 let kbOperationLock = false; // Prevents delete+upload conflicts
 
 async function acquireKBLock(operation){
@@ -2215,10 +2218,7 @@ async function reuploadWithContent(doc, content){
 // UPLOAD MANAGER — Background queue with dedup, logging, persistence
 // ════════════════════════════════════════════════════════════════
 
-let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
-let uploadQueueRunning = false;
-let uploadQueue = [];
-// kbOperationLock defined at top with other globals
+// uploadLog, uploadQueueRunning, uploadQueue defined at top with other globals
 
 function addUploadLog(type, message, detail=''){
   const entry = {
