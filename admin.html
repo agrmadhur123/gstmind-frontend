@@ -1989,10 +1989,12 @@ async function kbProcessBulk(files){
   // Get API token for uploading to server
   const token = await ensureApiToken();
   if(!token){
-    showToast('⚠ Not connected to server — log out and log back in with your GSTMind email','error');
+    releaseKBLock();
+    showToast('⚠ No server token — please log out and log back in','error');
     prog.style.display='none';
     return;
   }
+  console.log('Upload token present:', token ? 'yes' : 'no', 'length:', token?.length);
 
   const total=files.length;
   let added=0,dupes=0,errors=0;
@@ -2103,10 +2105,13 @@ async function kbProcessBulk(files){
           break;
         }
         errors++;
-        const errMsg = err.detail||'Server error';
-        fileEl.textContent = `✗ Failed: ${f.name}`;
+        const errMsg = err.detail||`HTTP ${uploadRes.status}`;
+        fileEl.textContent = `✗ Failed: ${f.name} — ${errMsg}`;
+        statsEl.textContent = `✓ ${added} uploaded  ⚠ ${dupes} skipped  ✗ ${errors} errors — Last error: ${errMsg}`;
+        statsEl.style.color = 'var(--red)';
         addUploadLog('error', `Failed: ${meta.docName}`, errMsg);
-        await new Promise(r=>setTimeout(r,500));
+        console.error('Upload failed:', meta.docName, errMsg, err);
+        await new Promise(r=>setTimeout(r,1000));
         continue;
       }
 
@@ -2137,7 +2142,10 @@ async function kbProcessBulk(files){
     }catch(e){
       console.error('Error processing '+f.name+':', e);
       errors++;
-      fileEl.textContent = `✗ Error: ${f.name}`;
+      fileEl.textContent = `✗ Error: ${f.name} — ${e.message}`;
+      statsEl.textContent = `✓ ${added} uploaded  ⚠ ${dupes} skipped  ✗ ${errors} errors — ${e.message}`;
+      statsEl.style.color = 'var(--red)';
+      addUploadLog('error', `Exception: ${f.name}`, e.message);
     }
   }
 
