@@ -657,6 +657,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
       <div>
         <div class="topbar-title" id="topbarTitle">Dashboard</div>
         <div class="topbar-sub" id="topbarSub">Overview of GSTMind platform</div>
+        <div id="kbVerifyStats" style="font-size:11px;color:var(--accent);font-weight:500;margin-left:8px;display:none"></div>
       </div>
       <div class="topbar-right">
         <div class="status-pill status-online" id="systemStatusPill" title="Click to check sync"><div class="status-dot" id="systemStatusDot"></div><span id="systemStatusText">Checking...</span></div>
@@ -1233,6 +1234,8 @@ async function ensureApiToken(){
 // ADMIN AUTH — Email OTP
 // ════════════════════════════════
 let adminEmail = localStorage.getItem('gm_admin_email') || '';
+let lastSyncTime = null;
+let syncCheckInterval = null;
 
 function showAdminStep1(){
   document.getElementById('adminStep1').style.display='block';
@@ -1458,6 +1461,8 @@ function showPanel(name, btn){
   const [title,sub] = panelTitles[name]||[name,''];
   document.getElementById('topbarTitle').textContent = title;
   document.getElementById('topbarSub').textContent = sub;
+  const kbStats = document.getElementById('kbVerifyStats');
+  if(kbStats) kbStats.style.display = (name==='kb') ? 'inline' : 'none';
   if(name==='users')renderUserTable(getAllUsers());
   if(name==='kb')renderKBList();
   if(name==='subscriptions')renderSubTable();
@@ -2362,9 +2367,6 @@ function reuploadDoc(docId){
 // KB SYNC STATUS — Always in sync with Supabase
 // ════════════════════════════════════════════════════════════════
 
-let lastSyncTime = null;
-let syncCheckInterval = null;
-
 async function checkKBSync(){
   const dot = document.getElementById('kbSyncDot');
   const txt = document.getElementById('kbSyncText');
@@ -2406,7 +2408,9 @@ async function checkKBSync(){
     } else {
       // All in sync
       dot.style.background = '#22c55e';
-      txt.textContent = `KB Sync: ✓ ${serverCount} docs · ${timeStr}`;
+      const totalChunks = serverDocs.reduce((s,d)=>s+(d.chunk_count||0),0);
+      txt.textContent = `KB Sync: ✓ ${serverCount} docs · ${totalChunks} chunks · ${timeStr}`;
+      txt.title = `${serverCount} documents with ${totalChunks} total chunks stored in Supabase`;
       document.getElementById('uploadAllBtn').style.display = 'none';
     }
 
@@ -2414,6 +2418,11 @@ async function checkKBSync(){
     const sysDot = document.getElementById('systemStatusDot');
     const sysTxt = document.getElementById('systemStatusText');
     if(sysDot&&sysTxt){ sysDot.style.background='#22c55e'; sysTxt.textContent='System Online'; }
+
+    // Update panel stats
+    const totalChunksAll = serverDocs.reduce((s,d)=>s+(d.chunk_count||0),0);
+    const verifyEl = document.getElementById('kbVerifyStats');
+    if(verifyEl) verifyEl.textContent = `${serverCount} docs · ${totalChunksAll} chunks in Supabase`;
 
     // Rebuild adminDocs from server to stay in sync
     const serverIds = new Set(serverDocs.map(d=>d.id));
