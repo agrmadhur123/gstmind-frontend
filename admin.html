@@ -1236,6 +1236,17 @@ async function ensureApiToken(){
 let adminEmail = localStorage.getItem('gm_admin_email') || '';
 let lastSyncTime = null;
 let syncCheckInterval = null;
+let kbOperationLock = false; // Prevents delete+upload conflicts
+
+async function acquireKBLock(operation){
+  if(kbOperationLock){
+    showToast(`Please wait — ${kbOperationLock} in progress...`,'error');
+    return false;
+  }
+  kbOperationLock = operation;
+  return true;
+}
+function releaseKBLock(){ kbOperationLock = false; }
 
 function showAdminStep1(){
   document.getElementById('adminStep1').style.display='block';
@@ -2199,17 +2210,7 @@ async function reuploadWithContent(doc, content){
 let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
 let uploadQueueRunning = false;
 let uploadQueue = [];
-let kbOperationLock = false; // Prevents delete+upload running at same time
-
-async function acquireKBLock(operation){
-  if(kbOperationLock){
-    showToast(`Please wait — KB ${kbOperationLock} in progress...`,'error');
-    return false;
-  }
-  kbOperationLock = operation;
-  return true;
-}
-function releaseKBLock(){ kbOperationLock = false; }
+// kbOperationLock defined at top with other globals
 
 function addUploadLog(type, message, detail=''){
   const entry = {
