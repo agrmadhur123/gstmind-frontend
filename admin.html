@@ -2780,11 +2780,23 @@ function updateDeleteBtn(){
 function deleteSelectedDocs(){
   const checked = [...document.querySelectorAll('.kb-select-chk:checked')].map(c=>c.dataset.id);
   if(!checked.length) return;
-  confirmAction(`Delete ${checked.length} selected document${checked.length>1?'s':''}?`, ()=>{
-    adminDocs = adminDocs.filter(d=>!checked.includes(d.id));
-    localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
-    renderKBList(); refreshData();
-    showToast(`${checked.length} document${checked.length>1?'s':''} deleted`, 'error');
+  confirmAction(`Delete ${checked.length} selected document${checked.length>1?'s':''}?`, async ()=>{
+    if(adminApiToken){
+      for(const id of checked){
+        try{
+          await fetch(API+'/kb/documents/'+id,{
+            method:'DELETE',
+            headers:{'Authorization':'Bearer '+adminApiToken}
+          });
+        }catch(e){ console.error('Delete failed for',id,e); }
+      }
+    }
+    // Reload from server — confirms what was actually deleted
+    await checkKBSync();
+    showToast(`${checked.length} document${checked.length>1?'s':''} deleted ✓`,'success');
+    document.querySelectorAll('.kb-select-chk').forEach(c=>c.checked=false);
+    const btn=document.getElementById('deleteSelectedBtn');
+    if(btn){btn.style.display='none';}
   });
 }
 
