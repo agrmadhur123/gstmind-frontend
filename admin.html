@@ -2424,18 +2424,14 @@ async function checkKBSync(){
     const verifyEl = document.getElementById('kbVerifyStats');
     if(verifyEl) verifyEl.textContent = `${serverCount} docs · ${totalChunksAll} chunks in Supabase`;
 
-    // Rebuild adminDocs from server to stay in sync
-    const serverIds = new Set(serverDocs.map(d=>d.id));
-    const localOnly = adminDocs.filter(d=>!d.supabase&&!d.builtin);
-    const fromServer = serverDocs.map(sd=>({
+    // Replace adminDocs completely with server state
+    adminDocs = serverDocs.map(sd=>({
       id:sd.id, name:sd.name, type:sd.type||'',
       date:sd.doc_date||'', chunks:sd.chunk_count||0,
       builtin:false, supabase:true, content:''
     }));
-    adminDocs = [...fromServer, ...localOnly];
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
     
-    // Update KB count badge
     const countEl = document.getElementById('nav-kb-count');
     if(countEl) countEl.textContent = adminDocs.length;
     
@@ -2472,12 +2468,9 @@ async function loadKBFromServer(){
     if(!res.ok){ console.log('KB server load failed:', res.status); return; }
     const serverDocs = await res.json();
     
-    // Server is source of truth — build fresh adminDocs from server
-    // Keep any local-only docs that aren't on server yet (content preview needed for dedup)
-    const serverIds = new Set(serverDocs.map(d=>d.id));
-    const localOnly = adminDocs.filter(d=>!d.supabase && !d.builtin && !serverIds.has(d.id));
-    
-    // Rebuild from server docs
+    // SERVER IS THE ONLY SOURCE OF TRUTH
+    // Completely replace local state with server state
+    // This ensures deletions on server are reflected immediately on reload
     const serverAdminDocs = serverDocs.map(sd=>({
       id: sd.id,
       name: sd.name,
@@ -2486,20 +2479,20 @@ async function loadKBFromServer(){
       chunks: sd.chunk_count||0,
       builtin: false,
       supabase: true,
-      content: '', // not stored locally after server sync
+      content: ''
     }));
     
-    // Merge: server docs + any still-local docs
-    adminDocs = [...serverAdminDocs, ...localOnly];
+    // Replace adminDocs entirely with server data
+    adminDocs = serverAdminDocs;
     
-    // Save merged list
+    // Overwrite localStorage with server state
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
     
     renderKBList();
     const countEl = document.getElementById('nav-kb-count');
     if(countEl) countEl.textContent = adminDocs.length;
     
-    console.log(`KB loaded: ${serverAdminDocs.length} from server, ${localOnly.length} local-only`);
+    console.log(`KB synced from server: ${adminDocs.length} documents`);
   }catch(e){ console.log('Could not load KB from server:', e.message); }
 }
 
@@ -3093,7 +3086,10 @@ function clearAllUsers(){
 function confirmAction(msg, cb){
   document.getElementById('confirm-msg').textContent=msg;
   const btn=document.getElementById('confirm-ok-btn');
-  btn.onclick=()=>{cb();document.getElementById('confirmModal').classList.remove('show');};
+  btn.onclick=async ()=>{
+    document.getElementById('confirmModal').classList.remove('show');
+    await cb(); // await async callbacks properly
+  };
   document.getElementById('confirmModal').classList.add('show');
 }
 
