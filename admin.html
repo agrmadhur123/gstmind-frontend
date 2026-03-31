@@ -1956,22 +1956,12 @@ async function kbOnDrop(e){
 function kbHandleFiles(fileList){
   const files=Array.from(fileList).filter(f=>/\.(pdf|txt|doc)$/i.test(f.name));
   if(!files.length){showToast('No supported files found','error');return;}
-  if(files.length===1){
-    // Single file — load into paste area
-    readFileText(files[0]).then(content=>{
-      const meta=autoExtractDocMeta(content);
-      document.getElementById('kb-doc-name').value=meta.docName;
-      const sel=document.getElementById('kb-doc-type');
-      if([...sel.options].some(o=>o.value===meta.docType))sel.value=meta.docType;
-      document.getElementById('kb-doc-text').value=content;
-      showToast('✓ Loaded: '+meta.docName,'success');
-    });
-  } else {
-    kbProcessBulk(files);
-  }
+  // Always bulk upload — faster and goes straight to Supabase
+  kbProcessBulk(files);
 }
 
 async function kbProcessBulk(files){
+  if(!await acquireKBLock('upload')) return;
   const prog=document.getElementById('kbProgress');
   const bar=document.getElementById('kbProgBar');
   const title=document.getElementById('kbProgTitle');
@@ -2114,6 +2104,7 @@ async function kbProcessBulk(files){
       fileEl.textContent = `✓ ${meta.docName} — ${result.chunks} chunks`;
       addUploadLog('success', `Uploaded: ${meta.docName}`, `${result.chunks} chunks stored`);
 
+      // Immediately add to local list and render
       adminDocs.push({
         id: result.id, name: meta.docName, type: meta.docType,
         content: content.slice(0,10000),
@@ -2122,9 +2113,16 @@ async function kbProcessBulk(files){
         date: meta.docDate||new Date().toLocaleDateString('en-IN'),
         builtin: false, supabase: true
       });
-
-      if(added%5===0){ renderKBList(); localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs)); }
-      await new Promise(r=>setTimeout(r,300));
+      localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+      renderKBList(); // Show in KB list instantly after each upload
+      
+      // Update sync pill immediately
+      const sDoc = document.getElementById('kbSyncDot');
+      const sTxt = document.getElementById('kbSyncText');
+      if(sDoc) sDoc.style.background='#22c55e';
+      if(sTxt) sTxt.textContent=`KB Sync: uploading... ${added} done`;
+      
+      await new Promise(r=>setTimeout(r,200)); // small gap between uploads
     }catch(e){
       console.error('Error processing '+f.name+':', e);
       errors++;
@@ -2145,7 +2143,8 @@ async function kbProcessBulk(files){
   showToast(summary, errors>0?'error':'success');
   addUploadLog(errors>0?'error':'success','Batch complete: '+summary);
   await checkKBSync(); // Verify sync after upload
-  setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},8000);
+  await checkKBSync();
+  setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},5000);
 }
 
 // Legacy function name kept for compatibility
@@ -2200,6 +2199,17 @@ async function reuploadWithContent(doc, content){
 let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
 let uploadQueueRunning = false;
 let uploadQueue = [];
+let kbOperationLock = false; // Prevents delete+upload running at same time
+
+async function acquireKBLock(operation){
+  if(kbOperationLock){
+    showToast(`Please wait — KB ${kbOperationLock} in progress...`,'error');
+    return false;
+  }
+  kbOperationLock = operation;
+  return true;
+}
+function releaseKBLock(){ kbOperationLock = false; }
 
 function addUploadLog(type, message, detail=''){
   const entry = {
@@ -2780,23 +2790,29 @@ function updateDeleteBtn(){
 function deleteSelectedDocs(){
   const checked = [...document.querySelectorAll('.kb-select-chk:checked')].map(c=>c.dataset.id);
   if(!checked.length) return;
-  confirmAction(`Delete ${checked.length} selected document${checked.length>1?'s':''}?`, async ()=>{
-    if(adminApiToken){
-      for(const id of checked){
-        try{
-          await fetch(API+'/kb/documents/'+id,{
-            method:'DELETE',
-            headers:{'Authorization':'Bearer '+adminApiToken}
-          });
-        }catch(e){ console.error('Delete failed for',id,e); }
-      }
+  confirmAction(`Delete ${checked.length} document${checked.length>1?'s':''}?`, async ()=>{
+    if(!await acquireKBLock('delete')) return;
+    const dot=document.getElementById('kbSyncDot');
+    const txt=document.getElementById('kbSyncText');
+    if(dot) dot.style.background='#fbbf24';
+    if(txt) txt.textContent=`Deleting ${checked.length} docs from Supabase...`;
+    let ok=0, fail=0;
+    for(const id of checked){
+      try{
+        const res=await fetch(API+'/kb/documents/'+id,{
+          method:'DELETE',
+          headers:{'Authorization':'Bearer '+adminApiToken}
+        });
+        if(res.ok) ok++; else fail++;
+      }catch(e){ fail++; }
     }
-    // Reload from server — confirms what was actually deleted
+    releaseKBLock();
     await checkKBSync();
-    showToast(`${checked.length} document${checked.length>1?'s':''} deleted ✓`,'success');
     document.querySelectorAll('.kb-select-chk').forEach(c=>c.checked=false);
     const btn=document.getElementById('deleteSelectedBtn');
-    if(btn){btn.style.display='none';}
+    if(btn) btn.style.display='none';
+    if(fail>0) showToast(`${ok} deleted, ${fail} failed`,'error');
+    else showToast(`✓ ${ok} document${ok>1?'s':''} deleted`,'success');
   });
 }
 
@@ -2926,6 +2942,7 @@ function deleteKBDoc(id){
   const doc = adminDocs.find(d=>d.id===id);
   const name = doc?.name || 'this document';
   confirmAction(`Delete "${name.slice(0,60)}" from knowledge base?`, async ()=>{
+    if(!await acquireKBLock('delete')) return;
     if(doc?.supabase && adminApiToken){
       try{
         const res = await fetch(API+'/kb/documents/'+id,{
@@ -2945,6 +2962,7 @@ function deleteKBDoc(id){
     adminDocs = adminDocs.filter(d=>d.id!==id);
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
     renderKBList(); refreshData();
+    releaseKBLock();
     showToast('Document deleted ✓','success');
     setTimeout(checkKBSync, 500);
   });
