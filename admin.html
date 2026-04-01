@@ -542,10 +542,10 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 
 /* Processing queue panel */
 .upload-queue { 
-  position:fixed;bottom:20px;right:20px;width:380px;max-height:400px;
+  position:fixed;bottom:20px;right:20px;width:380px;max-height:420px;
   background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);
-  z-index:200;display:none;flex-direction:column;overflow:hidden
+  border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.3);
+  z-index:9999;display:none;flex-direction:column;overflow:hidden
 }
 .upload-queue.show { display:flex }
 .upload-queue-hdr {
@@ -2276,8 +2276,9 @@ async function kbProcessBulk(files){
       const identity = extractDocIdentity(content);
 
       // Check if duplicate
-      if(isAlreadyOnServer(fullMeta.docName, identity) && 
-         fullMeta.docName !== meta.docName){
+      console.log('Dedup check:', fullMeta.docName, 'vs existing:', adminDocs.filter(d=>d.supabase).map(d=>d.name));
+      // Skip if already on server (regardless of name match)
+      if(isAlreadyOnServer(fullMeta.docName, identity)){
         // Delete the placeholder we just created
         await fetch(API+'/kb/documents/'+docId,{
           method:'DELETE',
@@ -2884,27 +2885,64 @@ function viewSkippedDoc(id){
   document.getElementById('docViewerModal').classList.add('show');
 }
 
-function addSkippedDoc(id){
+async function addSkippedDoc(id){
   const d = skippedDocs.find(s=>s.id===id);
-  if(!d) return;
-  const content = d.content||'';
-  const words = content.split(/\s+/).filter(w=>w);
-  const identity = extractDocIdentity(content);
-  adminDocs.push({
-    id: 'd'+Date.now()+Math.random(),
-    name: d.name!=='GST Document' ? d.name : d.fileName.replace(/\.[^.]+$/,''),
-    type: d.type||'Other',
-    content, text:content,
-    chunks: Math.ceil(words.length/400),
-    date: d.date||new Date().toLocaleDateString('en-IN'),
-    builtin: false,
-    contentHash: fullContentHash(content),
-    docIdentity: identity
-  });
-  try{ localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs)); } catch(e){}
-  removeSkipped(id);
-  renderKBList();refreshData();
-  showToast('Added: ' + d.name, 'success');
+  if(!d){ showToast('Skipped entry not found','error'); return; }
+  
+  // For new-style skipped docs (from new upload flow) — need original file
+  // since content is not stored in skippedDocs
+  if(!d.content || d.content.length < 100){
+    showToast('Please re-upload the original file — content not stored locally','info');
+    // Open file picker so user can select the original file
+    const input = document.createElement('input');
+    input.type='file'; input.accept='.pdf,.txt';
+    input.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      // Use the new upload pipeline
+      await kbProcessBulk([file]);
+      removeSkipped(id);
+    };
+    input.click();
+    return;
+  }
+  
+  // Has content — upload directly to server
+  const token = await ensureApiToken();
+  if(!token) return;
+  
+  const name = d.name!=='GST Document' ? d.name : (d.fileName||'').replace(/\.[^.]+$/,'');
+  showToast('Uploading: '+name,'info');
+  
+  try{
+    // Phase 1: init
+    const initRes = await fetch(API+'/kb/upload/init',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({name, type:d.type||'Other', doc_date:d.date||'', file_name:d.fileName||''})
+    });
+    if(!initRes.ok) throw new Error('Init failed');
+    const {doc_id} = await initRes.json();
+    
+    // Phase 2: chunks
+    const chunksRes = await fetch(API+'/kb/upload/chunks',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({doc_id, content:d.content})
+    });
+    if(!chunksRes.ok) throw new Error('Chunk upload failed');
+    const result = await chunksRes.json();
+    
+    adminDocs.push({id:doc_id, name:result.name||name, type:d.type||'Other',
+      date:d.date||'', chunks:result.chunks, builtin:false, supabase:true, status:'ready'});
+    localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+    removeSkipped(id);
+    renderKBList();
+    showToast('✓ Added: '+name+' — '+result.chunks+' chunks','success');
+    await checkKBSync();
+  }catch(e){
+    showToast('Upload failed: '+e.message,'error');
+  }
 }
 
 function removeSkipped(id){
@@ -3065,6 +3103,9 @@ function renderKBList(filter=''){
   const serverCount = allDocs.filter(d=>d.supabase).length;
   const localCount = allDocs.filter(d=>!d.supabase&&!d.builtin).length;
   document.getElementById('kb-count-label').textContent = `${adminDocs.length} documents (${allDocs.length} shown · ${serverCount} on server${localCount?' · '+localCount+' local only':''})`;
+  // Show/hide Sync button based on local-only count
+  const syncBtn = document.getElementById('uploadAllBtn');
+  if(syncBtn) syncBtn.style.display = localCount > 0 ? 'inline-flex' : 'none';
   document.getElementById('kbTabCount-all').textContent = allDocs.length;
   document.getElementById('kbTabCount-cat').textContent = allDocs.length;
   document.getElementById('kbTabCount-skipped').textContent = skippedDocs.length;
