@@ -824,6 +824,197 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
 
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--sidebar-bg);padding:9px 18px;border-radius:20px;font-size:12.5px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap;font-family:'DM Mono',monospace}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS — GSTMind
+   Best practices:
+   - Sidebar slides over content (not pushes)
+   - Input fixed at bottom with safe area
+   - Touch targets min 44px
+   - No horizontal scroll
+   - Keyboard-aware input
+   ═══════════════════════════════════════════════════════ */
+
+/* Prevent horizontal overflow globally */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+
+/* Better tap highlights */
+button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
+
+/* ── Sidebar overlay (mobile) ── */
+#sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99;
+  backdrop-filter: blur(1px);
+}
+
+/* ── Safe area for notched phones ── */
+.input-wrap {
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+/* ════════════════════════════════
+   TABLET: 481px – 768px
+   ════════════════════════════════ */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    width: 280px !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,.15);
+  }
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .app-sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 280px !important;
+  }
+  #sidebarOverlay.show { display: block; }
+  .app-main { width: 100%; }
+  .kb-drawer.open { width: 100%; position: fixed; inset: 0; z-index: 98; }
+  .msg-inner { padding: 0 16px; }
+  .empty { padding: 32px 16px; min-height: 50vh; }
+  .empty-title { font-size: 22px; }
+  .chips-grid { gap: 6px; }
+  .chip { font-size: 12px; padding: 8px 12px; }
+  .input-wrap { padding: 10px 12px max(10px, env(safe-area-inset-bottom)); }
+  .inp-hint { display: none; }
+  .app-topbar { padding: 0 12px; }
+  .mode-pill { padding: 5px 12px; font-size: 12px; }
+  .topbar-right .kb-chip { display: none; }
+  .auth-card { padding: 28px 20px; margin: 0 12px; }
+}
+
+/* ════════════════════════════════
+   MOBILE: ≤ 480px
+   ════════════════════════════════ */
+@media (max-width: 480px) {
+  /* Auth pages */
+  .auth-page { padding: 16px 0; align-items: flex-start; min-height: 100dvh; }
+  .auth-card {
+    width: 100%; margin: 0;
+    border-radius: 0;
+    border-left: none; border-right: none;
+    padding: 24px 20px;
+    min-height: 100dvh;
+  }
+  .auth-title { font-size: 22px; }
+  .form-row { flex-direction: column; gap: 0; }
+
+  /* Sidebar */
+  .app-sidebar { width: 100% !important; }
+
+  /* Topbar */
+  .app-topbar { height: 48px; gap: 6px; padding: 0 10px; }
+  .mode-pills { gap: 2px; }
+  .mode-pill { padding: 5px 10px; font-size: 11.5px; }
+  .topbar-right { gap: 4px; }
+  .docs-btn { padding: 5px 10px; font-size: 11px; }
+  .topbar-right .upgrade-btn { display: none; } /* hide on mobile — in sidebar */
+
+  /* Messages */
+  .msg-inner { padding: 0 12px; max-width: 100%; }
+  .bubble { font-size: 14px; line-height: 1.8; }
+  .msg-actions { gap: 6px; }
+  .msg-action-btn { padding: 4px 10px; font-size: 11px; }
+  .msgs { padding: 16px 0; }
+
+  /* Input bar */
+  .input-wrap { padding: 8px 10px max(8px, env(safe-area-inset-bottom)); }
+  .input-outer { border-radius: 14px; margin: 0; }
+  .input-inner { padding: 8px 10px; gap: 8px; }
+  #qi { font-size: 16px !important; } /* 16px prevents iOS auto-zoom */
+  .attach-btn { width: 38px; height: 38px; }
+  .send-btn { width: 38px; height: 38px; border-radius: 10px; }
+  .disclaimer { font-size: 10px; }
+
+  /* Empty state */
+  .empty { padding: 24px 16px; gap: 12px; }
+  .empty-icon { width: 46px; height: 46px; }
+  .empty-title { font-size: 20px; }
+  .empty-sub { font-size: 12.5px; }
+  .chips-grid { max-width: 100%; }
+  .chip { font-size: 11.5px; padding: 7px 11px; }
+
+  /* Source chips */
+  .src-chips { flex-wrap: wrap; }
+  .src-chip { font-size: 10px; }
+
+  /* Trial warning */
+  .trial-warning { padding: 6px 12px; font-size: 11px; }
+
+  /* Landing page */
+  .land-hero-title { font-size: 32px; }
+  .land-hero-sub { font-size: 14px; }
+  .land-features-grid { grid-template-columns: 1fr; }
+
+  /* OTP boxes */
+  .otp-boxes { gap: 6px; }
+  .otp-box { width: 42px; height: 48px; font-size: 18px; }
+
+  /* Upgrade modal */
+  .upgrade-card { margin: 16px; padding: 24px 20px; }
+}
+
+/* ════════════════════════════════
+   iOS KEYBOARD FIX
+   When keyboard opens, keep input visible
+   ════════════════════════════════ */
+@supports (height: 100dvh) {
+  .app-shell { height: 100dvh; }
+  .auth-page { min-height: 100dvh; }
+}
+
+/* ════════════════════════════════
+   TOUCH IMPROVEMENTS
+   ════════════════════════════════ */
+.chip, .mode-pill, .sb-bottom-btn, .new-chat, .hist-item,
+.send-btn, .attach-btn, .docs-btn {
+  touch-action: manipulation; /* faster tap, no double-tap zoom */
+}
+.msgs, .sidebar-scroll {
+  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
+  overscroll-behavior: contain;
+}
+
+/* ════════════════════════════════
+   UI BEST PRACTICES
+   ════════════════════════════════ */
+
+/* Smooth scroll to new messages */
+.msgs { scroll-behavior: smooth; }
+
+/* Better focus rings (accessibility) */
+button:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible) { outline: none; }
+
+/* Prevent text selection on UI elements */
+.mode-pill, .chip, .send-btn, .attach-btn, .sb-bottom-btn,
+.new-chat, .hist-item { user-select: none; }
+
+/* Better loading state */
+.send-btn:disabled { opacity: .5; transform: scale(.95); }
+
+/* Smooth sidebar toggle */
+.sidebar-toggle { transition: transform .25s ease; }
+
+/* Message animation feels snappier on mobile */
+@media (prefers-reduced-motion: reduce) {
+  .msg-row { animation: none; }
+  .app-sidebar { transition: none; }
+}
+
 </style>
 </head>
 <body>
@@ -1113,7 +1304,8 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
 
 <!-- ════ MAIN APP ════ -->
 <div class="page" id="page-app">
-  <div class="app-shell">
+  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="app-shell">
 
     <!-- SIDEBAR -->
     <div class="app-sidebar" id="appSidebar">
@@ -1168,6 +1360,13 @@ body.dark-mode .settings-input{background:var(--chat-bg);color:var(--text)}
     <!-- MAIN -->
     <div class="app-main">
       <div class="app-topbar">
+      <button onclick="toggleSidebarMobile()" class="sidebar-toggle" id="mobileMenuBtn" 
+        style="display:none;width:36px;height:36px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;color:var(--text2)" 
+        aria-label="Menu">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/>
+        </svg>
+      </button>
         <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">⟨</button>
         <div class="mode-pills">
           <button class="mode-pill active" onclick="setMode('query',this)">GST Query</button>
@@ -3125,6 +3324,93 @@ function updateKeyStatus(v){
 
 window.addEventListener('load', loadAdminBar);
 window.addEventListener('load', loadTheme);
+
+
+// ════════════════════════════════════════════════════════
+// MOBILE — Sidebar, keyboard, touch handling
+// ════════════════════════════════════════════════════════
+
+function isMobile(){ return window.innerWidth <= 768; }
+
+function toggleSidebarMobile(){
+  const sb = document.getElementById('appSidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const isOpen = sb.classList.contains('mobile-open');
+  if(isOpen){
+    sb.classList.remove('mobile-open');
+    ov.classList.remove('show');
+  } else {
+    sb.classList.add('mobile-open');
+    ov.classList.add('show');
+  }
+}
+
+function closeSidebar(){
+  const sb = document.getElementById('appSidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.remove('mobile-open');
+  ov.classList.remove('show');
+}
+
+function handleResize(){
+  const btn = document.getElementById('mobileMenuBtn');
+  const sb = document.getElementById('appSidebar');
+  if(window.innerWidth <= 768){
+    if(btn) btn.style.display = 'flex';
+    // On mobile, sidebar starts closed
+    if(!sb.classList.contains('mobile-open')){
+      sb.classList.remove('collapsed');
+    }
+  } else {
+    if(btn) btn.style.display = 'none';
+    closeSidebar();
+    // Restore desktop collapsed state
+    if(localStorage.getItem('gm_sidebar_collapsed')==='1'){
+      sb.classList.add('collapsed');
+    }
+  }
+}
+
+// Close sidebar when nav item clicked on mobile
+function closeSidebarOnMobile(){
+  if(isMobile()) closeSidebar();
+}
+
+// iOS keyboard — scroll input into view when keyboard opens
+function handleInputFocus(){
+  if(!isMobile()) return;
+  setTimeout(()=>{
+    const qi = document.getElementById('qi');
+    if(qi) qi.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 300);
+}
+
+// Override toggleSidebar for desktop behavior
+const _origToggle = typeof toggleSidebar === 'function' ? toggleSidebar : null;
+function toggleSidebar(){
+  if(isMobile()){
+    toggleSidebarMobile();
+    return;
+  }
+  if(_origToggle) _origToggle();
+  else {
+    const sb = document.getElementById('appSidebar');
+    sb.classList.toggle('collapsed');
+    localStorage.setItem('gm_sidebar_collapsed', sb.classList.contains('collapsed') ? '1' : '0');
+  }
+}
+
+window.addEventListener('resize', handleResize);
+window.addEventListener('load', ()=>{
+  handleResize();
+  // Attach focus handler to textarea
+  const qi = document.getElementById('qi');
+  if(qi) qi.addEventListener('focus', handleInputFocus);
+});
+
+// Close sidebar on new chat (mobile)
+const _origNewChat = typeof startNewChat === 'function' ? startNewChat : null;
+
 </script>
 
 </body>
