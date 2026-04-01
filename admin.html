@@ -2288,6 +2288,25 @@ async function kbProcessBulk(files){
         updateUQItem(fileId, `⚠ Duplicate: ${fullMeta.docName}`, 100, 'skipped');
         skipped++;
         addUploadLog('skip',`Duplicate: ${f.name}`,fullMeta.docName);
+        // Add to skipped tab so admin can review
+        skippedDocs.push({
+          id: 's'+Date.now()+Math.random(),
+          fileName: f.name,
+          name: fullMeta.docName,
+          type: fullMeta.docType||meta.docType,
+          date: fullMeta.docDate||meta.docDate||'',
+          reason: 'Duplicate — already on server',
+          matchedDoc: adminDocs.find(d=>d.supabase&&d.name===fullMeta.docName)?.name || 'existing document',
+          content: '',
+          skippedAt: new Date().toISOString()
+        });
+        localStorage.setItem('gm_skipped_kb', JSON.stringify(skippedDocs));
+        // Update skipped tab count badge
+        const skipBadge = document.getElementById('kbTabCount-skipped');
+        if(skipBadge){
+          skipBadge.textContent = skippedDocs.length;
+          skipBadge.style.cssText='background:var(--red-bg);color:var(--red)';
+        }
         continue;
       }
 
@@ -2517,12 +2536,16 @@ function clearUploadLog(){
 
 // Check if doc is already on Supabase by name+identity
 function isAlreadyOnServer(docName, identity){
-  const GENERIC_NAMES = ['GST Document','CBIC FAQ','GST Act 2017'];
+  const GENERIC_NAMES = ['GST Document','CBIC FAQ','GST Act 2017','GST Reference Material',
+                          'Background Material on GST','Other'];
   return adminDocs.some(d => {
     if(!d.supabase) return false;
-    // Never skip based on generic fallback names — filename-based names can collide
+    // Never deduplicate on generic/reference material names
+    if(GENERIC_NAMES.some(g => docName.toLowerCase().includes(g.toLowerCase()))) return false;
+    if(GENERIC_NAMES.some(g => d.name.toLowerCase().includes(g.toLowerCase()))) return false;
+    // Exact name match (only for specific circulars/notifications)
     const nameMatch = !GENERIC_NAMES.includes(docName) && d.name === docName;
-    // Only match by circular/notification ref+year (most reliable)
+    // Ref number match (most reliable — same circular number = definite duplicate)
     const refMatch = d.docIdentity?.refNo && identity?.refNo &&
        d.docIdentity.refNo === identity.refNo &&
        d.docIdentity.year === identity.year &&
