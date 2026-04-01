@@ -632,6 +632,9 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
       </button>
 
       <div class="nav-lbl">System</div>
+      <button class="nav-btn" onclick="showPanel('prompts',this)">
+        <span class="nav-icon">◻</span> Prompts & AI
+      </button>
       <button class="nav-btn" onclick="showPanel('settings',this)">
         <span class="nav-icon">◻</span> Settings
       </button>
@@ -842,7 +845,19 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 
           <!-- Auto-sync -->
           <div class="card">
-            <div class="card-title">CBIC Auto-Sync</div>
+            <!-- KB Health Card -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">📊 KB Health</div>
+            <div id="kbHealthGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+              <div style="color:var(--text2)">Total docs</div><div id="kh-docs" style="font-weight:600;text-align:right">—</div>
+              <div style="color:var(--text2)">Total chunks</div><div id="kh-chunks" style="font-weight:600;text-align:right">—</div>
+              <div style="color:var(--text2)">Avg chunks/doc</div><div id="kh-avg" style="font-weight:600;text-align:right">—</div>
+              <div style="color:var(--text2)">Est. pages covered</div><div id="kh-pages" style="font-weight:600;text-align:right">—</div>
+            </div>
+            <div id="kbHealthIssues" style="margin-top:10px;font-size:11px"></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadKBHealth()" style="margin-top:8px;width:100%">↺ Check Health</button>
+          </div>
+          <div class="card-title">CBIC Auto-Sync</div>
             <div class="card-sub">Automatically fetches new circulars and notifications from cbic.gov.in</div>
             <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
               <div style="display:flex;justify-content:space-between;font-size:13px">
@@ -872,7 +887,23 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
           <div class="sec-title">Knowledge Base Documents</div>
           <div class="sec-sub" id="kb-count-label">6 built-in documents</div>
           <div class="sec-hdr-right">
-            <input class="search-inp" type="text" placeholder="Search documents..." oninput="filterKB(this.value)" id="kbSearch" style="width:180px"/>
+            <input class="search-inp" type="text" placeholder="Search documents..." oninput="filterKB(this.value)" id="kbSearch" style="width:160px"/>
+            <select onchange="sortKB(this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer" title="Sort">
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="name-asc">Name A→Z</option>
+              <option value="chunks-desc">Most chunks</option>
+              <option value="chunks-asc">Fewest chunks</option>
+            </select>
+            <select onchange="filterKBType(this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer" title="Filter by type">
+              <option value="">All types</option>
+              <option value="CBIC Circular">Circulars</option>
+              <option value="CBIC Notification">Notifications</option>
+              <option value="GST Act Section">Acts</option>
+              <option value="GST Rules">Rules</option>
+              <option value="CBIC FAQ">FAQs</option>
+              <option value="Other">Other</option>
+            </select>
             <button class="btn btn-ghost btn-sm" onclick="downloadKBZip()">⬇ Download KB Zip</button>
             <button class="btn btn-danger btn-sm" onclick="deleteSelectedDocs()" id="deleteSelectedBtn" style="display:none">🗑 Delete Selected</button>
           </div>
@@ -1038,6 +1069,69 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
               <tr><td colspan="6"><div class="empty-state"><p>No subscribers yet.</p></div></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ── PROMPTS & AI BEHAVIOUR ── -->
+      <div class="panel" id="panel-prompts">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px">
+
+          <!-- Main Query Prompt -->
+          <div style="grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">Main Query Prompt</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:2px">Controls how GSTMind answers GST queries. Changes apply instantly — no deployment needed.</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" onclick="resetPrompt('main_prompt')">↺ Reset to Default</button>
+                <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="savePrompt('main_prompt')">Save</button>
+              </div>
+            </div>
+            <textarea id="prompt-main_prompt" style="width:100%;height:320px;font-family:monospace;font-size:12px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--chat-bg);color:var(--text);outline:none;resize:vertical;line-height:1.6" placeholder="Loading..."></textarea>
+          </div>
+
+          <!-- Amendment Instruction -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">Amendment Handling</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:2px">How to handle Finance Act amendments and superseded circulars</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" onclick="resetPrompt('amendment_instruction')">↺ Reset</button>
+                <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="savePrompt('amendment_instruction')">Save</button>
+              </div>
+            </div>
+            <textarea id="prompt-amendment_instruction" style="width:100%;height:220px;font-family:monospace;font-size:12px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--chat-bg);color:var(--text);outline:none;resize:vertical;line-height:1.6" placeholder="Loading..."></textarea>
+          </div>
+
+          <!-- Draft/Notice Prompt -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">Notice Draft Prompt</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:2px">Used when drafting replies to GST notices</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" onclick="resetPrompt('draft_prompt')">↺ Reset</button>
+                <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="savePrompt('draft_prompt')">Save</button>
+              </div>
+            </div>
+            <textarea id="prompt-draft_prompt" style="width:100%;height:220px;font-family:monospace;font-size:12px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--chat-bg);color:var(--text);outline:none;resize:vertical;line-height:1.6" placeholder="Loading..."></textarea>
+          </div>
+
+          <!-- Tips box -->
+          <div style="grid-column:1/-1;background:var(--accent-light);border:1px solid var(--accent-border);border-radius:10px;padding:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:8px">💡 How Prompt Management Works</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7">
+              Changes save to Supabase and apply to all new queries within 5 minutes — no code change or redeployment needed.<br>
+              <strong>Main Prompt:</strong> Controls identity, answer structure, confidence levels, and citation format.<br>
+              <strong>Amendment Handling:</strong> How GSTMind presents Finance Act changes and superseded circulars.<br>
+              <strong>Notice Draft:</strong> Tone and structure for drafting replies to GST department notices.<br>
+              <strong>Reset to Default:</strong> Restores the original built-in prompt if something goes wrong.
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1462,6 +1556,7 @@ const panelTitles = {
   dashboard:['Dashboard','Overview of GSTMind platform'],
   users:['User Management','Add, edit, block and manage all users'],
   kb:['Knowledge Base','Manage CBIC documents and auto-sync'],
+  prompts:['Prompts & AI Behaviour','Control how GSTMind responds — no code changes needed'],
   analytics:['Analytics','Query patterns and usage insights'],
   subscriptions:['Subscriptions','Plans, revenue and billing management'],
   settings:['Settings','Admin credentials, API key and system config']
@@ -1478,7 +1573,8 @@ function showPanel(name, btn){
   const kbStats = document.getElementById('kbVerifyStats');
   if(kbStats) kbStats.style.display = (name==='kb') ? 'inline' : 'none';
   if(name==='users')renderUserTable(getAllUsers());
-  if(name==='kb')renderKBList();
+  if(name==='kb'){ renderKBList(); loadKBHealth(); }
+  if(name==='prompts') loadPromptPanel();
   if(name==='subscriptions')renderSubTable();
   if(name==='analytics')renderAnalytics();
 }
@@ -2052,9 +2148,17 @@ async function kbProcessBulk(files){
       // Step 2: Extract metadata
       const meta = autoExtractDocMeta(content);
       const identity = extractDocIdentity(content);
+      // If name extraction failed, use filename (without extension) as name
+      const GENERIC_NAMES = ['GST Document','CBIC FAQ','GST Act 2017'];
+      if(GENERIC_NAMES.includes(meta.docName)){
+        meta.docName = f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim() || meta.docName;
+      }
 
-      // Step 3: Check duplicate locally first (fast)
-      const dupeResult = isDuplicateContent(content, meta.docName);
+      // Step 3: Check duplicate locally (skip if generic name — use content hash only)
+      const GENERIC_NAMES_CHECK = ['GST Document','CBIC FAQ'];
+      const dupeResult = GENERIC_NAMES_CHECK.includes(meta.docName) 
+        ? null  // Don't deduplicate generic names by name
+        : isDuplicateContent(content, meta.docName);
       if(dupeResult){
         dupes++;
         fileEl.textContent='⚠ Duplicate: '+f.name;
@@ -2264,15 +2368,18 @@ function clearUploadLog(){
 
 // Check if doc is already on Supabase by name+identity
 function isAlreadyOnServer(docName, identity){
-  return adminDocs.some(d => 
-    d.supabase && (
-      d.name === docName ||
-      (d.docIdentity?.refNo && identity?.refNo && 
+  const GENERIC_NAMES = ['GST Document','CBIC FAQ','GST Act 2017'];
+  return adminDocs.some(d => {
+    if(!d.supabase) return false;
+    // Never skip based on generic fallback names — filename-based names can collide
+    const nameMatch = !GENERIC_NAMES.includes(docName) && d.name === docName;
+    // Only match by circular/notification ref+year (most reliable)
+    const refMatch = d.docIdentity?.refNo && identity?.refNo &&
        d.docIdentity.refNo === identity.refNo &&
        d.docIdentity.year === identity.year &&
-       (d.docIdentity.variantType||'original') === (identity.variantType||'original'))
-    )
-  );
+       (d.docIdentity.variantType||'original') === (identity.variantType||'original');
+    return nameMatch || refMatch;
+  });
 }
 
 async function uploadAllLocal(){
@@ -2759,8 +2866,22 @@ function closeDocViewer(){
 }
 
 function renderKBList(filter=''){
-  const allDocs = [...BUILTIN_KB,...adminDocs].filter(d=>!filter||d.name.toLowerCase().includes(filter.toLowerCase()));
-  document.getElementById('kb-count-label').textContent = `${adminDocs.length} documents (${allDocs.length} total)`;
+  let allDocs = [...BUILTIN_KB,...adminDocs];
+  // Apply search filter
+  if(filter) allDocs = allDocs.filter(d=>d.name.toLowerCase().includes(filter.toLowerCase())||d.type?.toLowerCase().includes(filter.toLowerCase()));
+  // Apply type filter
+  if(kbTypeFilter) allDocs = allDocs.filter(d=>d.type===kbTypeFilter);
+  // Apply sort
+  allDocs.sort((a,b)=>{
+    if(kbSortMode==='name-asc') return (a.name||'').localeCompare(b.name||'');
+    if(kbSortMode==='chunks-desc') return (b.chunks||0)-(a.chunks||0);
+    if(kbSortMode==='chunks-asc') return (a.chunks||0)-(b.chunks||0);
+    if(kbSortMode==='date-asc') return (a.date||'').localeCompare(b.date||'');
+    return (b.date||'').localeCompare(a.date||''); // date-desc default
+  });
+  const serverCount = allDocs.filter(d=>d.supabase).length;
+  const localCount = allDocs.filter(d=>!d.supabase&&!d.builtin).length;
+  document.getElementById('kb-count-label').textContent = `${adminDocs.length} documents (${allDocs.length} shown · ${serverCount} on server${localCount?' · '+localCount+' local only':''})`;
   document.getElementById('kbTabCount-all').textContent = allDocs.length;
   document.getElementById('kbTabCount-cat').textContent = allDocs.length;
   document.getElementById('kbTabCount-skipped').textContent = skippedDocs.length;
@@ -2783,7 +2904,8 @@ function renderKBList(filter=''){
           : !d.supabase
             ? `<button class="btn btn-sm" style="background:var(--accent);color:#fff;font-size:10px" onclick="reuploadDoc('${d.id}')">↑ Upload</button>
                <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
-            : `<button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="editKBDoc('${d.id}')" title="Edit name/type/date">✏</button>
+               <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">Delete</button>`
         }
       </div>
     </div>`).join('');
@@ -2795,6 +2917,178 @@ function updateDeleteBtn(){
   if(btn) btn.style.display = checked > 0 ? 'flex' : 'none';
   if(btn) btn.textContent = `🗑 Delete Selected (${checked})`;
 }
+
+
+// ════════════════════════════════════════════════════════
+// KB SORT, FILTER, HEALTH, EDIT
+// ════════════════════════════════════════════════════════
+
+let kbSortMode = 'date-desc';
+let kbTypeFilter = '';
+let kbSearchFilter = '';
+
+function sortKB(mode){
+  kbSortMode = mode;
+  renderKBList(kbSearchFilter);
+}
+
+function filterKBType(type){
+  kbTypeFilter = type;
+  renderKBList(kbSearchFilter);
+}
+
+function filterKB(val){
+  kbSearchFilter = val;
+  renderKBList(val);
+}
+
+// ── KB Health Check ──
+async function loadKBHealth(){
+  if(!adminApiToken) return;
+  try{
+    const res = await fetch(API+'/kb/health',{headers:{'Authorization':'Bearer '+adminApiToken}});
+    if(!res.ok) return;
+    const h = await res.json();
+    
+    document.getElementById('kh-docs').textContent = h.total_docs.toLocaleString();
+    document.getElementById('kh-chunks').textContent = h.total_chunks.toLocaleString();
+    document.getElementById('kh-avg').textContent = h.avg_chunks_per_doc;
+    document.getElementById('kh-pages').textContent = '~'+h.estimated_pages.toLocaleString();
+    
+    const issuesEl = document.getElementById('kbHealthIssues');
+    if(!h.issues.length){
+      issuesEl.innerHTML = '<div style="color:#22c55e">✓ No issues found</div>';
+    } else {
+      issuesEl.innerHTML = h.issues.map(i=>
+        `<div style="color:${i.type==='empty'?'#ef4444':'#f59e0b'};margin-top:4px">
+          ⚠ ${i.msg}: ${i.docs.slice(0,3).join(', ')}${i.docs.length>3?' +'+(i.docs.length-3)+' more':''}
+        </div>`
+      ).join('');
+    }
+  }catch(e){ console.log('Health check failed:', e.message); }
+}
+
+// ── Edit KB Document ──
+function editKBDoc(id){
+  const doc = adminDocs.find(d=>d.id===id);
+  if(!doc) return;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--surface);border-radius:12px;padding:24px;width:440px;max-width:90vw">
+      <div style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text)">Edit Document</div>
+      <label style="font-size:11px;color:var(--text2);font-weight:600">DOCUMENT NAME</label>
+      <input id="editDocName" class="inp" value="${esc(doc.name)}" style="margin-bottom:12px;width:100%"/>
+      <label style="font-size:11px;color:var(--text2);font-weight:600">DOCUMENT TYPE</label>
+      <select id="editDocType" class="inp" style="margin-bottom:12px;width:100%;cursor:pointer">
+        ${['CBIC Circular','CBIC Notification','GST Act Section','GST Rules','CBIC FAQ','Other'].map(t=>
+          `<option ${doc.type===t?'selected':''} value="${t}">${t}</option>`
+        ).join('')}
+      </select>
+      <label style="font-size:11px;color:var(--text2);font-weight:600">DATE (YYYY-MM-DD)</label>
+      <input id="editDocDate" class="inp" value="${doc.date||''}" placeholder="2024-03-15" style="margin-bottom:16px;width:100%"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveDocEdit('${id}',this)">Save Changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
+
+async function saveDocEdit(id, btn){
+  const name = document.getElementById('editDocName').value.trim();
+  const type = document.getElementById('editDocType').value;
+  const date = document.getElementById('editDocDate').value.trim();
+  if(!name){ showToast('Name cannot be empty','error'); return; }
+  
+  btn.textContent='Saving...'; btn.disabled=true;
+  try{
+    const res = await fetch(API+'/kb/documents/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+adminApiToken},
+      body:JSON.stringify({name, type, doc_date:date})
+    });
+    if(!res.ok) throw new Error('Server error');
+    // Update local
+    const doc = adminDocs.find(d=>d.id===id);
+    if(doc){ doc.name=name; doc.type=type; doc.date=date; }
+    localStorage.setItem('gm_admin_kb',JSON.stringify(adminDocs));
+    renderKBList();
+    document.querySelector('[style*=fixed]')?.remove();
+    showToast('✓ Document updated','success');
+  }catch(e){
+    showToast('Update failed: '+e.message,'error');
+    btn.textContent='Save Changes'; btn.disabled=false;
+  }
+}
+
+
+
+// ════════════════════════════════════════════════════════════════
+// PROMPT MANAGEMENT — Load, save, reset AI prompts
+// ════════════════════════════════════════════════════════════════
+
+let defaultPrompts = {};
+
+async function loadPromptPanel(){
+  if(!adminApiToken) return;
+  try{
+    // Load defaults first
+    const defRes = await fetch(API+'/settings/defaults',{
+      headers:{'Authorization':'Bearer '+adminApiToken}
+    });
+    if(defRes.ok) defaultPrompts = await defRes.json();
+
+    // Load current saved values
+    const res = await fetch(API+'/settings',{
+      headers:{'Authorization':'Bearer '+adminApiToken}
+    });
+    if(!res.ok) return;
+    const settings = await res.json();
+    const settingMap = {};
+    settings.forEach(s=>settingMap[s.key]=s.value);
+
+    // Fill textareas
+    for(const key of ['main_prompt','amendment_instruction','draft_prompt']){
+      const el = document.getElementById('prompt-'+key);
+      if(el){
+        el.value = settingMap[key] || defaultPrompts[key] || '';
+      }
+    }
+  }catch(e){ console.log('Prompt load failed:', e.message); }
+}
+
+async function savePrompt(key){
+  const el = document.getElementById('prompt-'+key);
+  if(!el) return;
+  const value = el.value.trim();
+  if(!value){ showToast('Prompt cannot be empty','error'); return; }
+  try{
+    const res = await fetch(API+'/settings/'+key,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+adminApiToken},
+      body:JSON.stringify({value})
+    });
+    if(res.ok){
+      showToast('✓ Prompt saved — applies to new queries within 5 minutes','success');
+    } else {
+      showToast('Save failed','error');
+    }
+  }catch(e){ showToast('Error: '+e.message,'error'); }
+}
+
+async function resetPrompt(key){
+  const el = document.getElementById('prompt-'+key);
+  if(!el) return;
+  const def = defaultPrompts[key];
+  if(!def){ showToast('Default not loaded yet — try again','error'); return; }
+  el.value = def;
+  await savePrompt(key);
+  showToast('✓ Reset to default prompt','success');
+}
+
 
 function deleteSelectedDocs(){
   const checked = [...document.querySelectorAll('.kb-select-chk:checked')].map(c=>c.dataset.id);
