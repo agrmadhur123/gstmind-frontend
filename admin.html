@@ -524,6 +524,45 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 
 /* GRID 2COL */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+
+/* ── Document Processing Status Badges ── */
+.doc-status { display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:monospace }
+.doc-status.processing { background:#fef3c7;color:#92400e;border:1px solid #fcd34d }
+.doc-status.extracting { background:#dbeafe;color:#1e40af;border:1px solid #93c5fd }
+.doc-status.chunking   { background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd }
+.doc-status.ready      { background:#dcfce7;color:#166534;border:1px solid #86efac }
+.doc-status.failed     { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5 }
+.doc-status-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0 }
+.processing .doc-status-dot { background:#f59e0b;animation:pulse 1s infinite }
+.extracting .doc-status-dot { background:#3b82f6;animation:pulse 0.8s infinite }
+.chunking   .doc-status-dot { background:#8b5cf6;animation:pulse 0.6s infinite }
+.ready      .doc-status-dot { background:#22c55e }
+.failed     .doc-status-dot { background:#ef4444 }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Processing queue panel */
+.upload-queue { 
+  position:fixed;bottom:20px;right:20px;width:380px;max-height:400px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);
+  z-index:200;display:none;flex-direction:column;overflow:hidden
+}
+.upload-queue.show { display:flex }
+.upload-queue-hdr {
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+.upload-queue-hdr-title { font-size:13px;font-weight:600;color:var(--text) }
+.upload-queue-body { overflow-y:auto;max-height:320px;padding:8px }
+.uq-item {
+  padding:8px 10px;border-radius:8px;margin-bottom:4px;
+  background:var(--chat-bg);border:1px solid var(--border2)
+}
+.uq-item-name { font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.uq-item-status { font-size:11px;color:var(--text3);margin-top:2px }
+.uq-item-bar { height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden }
+.uq-item-bar-fill { height:100%;background:var(--accent);border-radius:2px;transition:width .3s }
+
 </style>
 </head>
 <body>
@@ -595,7 +634,23 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
   </div>
 </div>
 
-<!-- ════ ADMIN SHELL<!-- ════ ADMIN SHELL ════ -->
+<!-- ════ ADMIN SHELL
+<!-- ══ UPLOAD QUEUE PANEL ══ -->
+<div id="uploadQueue" class="upload-queue">
+  <div class="upload-queue-hdr">
+    <div class="upload-queue-hdr-title">
+      <span id="uqTitle">📤 Processing Documents</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="uqCount" style="font-size:11px;color:var(--text3)"></span>
+      <button onclick="toggleUploadQueue()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px">−</button>
+    </div>
+  </div>
+  <div class="upload-queue-body" id="uqBody">
+  </div>
+</div>
+
+<!-- ════ ADMIN SHELL ════ -->
 <div class="shell" id="adminShell">
 
   <!-- SIDEBAR -->
@@ -885,7 +940,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
         <!-- Document list -->
         <div class="sec-hdr">
           <div class="sec-title">Knowledge Base Documents</div>
-          <div class="sec-sub" id="kb-count-label">6 built-in documents</div>
+          <div class="sec-sub" id="kb-count-label">Loading...</div>
           <div class="sec-hdr-right">
             <input class="search-inp" type="text" placeholder="Search documents..." oninput="filterKB(this.value)" id="kbSearch" style="width:160px"/>
             <select onchange="sortKB(this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer" title="Sort">
@@ -1328,6 +1383,9 @@ async function ensureApiToken(){
 // ADMIN AUTH — Email OTP
 // ════════════════════════════════
 let adminEmail = localStorage.getItem('gm_admin_email') || '';
+let kbSortMode = 'date-desc';
+let kbTypeFilter = '';
+let kbSearchFilter = '';
 let lastSyncTime = null;
 let syncCheckInterval = null;
 let uploadLog = JSON.parse(localStorage.getItem('gm_upload_log')||'[]');
@@ -1859,7 +1917,7 @@ function extractDocIdentity(text){
 
 
 // ── AUTO EXTRACT DOCUMENT NAME, TYPE AND DATE FROM CONTENT ──
-function autoExtractDocMeta(text){
+function autoExtractDocMeta(text, nameHint=''){
   const t = text.slice(0, 4000);
   const hdr = text.slice(0, 300); // header only — prevents body text dates from being picked up
   let docType='Other', docName='', docDate='';
@@ -1905,6 +1963,7 @@ function autoExtractDocMeta(text){
     else if(/union territory goods and services/i.test(t)){ docType='GST Act Section'; docName='UTGST Act 2017'; }
     else if(/cgst rules|central goods.*services.*tax.*rules/i.test(t)){ docType='GST Rules'; docName='CGST Rules 2017'; }
     else if(/frequently asked|faq/i.test(t)){ docType='CBIC FAQ'; docName='CBIC FAQ'; }
+    else if(/background\s*material|study\s*material|bare\s*act|compilation/i.test(t)){ docType='GST Reference Material'; }
     else docName='GST Document';
   }
 
@@ -1932,6 +1991,17 @@ function autoExtractDocMeta(text){
   }
 
   if(docDate) docName=docName+' dated '+docDate;
+  // Fallback: extract date from filename if not found in content
+  if(!docDate && nameHint){
+    const yrM = nameHint.match(/\b(20\d{2})\b/);
+    if(yrM){
+      const monM = nameHint.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i);
+      const monMap = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+                      jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+      const mon = monM ? monMap[monM[1].toLowerCase()] : '01';
+      docDate = yrM[1]+'-'+mon+'-01';
+    }
+  }
   return {docName, docType, docDate};
 }
 
@@ -2009,23 +2079,38 @@ async function extractPDFText(file, onProgress){
     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
     const totalPages = pdf.numPages;
     let fullText = '';
+    
+    // Warn for very large documents
+    if(totalPages > 300){
+      addUploadLog('info', `Large document: ${file.name}`, 
+        `${totalPages} pages — extraction may take 2-5 minutes. Do not close the browser.`);
+    }
 
-    // Extract ALL pages — needed for complete content
-    // Large docs (200+ pages) process in batches to keep UI responsive
+    // Extract ALL pages in batches — yield to browser to show progress
+    const batchSize = totalPages > 500 ? 5 : 20;  // Smaller batches for huge docs
     for(let i=1; i<=totalPages; i++){
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const pageText = content.items.map(item=>item.str).join(' ');
+      // Join text items with space, preserve newlines between blocks
+      const pageText = content.items.map(item => 
+        item.hasEOL ? item.str + '\n' : item.str
+      ).join(' ');
       fullText += pageText + '\n';
-      // Yield to browser every 20 pages to show progress
-      if(i % 20 === 0){
+      
+      if(i % batchSize === 0 || i === totalPages){
         if(onProgress) onProgress(i, totalPages);
-        await new Promise(r=>setTimeout(r,5));
+        await new Promise(r=>setTimeout(r, 1)); // yield to browser
       }
     }
+    
+    const wordCount = fullText.split(/\s+/).filter(w=>w).length;
+    console.log(`PDF extracted: ${totalPages} pages, ${wordCount.toLocaleString()} words`);
+    addUploadLog('info', `Extracted: ${file.name}`, `${totalPages} pages · ${wordCount.toLocaleString()} words`);
+    
     return fullText.trim();
   } catch(e){
-    console.log('PDF extract error:', e.message);
+    console.error('PDF extract error:', e.message);
+    addUploadLog('error', `PDF read failed: ${file.name}`, e.message);
     return '';
   }
 }
@@ -2072,205 +2157,269 @@ function kbHandleFiles(fileList){
 
 async function kbProcessBulk(files){
   if(!await acquireKBLock('upload')) return;
-  const prog=document.getElementById('kbProgress');
-  const bar=document.getElementById('kbProgBar');
-  const title=document.getElementById('kbProgTitle');
-  const countEl=document.getElementById('kbProgCount');
-  const fileEl=document.getElementById('kbProgFile');
-  const statsEl=document.getElementById('kbProgStats');
 
-  prog.style.display='block';
-  bar.style.width='0%';
-  title.textContent='Starting...';
-  statsEl.textContent='';
-  await new Promise(r=>setTimeout(r,30));
-
-  // Get API token for uploading to server
   const token = await ensureApiToken();
   if(!token){
     releaseKBLock();
-    showToast('⚠ No server token — please log out and log back in','error');
-    prog.style.display='none';
+    showToast('⚠ Not connected to server — log out and log back in','error');
     return;
   }
-  console.log('Upload token present:', token ? 'yes' : 'no', 'length:', token?.length);
 
-  const total=files.length;
-  let added=0,dupes=0,errors=0;
+  // Show upload queue panel
+  showUploadQueue();
+  const total = files.length;
+  let done=0, failed=0, skipped=0;
+  updateUQTitle(`📤 Processing ${total} document${total>1?'s':''}...`);
 
-  for(let i=0;i<total;i++){
-    const f=files[i];
-    const pct=Math.round(i/total*100);
-    bar.style.width=pct+'%';
-    title.textContent=`Processing ${i+1} of ${total}`;
-    countEl.textContent=`${i+1} / ${total}`;
-    fileEl.textContent='📄 '+f.name;
-    statsEl.textContent=`✓ ${added} added  ⚠ ${dupes} duplicates  ✗ ${errors} errors`;
-    await new Promise(r=>setTimeout(r,15));
+  for(let i=0; i<files.length; i++){
+    const f = files[i];
+    const fileId = 'uq-' + Date.now() + '-' + i;
+
+    // ── PHASE 0: Quick dedup check ──
+    const quickMeta = {
+      docName: f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim(),
+      docType: 'Other', docDate: ''
+    };
+    // Add to queue UI immediately
+    addToUploadQueue(fileId, f.name, '⏳ Queued', 0);
 
     try{
-      // Step 1: Extract text with PDF.js (all pages, no limit)
-      let content = await readFileText(f, (page, total)=>{
-        fileEl.textContent = `📄 ${f.name} — reading page ${page} of ${total}...`;
-      });
-      if(!content || content.trim().length < 30){
-        errors++;
-        fileEl.textContent = `⚠ Skipped (scanned/empty PDF): ${f.name}`;
-        addUploadLog('skip', `Skipped: ${f.name}`, 'Scanned PDF or no extractable text — use text-based PDF or OCR first');
-        skippedDocs.push({
-          id:'s'+Date.now()+Math.random(),
-          fileName:f.name,
-          name:f.name,
-          type:'Unknown',
-          date:'',
-          reason:'Scanned/image-based PDF — no text extractable',
-          matchedDoc:'',
-          content:'',
-          skippedAt:new Date().toISOString()
-        });
-        localStorage.setItem('gm_skipped_kb',JSON.stringify(skippedDocs));
-        await new Promise(r=>setTimeout(r,15));
-        continue;
-      }
-
-      const wordCount = content.split(/\s+/).filter(w=>w).length;
-      // Warn if suspiciously low word count (may be partially scanned)
-      const pagesEst = Math.ceil(wordCount / 250);
-      if(wordCount < 100){
-        fileEl.textContent = `⚠ Very low text (${wordCount} words) — may be scanned: ${f.name}`;
-        addUploadLog('skip', `Low text warning: ${f.name}`, `Only ${wordCount} words extracted`);
-        errors++;
-        continue;
-      }
-      fileEl.textContent = `📄 ${f.name} — ${wordCount.toLocaleString()} words (~${pagesEst} pages), uploading...`;
-      await new Promise(r=>setTimeout(r,10));
-
-      // Step 2: Extract metadata
-      const meta = autoExtractDocMeta(content);
-      const identity = extractDocIdentity(content);
-      // If name extraction failed, use filename (without extension) as name
-      const GENERIC_NAMES = ['GST Document','CBIC FAQ','GST Act 2017'];
-      if(GENERIC_NAMES.includes(meta.docName)){
-        meta.docName = f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim() || meta.docName;
-      }
-
-      // Step 3: Check duplicate locally (skip if generic name — use content hash only)
-      const GENERIC_NAMES_CHECK = ['GST Document','CBIC FAQ'];
-      const dupeResult = GENERIC_NAMES_CHECK.includes(meta.docName) 
-        ? null  // Don't deduplicate generic names by name
-        : isDuplicateContent(content, meta.docName);
-      if(dupeResult){
-        dupes++;
-        fileEl.textContent='⚠ Duplicate: '+f.name;
-        skippedDocs.push({
-          id:'s'+Date.now()+Math.random(),
-          fileName:f.name,
-          name:meta.docName.replace(/[\-\/]+$/,'').trim(),
-          type:meta.docType,
-          date:meta.docDate||'',
-          reason:dupeResult.reason,
-          matchedDoc:dupeResult.name,
-          content:content.slice(0,5000),
-          skippedAt:new Date().toISOString()
-        });
-        localStorage.setItem('gm_skipped_kb',JSON.stringify(skippedDocs));
-        continue;
-      }
-
-      // Step 4: Check if already on server (prevent re-upload)
-      if(isAlreadyOnServer(meta.docName, identity)){
-        dupes++;
-        fileEl.textContent = `⟳ Already on server: ${meta.docName}`;
-        addUploadLog('skip', `Already on server: ${meta.docName}`);
-        await new Promise(r=>setTimeout(r,15));
-        continue;
-      }
-
-      // Step 5: Upload to Railway → Supabase
-      fileEl.textContent = `↑ Uploading: ${meta.docName}`;
-      addUploadLog('info', `Uploading: ${meta.docName}`);
+      // ── PHASE 1: Upload PDF to Supabase Storage + create doc record ──
+      updateUQItem(fileId, '☁ Uploading PDF...', 2);
       
-      const uploadRes = await fetch(API+'/kb/upload',{
+      // Extract basic metadata from filename
+      const meta = {
+        docName: f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim(),
+        docType: guessDocType(f.name),
+        docDate: guessDocDate(f.name)
+      };
+
+      // Upload PDF binary + create record in one call
+      const formData = new FormData();
+      formData.append('pdf_file', f, f.name);
+      formData.append('metadata', JSON.stringify({
+        name: meta.docName,
+        type: meta.docType,
+        doc_date: meta.docDate,
+        file_size: f.size,
+        file_name: f.name,
+        doc_identity: {}
+      }));
+
+      const initRes = await fetch(API+'/kb/upload/pdf',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body:JSON.stringify({
-          name: meta.docName,
-          type: meta.docType,
-          doc_date: meta.docDate||'',
-          content: content,
-          doc_identity: identity
-        })
+        headers:{'Authorization':'Bearer '+token},
+        body: formData  // No Content-Type header — browser sets multipart boundary
       });
 
-      if(!uploadRes.ok){
-        const err = await uploadRes.json().catch(()=>({}));
-        if(uploadRes.status === 401){
-          adminApiToken = '';
-          localStorage.removeItem('gm_admin_api_token');
-          showToast('Session expired — please log in again','error');
-          addUploadLog('error','Session expired — upload stopped');
-          break;
-        }
-        errors++;
-        const errMsg = err.detail||`HTTP ${uploadRes.status}`;
-        fileEl.textContent = `✗ Failed: ${f.name} — ${errMsg}`;
-        statsEl.textContent = `✓ ${added} uploaded  ⚠ ${dupes} skipped  ✗ ${errors} errors — Last error: ${errMsg}`;
-        statsEl.style.color = 'var(--red)';
-        addUploadLog('error', `Failed: ${meta.docName}`, errMsg);
-        console.error('Upload failed:', meta.docName, errMsg, err);
-        await new Promise(r=>setTimeout(r,1000));
-        continue;
+      if(!initRes.ok){
+        const err = await initRes.json().catch(()=>({}));
+        throw new Error(err.detail||'PDF upload failed');
       }
 
-      const result = await uploadRes.json();
-      added++;
-      fileEl.textContent = `✓ ${meta.docName} — ${result.chunks} chunks`;
-      addUploadLog('success', `Uploaded: ${meta.docName}`, `${result.chunks} chunks stored`);
+      const initData = await initRes.json();
+      const docId = initData.doc_id;
+      const storageUrl = initData.storage_url || '';
 
-      // Immediately add to local list and render
+      // ── Add to local list immediately (shows in KB list) ──
       adminDocs.push({
-        id: result.id, name: meta.docName, type: meta.docType,
-        content: content.slice(0,10000),
-        contentHash: fullContentHash(content),
-        docIdentity: identity, chunks: result.chunks,
-        date: meta.docDate||new Date().toLocaleDateString('en-IN'),
-        builtin: false, supabase: true
+        id: docId,
+        name: meta.docName,
+        type: meta.docType,
+        date: meta.docDate,
+        chunks: 0,
+        builtin: false,
+        supabase: true,
+        status: 'processing',
+        fileName: f.name,
+        storageUrl: storageUrl,
+        fileSize: f.size
       });
       localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
-      renderKBList(); // Show in KB list instantly after each upload
+      renderKBList();  // ← Document appears in list RIGHT NOW with PDF stored
+      updateUQItem(fileId, '✓ PDF stored — extracting text...', 10);
+
+      // ── PHASE 2: BACKGROUND — Extract text with PDF.js ──
+      updateUQItem(fileId, '📄 Reading pages...', 15);
+      let pagesDone = 0;
       
-      // Update sync pill immediately
-      const sDoc = document.getElementById('kbSyncDot');
-      const sTxt = document.getElementById('kbSyncText');
-      if(sDoc) sDoc.style.background='#22c55e';
-      if(sTxt) sTxt.textContent=`KB Sync: uploading... ${added} done`;
+      const content = await readFileText(f, (page, total) => {
+        pagesDone = page;
+        const pct = 15 + Math.round((page/total) * 50);
+        updateUQItem(fileId, `📄 Reading page ${page} of ${total}...`, pct);
+      });
+
+      const wordCount = content ? content.split(/\s+/).filter(w=>w).length : 0;
       
-      await new Promise(r=>setTimeout(r,200)); // small gap between uploads
-    }catch(e){
-      console.error('Error processing '+f.name+':', e);
-      errors++;
-      fileEl.textContent = `✗ Error: ${f.name} — ${e.message}`;
-      statsEl.textContent = `✓ ${added} uploaded  ⚠ ${dupes} skipped  ✗ ${errors} errors — ${e.message}`;
-      statsEl.style.color = 'var(--red)';
-      addUploadLog('error', `Exception: ${f.name}`, e.message);
+      if(!content || wordCount < 80){
+        // Mark as failed on server
+        await fetch(API+'/kb/documents/'+docId,{
+          method:'PATCH',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body:JSON.stringify({status:'failed'})
+        });
+        // Update local
+        const d = adminDocs.find(d=>d.id===docId);
+        if(d){ d.status='failed'; d.chunks=0; }
+        renderKBList();
+        updateUQItem(fileId, `✗ No extractable text — scanned PDF?`, 100, 'failed');
+        failed++;
+        addUploadLog('error',`Failed: ${f.name}`,'Scanned PDF or no text extracted');
+        continue;
+      }
+
+      addUploadLog('info',`Extracted: ${f.name}`,`${wordCount.toLocaleString()} words`);
+
+      // ── PHASE 3: BACKGROUND — Full meta extraction + dedup ──
+      updateUQItem(fileId, '🔍 Analysing document...', 67);
+      const fullMeta = autoExtractDocMeta(content, f.name.replace(/\.[^.]+$/,''));
+      const identity = extractDocIdentity(content);
+
+      // Check if duplicate
+      if(isAlreadyOnServer(fullMeta.docName, identity) && 
+         fullMeta.docName !== meta.docName){
+        // Delete the placeholder we just created
+        await fetch(API+'/kb/documents/'+docId,{
+          method:'DELETE',
+          headers:{'Authorization':'Bearer '+token}
+        });
+        adminDocs = adminDocs.filter(d=>d.id!==docId);
+        renderKBList();
+        updateUQItem(fileId, `⚠ Duplicate: ${fullMeta.docName}`, 100, 'skipped');
+        skipped++;
+        addUploadLog('skip',`Duplicate: ${f.name}`,fullMeta.docName);
+        continue;
+      }
+
+      // Update document name with proper extracted name
+      if(fullMeta.docName !== meta.docName || fullMeta.docDate !== meta.docDate){
+        await fetch(API+'/kb/documents/'+docId,{
+          method:'PATCH',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body:JSON.stringify({name:fullMeta.docName, type:fullMeta.docType||meta.docType, doc_date:fullMeta.docDate||''})
+        });
+        const d = adminDocs.find(d=>d.id===docId);
+        if(d){ d.name=fullMeta.docName; d.type=fullMeta.docType||d.type; d.date=fullMeta.docDate||''; }
+        renderKBList();
+      }
+
+      // ── PHASE 4: BACKGROUND — Send to Railway for chunking ──
+      updateUQItem(fileId, '⚙ Chunking document...', 72);
+      
+      const chunksRes = await fetch(API+'/kb/upload/chunks',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({doc_id: docId, content: content})
+      });
+
+      if(!chunksRes.ok){
+        const err = await chunksRes.json().catch(()=>({}));
+        const d = adminDocs.find(d=>d.id===docId);
+        if(d){ d.status='failed'; }
+        renderKBList();
+        updateUQItem(fileId, `✗ Chunking failed: ${err.detail||'Server error'}`, 100, 'failed');
+        failed++;
+        addUploadLog('error',`Chunk failed: ${f.name}`,err.detail||'');
+        continue;
+      }
+
+      const result = await chunksRes.json();
+      
+      // Update local record with final chunk count
+      const d = adminDocs.find(d=>d.id===docId);
+      if(d){ d.chunks=result.chunks; d.status='ready'; d.name=result.name||d.name; }
+      localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+      renderKBList();
+
+      done++;
+      updateUQItem(fileId, `✓ Ready — ${result.chunks.toLocaleString()} chunks · ${(result.words||0).toLocaleString()} words`, 100, 'ready');
+      addUploadLog('success',`Uploaded: ${result.name}`,`${result.chunks} chunks`);
+
+    }catch(err){
+      console.error('Upload error:', f.name, err);
+      updateUQItem(fileId, `✗ Error: ${err.message}`, 100, 'failed');
+      failed++;
+      addUploadLog('error',`Error: ${f.name}`,err.message);
     }
+
+    await new Promise(r=>setTimeout(r,100));
   }
 
-  bar.style.width='100%';
-  title.textContent='✓ Complete';
-  countEl.textContent=`${total} / ${total}`;
-  fileEl.textContent='All files processed';
-  statsEl.textContent=`✓ ${added} uploaded to server  ⚠ ${dupes} duplicates  ✗ ${errors} errors`;
-  statsEl.style.color='var(--green)';
-  // Reload from server to show correct state
-  await loadKBFromServer();
-  refreshData();
-  const summary = `✓ ${added} uploaded · ${dupes} skipped · ${errors} errors`;
-  showToast(summary, errors>0?'error':'success');
-  addUploadLog(errors>0?'error':'success','Batch complete: '+summary);
-  await checkKBSync(); // Verify sync after upload
+  // Final summary
+  releaseKBLock();
+  const summary = `✓ ${done} uploaded · ${skipped} skipped · ${failed} failed`;
+  updateUQTitle(`✅ Done — ${summary}`);
+  addUploadLog(failed>0?'error':'success','Batch complete',summary);
+  showToast(summary, failed>0?'error':'success');
+  
+  // Final server sync
   await checkKBSync();
-  setTimeout(()=>{prog.style.display='none';bar.style.width='0%';},5000);
+}
+
+// ── Quick type/date guess from filename ──
+function guessDocType(filename){
+  const f = filename.toLowerCase();
+  if(/circular/i.test(f)) return 'CBIC Circular';
+  if(/notification/i.test(f)) return 'CBIC Notification';
+  if(/cgst.*act|igst.*act|utgst.*act/i.test(f)) return 'GST Act Section';
+  if(/rules/i.test(f)) return 'GST Rules';
+  if(/faq/i.test(f)) return 'CBIC FAQ';
+  if(/background.*material|study.*material/i.test(f)) return 'GST Reference Material';
+  if(/finance.*act/i.test(f)) return 'Finance Act';
+  if(/aar|aaar/i.test(f)) return 'AAR/AAAR Order';
+  return 'Other';
+}
+
+function guessDocDate(filename){
+  const yrM = filename.match(/(20\d{2})/);
+  if(!yrM) return '';
+  const monM = filename.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i);
+  const monMap = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+                  jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  const mon = monM ? monMap[monM[1].toLowerCase()] : '01';
+  return `${yrM[1]}-${mon}-01`;
+}
+
+// ── Upload Queue UI functions ──
+function showUploadQueue(){
+  document.getElementById('uploadQueue').classList.add('show');
+}
+function toggleUploadQueue(){
+  const uq = document.getElementById('uploadQueue');
+  const body = document.getElementById('uqBody');
+  body.style.display = body.style.display==='none' ? 'block' : 'none';
+}
+function updateUQTitle(text){
+  const el = document.getElementById('uqTitle');
+  if(el) el.textContent = text;
+}
+function addToUploadQueue(id, name, status, pct){
+  const body = document.getElementById('uqBody');
+  if(!body) return;
+  const div = document.createElement('div');
+  div.className = 'uq-item';
+  div.id = id;
+  div.innerHTML = `
+    <div class="uq-item-name" title="${esc(name)}">${esc(name.slice(0,45))}${name.length>45?'...':''}</div>
+    <div class="uq-item-status" id="${id}-status">${status}</div>
+    <div class="uq-item-bar"><div class="uq-item-bar-fill" id="${id}-bar" style="width:${pct}%"></div></div>
+  `;
+  body.appendChild(div);
+  // Show count
+  const count = body.children.length;
+  const cEl = document.getElementById('uqCount');
+  if(cEl) cEl.textContent = count + ' file' + (count>1?'s':'');
+}
+function updateUQItem(id, status, pct, state=''){
+  const sEl = document.getElementById(id+'-status');
+  const bEl = document.getElementById(id+'-bar');
+  if(sEl) sEl.textContent = status;
+  if(bEl){
+    bEl.style.width = pct + '%';
+    if(state==='ready') bEl.style.background='#22c55e';
+    else if(state==='failed') bEl.style.background='#ef4444';
+    else if(state==='skipped') bEl.style.background='#f59e0b';
+  }
 }
 
 // Legacy function name kept for compatibility
@@ -2554,7 +2703,12 @@ async function checkKBSync(){
     adminDocs = serverDocs.map(sd=>({
       id:sd.id, name:sd.name, type:sd.type||'',
       date:sd.doc_date||'', chunks:sd.chunk_count||0,
-      builtin:false, supabase:true, content:''
+      builtin:false, supabase:true,
+      status:sd.status||'ready',
+      storageUrl:sd.storage_url||'',
+      fileName:sd.file_name||'',
+      pageCount:sd.page_count||0,
+      content:''
     }));
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
     
@@ -2565,10 +2719,12 @@ async function checkKBSync(){
 
   }catch(e){
     dot.style.background = '#f87171';
-    txt.textContent = 'KB Sync: Error — ' + e.message.slice(0,30);
+    const msg = e.message.includes('fetch') ? 'Railway offline' : e.message.slice(0,25);
+    txt.textContent = 'KB Sync: ' + msg;
     const sysDot = document.getElementById('systemStatusDot');
     const sysTxt = document.getElementById('systemStatusText');
     if(sysDot&&sysTxt){ sysDot.style.background='#f87171'; sysTxt.textContent='Server Unreachable'; }
+    console.warn('Sync error:', e.message);
   }
 }
 
@@ -2605,6 +2761,10 @@ async function loadKBFromServer(){
       chunks: sd.chunk_count||0,
       builtin: false,
       supabase: true,
+      status: sd.status||'ready',
+      storageUrl: sd.storage_url||'',
+      fileName: sd.file_name||'',
+      pageCount: sd.page_count||0,
       content: ''
     }));
     
@@ -2749,14 +2909,14 @@ function renderKBCategories(filter){
   const groups = {};
   filtered.forEach(d=>{
     const type = d.type||'Other';
-    const year = d.docIdentity?.year || (d.date?d.date.match(/\d{4}/)?.[0]:'') || 'Unknown';
+    const year = d.docIdentity?.year || (d.date?d.date.match(/\d{4}/)?.[0]:'') || 'Date Unknown';
     if(!groups[type]) groups[type]={};
     if(!groups[type][year]) groups[type][year]=[];
     groups[type][year].push(d);
   });
 
-  const typeOrder = ['CBIC Circular','CBIC Notification','GST Act Section','GST Rules','AAR/AAAR Order','CBIC FAQ','Other'];
-  const typeIcons = {'CBIC Circular':'📋','CBIC Notification':'🔔','GST Act Section':'⚖','GST Rules':'📜','AAR/AAAR Order':'🏛','CBIC FAQ':'❓','Other':'📄'};
+  const typeOrder = ['CBIC Circular','CBIC Notification','GST Act Section','GST Rules','AAR/AAAR Order','CBIC FAQ','GST Reference Material','Other'];
+  const typeIcons = {'CBIC Circular':'📋','CBIC Notification':'🔔','GST Act Section':'⚖','GST Rules':'📜','AAR/AAAR Order':'🏛','CBIC FAQ':'❓','GST Reference Material':'📚','Other':'📄'};
 
   el.innerHTML = typeOrder
     .filter(type=>groups[type])
@@ -2785,7 +2945,7 @@ function renderKBCategories(filter){
                       <div class="kb-icon" style="width:28px;height:28px;font-size:13px">${typeIcons[d.type||'Other']||'📄'}</div>
                       <div class="kb-info">
                         <div class="kb-name" style="font-size:12.5px">${esc(d.name)}</div>
-                        <div class="kb-meta" style="color:var(--accent)">${d.date||'—'}</div><div class="kb-meta">${d.type||''} · ${d.chunks||0} chunks${d.builtin?' · Built-in':''}<span style="color:${d.supabase?'#22c55e':'#f59e0b'};margin-left:6px;font-size:10px">${d.supabase?'● Server':'⚠ Local only'}</span></div>
+                        <div class="kb-meta" style="color:var(--accent)">${d.date||'—'}</div><div class="kb-meta">${d.type||''} · ${(d.chunks||0).toLocaleString()} chunks${d.builtin?' · Built-in':''}<span style="color:${d.supabase?'#22c55e':'#f59e0b'};margin-left:6px;font-size:10px">${d.supabase?'● Server':'⚠ Local only'}</span></div>
                       </div>
                       <div style="display:flex;gap:5px;flex-shrink:0">
                         <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')">👁</button>
@@ -2893,12 +3053,22 @@ function renderKBList(filter=''){
       <div class="kb-icon">${d.type?.includes('Circular')?'📋':d.type?.includes('Rules')?'📜':d.type?.includes('AAR')?'⚖':d.type?.includes('Notification')?'🔔':'📄'}</div>
       <div class="kb-info">
         <div class="kb-name">${esc(d.name)}</div>
-        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${d.date||'Date unknown'}</span> · ${d.chunks||0} chunks${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}
-          <span style="margin-left:8px;font-size:10px;font-weight:600;color:${d.supabase||d.builtin?'#22c55e':'#f59e0b'}">${d.builtin?'● Built-in':d.supabase?'● Server':'⚠ Local only'}</span>
+        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${d.date||'Date unknown'}</span> · ${(d.chunks||0).toLocaleString()} chunks${d.pageCount?' · '+d.pageCount+' pages':''}${d.fileSize?' · '+(d.fileSize/1024/1024).toFixed(1)+'MB':''}${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}
+          <span class="doc-status ${d.status||'ready'}" style="margin-left:8px">
+            <span class="doc-status-dot"></span>
+            ${d.builtin ? '● Built-in' : 
+              d.status==='processing' ? '⏳ Processing...' :
+              d.status==='extracting' ? '📄 Extracting...' :
+              d.status==='chunking'   ? '⚙ Chunking...' :
+              d.status==='failed'     ? '✗ Failed' :
+              d.supabase              ? `● Server${d.chunks?' · '+d.chunks.toLocaleString()+' chunks':''}` :
+                                       '⚠ Local only'}
+          </span>
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
-        <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')">👁 View</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')" title="View extracted text">👁 Text</button>
+        ${d.storageUrl ? `<a href="${d.storageUrl}" target="_blank" class="btn btn-ghost btn-sm" title="Open original PDF" style="text-decoration:none">📄 PDF</a>` : ''}
         ${d.builtin
           ? ''
           : !d.supabase
@@ -2923,9 +3093,7 @@ function updateDeleteBtn(){
 // KB SORT, FILTER, HEALTH, EDIT
 // ════════════════════════════════════════════════════════
 
-let kbSortMode = 'date-desc';
-let kbTypeFilter = '';
-let kbSearchFilter = '';
+// kbSortMode, kbTypeFilter, kbSearchFilter declared at top
 
 function sortKB(mode){
   kbSortMode = mode;
