@@ -543,37 +543,45 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
 /* Processing queue panel */
 .upload-queue {
   position:fixed;bottom:20px;right:20px;width:400px;max-height:460px;
-  background:var(--surface);
-  border:1.5px solid var(--border);
+  /* Solid background — no transparency */
+  background:#ffffff;
+  border:2px solid #d1c9bc;
   border-radius:14px;
-  box-shadow:0 20px 60px rgba(0,0,0,.35),0 4px 16px rgba(0,0,0,.2);
+  box-shadow:0 24px 64px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.25);
   z-index:99999;
   display:none;flex-direction:column;overflow:hidden;
-  /* Ensure it's truly on top */
   isolation:isolate;
+  /* Force GPU layer to prevent bleed-through */
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+}
+body.dark-mode .upload-queue {
+  background:#1a1208;
+  border-color:#3d2e1a;
 }
 .upload-queue.show { display:flex }
 .upload-queue-hdr {
   padding:12px 16px;
-  border-bottom:1.5px solid var(--border);
+  border-bottom:2px solid #e5ddd0;
   display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;
-  background:var(--surface);
+  background:inherit;
 }
+body.dark-mode .upload-queue-hdr { border-bottom-color:#3d2e1a; }
 .upload-queue-hdr-title { font-size:13px;font-weight:600;color:var(--text) }
 .upload-queue-body {
   overflow-y:auto;
   padding:8px;
-  background:var(--surface);
-  /* Show scrollbar */
+  background:inherit;
   scrollbar-width:thin;
 }
 .upload-queue-body::-webkit-scrollbar { width:4px }
 .upload-queue-body::-webkit-scrollbar-thumb { background:var(--border);border-radius:4px }
 .uq-item {
   padding:8px 10px;border-radius:8px;margin-bottom:4px;
-  background:var(--chat-bg);border:1px solid var(--border);
+  background:#faf8f5;border:1px solid #e5ddd0;
 }
+body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
 .uq-item-name {
   font-size:12px;font-weight:500;color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -914,7 +922,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
             <div class="fg"><label>Document Type</label>
               <select id="kb-doc-type">
                 <option>CBIC Circular</option><option>CBIC Notification</option><option>GST Act Section</option>
-                <option>GST Rules</option><option>AAR/AAAR Order</option><option>CBIC FAQ</option><option>Other</option>
+                <option>GST Rules</option><option>AAR/AAAR Order</option><option>CBIC FAQ</option><option>Others</option>
               </select>
             </div>
             <div class="fg"><label>Document Text</label><textarea id="kb-doc-text" placeholder="Paste full document text here..."></textarea></div>
@@ -980,7 +988,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
               <option value="GST Act Section">Acts</option>
               <option value="GST Rules">Rules</option>
               <option value="CBIC FAQ">FAQs</option>
-              <option value="Other">Other</option>
+              <option value="Others">Others</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="downloadKBZip()">⬇ Download KB Zip</button>
             <button class="btn btn-danger btn-sm" onclick="deleteSelectedDocs()" id="deleteSelectedBtn" style="display:none">🗑 Delete Selected</button>
@@ -1329,7 +1337,7 @@ body.light-mode .search-inp,.light-mode .filter-sel{background:#fff;border-color
           <option>Tax Consultant</option>
           <option>Advocate / Tax Lawyer</option>
           <option>Company Secretary</option>
-          <option>Other</option>
+          <option>Others</option>
         </select>
       </div>
     </div>
@@ -1941,9 +1949,11 @@ function extractDocIdentity(text){
 
 // ── AUTO EXTRACT DOCUMENT NAME, TYPE AND DATE FROM CONTENT ──
 function autoExtractDocMeta(text, nameHint=''){
+  // Clean filename hint: remove extension, replace separators with spaces
+  if(nameHint) nameHint = nameHint.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
   const t = text.slice(0, 4000);
   const hdr = text.slice(0, 300); // header only — prevents body text dates from being picked up
-  let docType='Other', docName='', docDate='';
+  let docType='Others', docName='', docDate='';
 
 
   // ── Circular No. — header only, captures full number including -GST suffix
@@ -1986,8 +1996,12 @@ function autoExtractDocMeta(text, nameHint=''){
     else if(/union territory goods and services/i.test(t)){ docType='GST Act Section'; docName='UTGST Act 2017'; }
     else if(/cgst rules|central goods.*services.*tax.*rules/i.test(t)){ docType='GST Rules'; docName='CGST Rules 2017'; }
     else if(/frequently asked|faq/i.test(t)){ docType='CBIC FAQ'; docName='CBIC FAQ'; }
-    else if(/background\s*material|study\s*material|bare\s*act|compilation/i.test(t)){ docType='GST Reference Material'; }
-    else docName='GST Document';
+    else if(/background\s*material|study\s*material|bare\s*act|compilation/i.test(t)){
+      docType='GST Reference Material';
+      // Use filename as document name — it's more descriptive than generic label
+      docName = nameHint || 'GST Reference Material';
+    }
+    else docName = nameHint || 'GST Document';
   }
 
   // ── Date extraction — PDF.js often adds spaces in ordinals ("26 th" not "26th")
@@ -2339,7 +2353,8 @@ async function kbProcessBulk(files){
       renderKBList();
 
       done++;
-      updateUQItem(fileId, `✓ Ready — ${result.chunks.toLocaleString()} chunks · ${(result.words||0).toLocaleString()} words`, 100, 'ready');
+      const pdfStored = storageUrl ? '· 📄 PDF stored' : '· ⚠ PDF not stored (create kb-documents bucket in Supabase)';
+      updateUQItem(fileId, `✓ Ready — ${result.chunks.toLocaleString()} chunks ${pdfStored}`, 100, 'ready');
       addUploadLog('success',`Uploaded: ${result.name}`,`${result.chunks} chunks`);
 
     }catch(err){
@@ -2361,6 +2376,44 @@ async function kbProcessBulk(files){
   
   // Final server sync
   await checkKBSync();
+}
+
+
+// ── Attach PDF to existing document ──
+async function attachPdf(docId){
+  const token = await ensureApiToken();
+  if(!token) return;
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.pdf';
+  input.onchange = async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    showToast('Uploading PDF...','info');
+    const fd = new FormData();
+    fd.append('pdf_file', file, file.name);
+    try{
+      const res = await fetch(API+'/kb/documents/'+docId+'/upload-pdf',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+token},
+        body: fd
+      });
+      if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        showToast('Upload failed: '+(err.detail||'Storage error'),'error');
+        return;
+      }
+      const data = await res.json();
+      // Update local doc
+      const d = adminDocs.find(d=>d.id===docId);
+      if(d){ d.storageUrl = data.storage_url; }
+      localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
+      renderKBList();
+      showToast('✓ PDF attached — click 📄 PDF to view','success');
+    }catch(e){
+      showToast('Error: '+e.message,'error');
+    }
+  };
+  input.click();
 }
 
 // ── Quick type/date guess from filename ──
@@ -2912,15 +2965,15 @@ function renderKBCategories(filter){
   // Group by type > year
   const groups = {};
   filtered.forEach(d=>{
-    const type = d.type||'Other';
+    const type = d.type||'Others';
     const year = d.docIdentity?.year || (d.date?d.date.match(/\d{4}/)?.[0]:'') || 'Date Unknown';
     if(!groups[type]) groups[type]={};
     if(!groups[type][year]) groups[type][year]=[];
     groups[type][year].push(d);
   });
 
-  const typeOrder = ['CBIC Circular','CBIC Notification','GST Act Section','GST Rules','AAR/AAAR Order','CBIC FAQ','GST Reference Material','Other'];
-  const typeIcons = {'CBIC Circular':'📋','CBIC Notification':'🔔','GST Act Section':'⚖','GST Rules':'📜','AAR/AAAR Order':'🏛','CBIC FAQ':'❓','GST Reference Material':'📚','Other':'📄'};
+  const typeOrder = ['CBIC Circular','CBIC Notification','GST Act Section','GST Rules','AAR/AAAR Order','CBIC FAQ','GST Reference Material','Others'];
+  const typeIcons = {'CBIC Circular':'📋','CBIC Notification':'🔔','GST Act Section':'⚖','GST Rules':'📜','AAR/AAAR Order':'🏛','CBIC FAQ':'❓','GST Reference Material':'📚','Others':'📄'};
 
   el.innerHTML = typeOrder
     .filter(type=>groups[type])
@@ -2946,7 +2999,7 @@ function renderKBCategories(filter){
                 <div class="kb-year-docs">
                   ${yearGroups[year].map(d=>`
                     <div class="kb-item" style="padding-left:44px">
-                      <div class="kb-icon" style="width:28px;height:28px;font-size:13px">${typeIcons[d.type||'Other']||'📄'}</div>
+                      <div class="kb-icon" style="width:28px;height:28px;font-size:13px">${typeIcons[d.type||'Others']||'📄'}</div>
                       <div class="kb-info">
                         <div class="kb-name" style="font-size:12.5px">${esc(d.name)}</div>
                         <div class="kb-meta" style="color:var(--accent)">${d.date||'—'}</div><div class="kb-meta">${d.type||''} · ${(d.chunks||0).toLocaleString()} chunks${d.builtin?' · Built-in':''}<span style="color:${d.supabase?'#22c55e':'#f59e0b'};margin-left:6px;font-size:10px">${d.supabase?'● Server':'⚠ Local only'}</span></div>
@@ -3060,7 +3113,7 @@ function renderKBList(filter=''){
       <div class="kb-icon">${d.type?.includes('Circular')?'📋':d.type?.includes('Rules')?'📜':d.type?.includes('AAR')?'⚖':d.type?.includes('Notification')?'🔔':'📄'}</div>
       <div class="kb-info">
         <div class="kb-name">${esc(d.name)}</div>
-        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${d.date||'Date unknown'}</span> · ${(d.chunks||0).toLocaleString()} chunks${d.pageCount?' · '+d.pageCount+' pages':''}${d.fileSize?' · '+(d.fileSize/1024/1024).toFixed(1)+'MB':''}${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}
+        <div class="kb-meta">${esc(d.type||'Document')} · <span style="color:var(--accent);font-weight:500">${fmtDate(d.date)||'Date unknown'}</span> · ${(d.chunks||0).toLocaleString()} chunks${d.pageCount?' · '+d.pageCount+' pages':''}${d.fileSize?' · '+(d.fileSize/1024/1024).toFixed(1)+'MB':''}${d.docIdentity?.refNo?' · '+d.docIdentity.refNo.toUpperCase():''}
           <span class="doc-status ${d.status||'ready'}" style="margin-left:8px">
             <span class="doc-status-dot"></span>
             ${d.builtin ? '● Built-in' : 
@@ -3075,7 +3128,11 @@ function renderKBList(filter=''){
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         <button class="btn btn-ghost btn-sm" onclick="viewDoc('${d.id}')" title="View extracted text">👁 Text</button>
-        ${d.storageUrl ? `<a href="${d.storageUrl}" target="_blank" class="btn btn-ghost btn-sm" title="Open original PDF" style="text-decoration:none">📄 PDF</a>` : ''}
+        ${d.storageUrl 
+          ? `<a href="${d.storageUrl}" target="_blank" class="btn btn-ghost btn-sm" title="View/download original PDF" style="text-decoration:none">📄 PDF</a>` 
+          : (d.supabase && !d.builtin && d.status==='ready') 
+            ? `<button class="btn btn-ghost btn-sm" onclick="attachPdf('${d.id}')" title="Upload original PDF for this document" style="opacity:.6">📎 Add PDF</button>` 
+            : ''}
         ${d.builtin
           ? ''
           : !d.supabase
@@ -3101,6 +3158,22 @@ function updateDeleteBtn(){
 // ════════════════════════════════════════════════════════
 
 // kbSortMode, kbTypeFilter, kbSearchFilter declared at top
+
+// ── Date display helper ──
+function fmtDate(isoDate){
+  if(!isoDate) return '';
+  // Input: YYYY-MM-DD or YYYY-MM or YYYY
+  const parts = isoDate.split('-');
+  if(parts.length === 3){
+    const [y,m,d] = parts;
+    return `${d}/${m}/${y.slice(2)}`; // DD/MM/YY
+  }
+  if(parts.length === 2){
+    return `${parts[1]}/${parts[0].slice(2)}`; // MM/YY
+  }
+  return isoDate; // Just year — return as-is
+}
+
 
 function sortKB(mode){
   kbSortMode = mode;
