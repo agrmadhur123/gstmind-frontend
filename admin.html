@@ -2330,7 +2330,7 @@ async function kbProcessBulk(files){
       const chunksRes = await fetch(API+'/kb/upload/chunks',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body:JSON.stringify({doc_id: docId, content: content})
+        body:JSON.stringify({doc_id: docId, content: content, storage_url: storageUrl})
       });
 
       if(!chunksRes.ok){
@@ -2764,16 +2764,21 @@ async function checkKBSync(){
     if(verifyEl) verifyEl.textContent = `${serverCount} docs · ${totalChunksAll} chunks in Supabase`;
 
     // Replace adminDocs completely with server state
-    adminDocs = serverDocs.map(sd=>({
-      id:sd.id, name:sd.name, type:sd.type||'',
-      date:sd.doc_date||'', chunks:sd.chunk_count||0,
-      builtin:false, supabase:true,
-      status:sd.status||'ready',
-      storageUrl:sd.storage_url||'',
-      fileName:sd.file_name||'',
-      pageCount:sd.page_count||0,
-      content:''
-    }));
+    // Merge server data with local — preserve storageUrl if server doesn't have it
+    adminDocs = serverDocs.map(sd=>{
+      const existing = adminDocs.find(d=>d.id===sd.id);
+      return {
+        id:sd.id, name:sd.name, type:sd.type||'',
+        date:sd.doc_date||'', chunks:sd.chunk_count||0,
+        builtin:false, supabase:true,
+        status:sd.status||'ready',
+        // Use server storage_url if available, else preserve local
+        storageUrl: sd.storage_url || (existing?.storageUrl) || '',
+        fileName:sd.file_name||'',
+        pageCount:sd.page_count||0,
+        content:''
+      };
+    });
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
     
     const countEl = document.getElementById('nav-kb-count');
