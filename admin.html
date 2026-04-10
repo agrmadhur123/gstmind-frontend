@@ -1536,25 +1536,13 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
 // ════════════════════════════════
 // ADMIN AUTH
 // ════════════════════════════════
-const ADMIN_CREDS = {user:'admin', pass:''}; // Legacy — replaced by OTP
+const ADMIN_CREDS = {user:'admin', pass:'gstmind@admin123'};
+let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
 const API = 'https://web-production-399b0.up.railway.app';
 // Admin Railway token — stored after admin logs in via API
 let adminApiToken = localStorage.getItem('gm_admin_api_token') || '';
 
-// Get/refresh API token for KB operations
-async function ensureApiToken(){
-  // Use existing token if available
-  if(adminApiToken) return adminApiToken;
-  
-  // Try stored token from previous session
-  const stored = localStorage.getItem('gm_admin_api_token');
-  if(stored){ adminApiToken = stored; return adminApiToken; }
-  
-  // No token — show helpful message instead of browser prompt
-  showToast('Please log out and log back in with your GSTMind email to enable server uploads','error');
-  return null;
-}
-// adminPass removed — auth now via OTP
+// ensureApiToken defined below with adminLogout
 
 // ════════════════════════════════
 // ADMIN AUTH — Email OTP
@@ -1692,56 +1680,7 @@ function adminLogout(){
 
 // adminPass removed — auth now via OTP
 
-async function adminLogin(){
-  const u = document.getElementById('adminUser').value.trim();
-  const p = document.getElementById('adminPass').value;
-  const err = document.getElementById('loginErr');
-  const btn = document.querySelector('.login-btn');
-  
-  // Local admin check
-  const isLocalAdmin = (u === ADMIN_CREDS.user && p === adminPass);
-  const isEmailLogin = u.includes('@');
-  
-  if(!isLocalAdmin && !isEmailLogin){ err.classList.add('show'); return; }
-  
-  if(btn){ btn.textContent='Logging in...'; btn.disabled=true; }
-  
-  try{
-    // Always try Railway auth to get API token for Supabase uploads
-    const loginEmail = isEmailLogin ? u : (localStorage.getItem('gm_admin_email')||'');
-    const loginPass = p;
-    
-    if(loginEmail){
-      try{
-        const res = await fetch(API+'/auth/login/email',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({email:loginEmail, password:loginPass})
-        });
-        const data = await res.json();
-        if(data.token){
-          adminApiToken = data.token;
-          localStorage.setItem('gm_admin_api_token', adminApiToken);
-          localStorage.setItem('gm_admin_email', loginEmail);
-          console.log('Railway auth: OK');
-        }
-      }catch(e){ console.log('Railway auth failed (will work offline):', e.message); }
-    }
-    
-    // Allow access if local credentials match OR Railway auth succeeded
-    if(isLocalAdmin || (isEmailLogin && adminApiToken)){
-      err.classList.remove('show');
-      localStorage.setItem('gm_admin_session','1');
-      document.getElementById('loginWrap').style.display='none';
-      document.getElementById('adminShell').style.display='flex';
-      initAdmin();
-    } else {
-      err.classList.add('show');
-    }
-  } finally {
-    if(btn){ btn.textContent='Access Admin Panel'; btn.disabled=false; }
-  }
-}
+// adminLogin() replaced by OTP flow: adminSendOTP() → adminVerifyOTP()
 
 function adminLogout(){
   localStorage.removeItem('gm_admin_session');
