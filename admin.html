@@ -1754,6 +1754,7 @@ window.onload = async () => {
 // ════════════════════════════════
 const BUILTIN_KB = []; // All docs in Supabase // All docs now in Supabase — no hardcoded built-ins
 let adminDocs = JSON.parse(localStorage.getItem('gm_admin_kb')||'[]');
+const pendingFileMap = new Map(); // docId -> File object (tracks uploaded files for pipeline)
 let skippedDocs = JSON.parse(localStorage.getItem('gm_skipped_kb')||'[]');
 let currentKBTab = 'all';
 
@@ -3149,8 +3150,6 @@ function renderWikiList(){
 // ══════════════════════════════════════════════════════════
 
 // In-memory File object store — survives only until page reload
-const pendingFileMap = new Map(); // docId -> File object
-
 // Derive pipeline stage from doc fields
 function getPipelineStage(d){
   if(d.builtin) return 3; // builtins are always complete
