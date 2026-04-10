@@ -731,7 +731,7 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
     <div id="adminStep1">
       <div class="login-title">Admin Login</div>
       <div class="login-sub">Enter your admin email to receive a one-time password.</div>
-      <div class="login-err" id="loginErr" style="display:none">Error. Please try again.</div>
+      <div class="login-err" id="loginErr" style="display:none;background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);padding:9px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px;">Error. Please try again.</div>
       <label class="lbl">Admin Email</label>
       <input class="inp" type="email" id="adminEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')adminSendOTP()"/>
       <button class="login-btn" onclick="adminSendOTP()" id="adminSendBtn">Send OTP →</button>
@@ -1606,7 +1606,11 @@ async function adminSendOTP(){
     ['ao1','ao2','ao3','ao4','ao5','ao6'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('ao1').focus();
     if(data.dev_otp){ showToast('Dev OTP: '+data.dev_otp,'info'); }
-  }catch(e){ showErr('loginErr', e.message); }
+  }catch(e){ 
+    showErr('loginErr', e.message);
+    showToast('Error: '+e.message, 'error');
+    console.error('OTP send error:', e);
+  }
   finally{ btn.textContent='Send OTP →'; btn.disabled=false; }
 }
 async function adminVerifyOTP(){
