@@ -3320,10 +3320,23 @@ async function pipeGenerateWiki(docId){
   var token = await ensureApiToken();
   if(!token){ showToast('Not connected to server', 'error'); return; }
 
-  // Get the content — from memory or local doc
+  // Get the content — fetch from server (text lives in Supabase, not localStorage)
   var content = doc.content || doc.text || '';
   if(!content){
-    showToast('No text content — extract text first', 'error');
+    // Fetch text from backend /kb/preview endpoint
+    try{
+      if(btn) btn.textContent = '\uD83E\uDDE0 Fetching text...';
+      var previewRes = await fetch(API+'/kb/text/'+docId, {
+        headers:{'Authorization':'Bearer '+token}
+      });
+      if(previewRes.ok){
+        var previewData = await previewRes.json();
+        content = previewData.text || '';
+      }
+    } catch(e){ content = ''; }
+  }
+  if(!content){
+    showToast('No text content found on server — please re-extract text first', 'error');
     if(btn){ btn.textContent = '\uD83E\uDDE0 Generate Wiki'; btn.disabled = false; btn.classList.remove('processing'); }
     return;
   }
