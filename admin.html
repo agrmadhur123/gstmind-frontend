@@ -727,21 +727,20 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
       </div>
     </div>
 
-    <!-- Step 1: Email -->
+    <!-- Password Login (primary) -->
     <div id="adminStep1">
       <div class="login-title">Admin Login</div>
-      <div class="login-sub">Enter your admin email to receive a one-time password.</div>
-      <div class="login-err" id="loginErr" style="display:none;background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);padding:9px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px;">Error. Please try again.</div>
-      <label class="lbl">Admin Email</label>
-      <input class="inp" type="email" id="adminEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')adminSendOTP()"/>
-      <button class="login-btn" onclick="adminSendOTP()" id="adminSendBtn">Send OTP →</button>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e5e0d8;text-align:center">
-        <span style="font-size:12px;color:#999">First time? </span>
-        <span style="font-size:12px;color:#c9a96e;cursor:pointer;font-weight:500" onclick="showAdminSignup()">Create admin account</span>
-      </div>
+      <div class="login-sub">Enter your admin credentials.</div>
+      <div class="login-err" id="loginErr" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;padding:9px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px;">Incorrect password.</div>
+      <label class="lbl">Username</label>
+      <input class="inp" type="text" id="adminUser" placeholder="admin" onkeydown="if(event.key==='Enter')document.getElementById('adminPass').focus()"/>
+      <label class="lbl">Password</label>
+      <input class="inp" type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLocalLogin()"/>
+      <button class="login-btn" onclick="adminLocalLogin()" id="adminLoginBtn">Access Admin Panel</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:#666">Default: admin / gstmind@admin123</div>
     </div>
 
-    <!-- Step 2: OTP -->
+    <!-- OTP Step 2 (kept for verify after OTP send) -->
     <div id="adminStep2" style="display:none">
       <div class="login-title">Enter OTP</div>
       <div class="login-sub">6-digit code sent to <strong id="adminEmailShow"></strong></div>
@@ -757,27 +756,21 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
       <button class="login-btn" onclick="adminVerifyOTP()" id="adminVerifyBtn">Verify & Login</button>
       <div style="text-align:center;margin-top:10px;font-size:12px">
         <span style="color:#c9a96e;cursor:pointer" onclick="showAdminStep1()">← Back</span>
-        &nbsp;·&nbsp;
-        <span style="color:#c9a96e;cursor:pointer" onclick="adminSendOTP()">Resend OTP</span>
       </div>
     </div>
 
-    <!-- Signup -->
+    <!-- Signup (hidden) -->
     <div id="adminSignup" style="display:none">
       <div class="login-title">Create Admin Account</div>
       <div class="login-sub">One-time setup. Requires invite code.</div>
       <div class="login-err" id="signupErr" style="display:none">Error.</div>
-      <label class="lbl">First Name</label>
-      <input class="inp" type="text" id="adminFname" placeholder="First name"/>
-      <label class="lbl">Last Name</label>
-      <input class="inp" type="text" id="adminLname" placeholder="Last name"/>
-      <label class="lbl">Email</label>
-      <input class="inp" type="email" id="adminSignupEmail" placeholder="your@email.com"/>
-      <label class="lbl">Invite Code</label>
-      <input class="inp" type="text" id="adminInviteCode" placeholder="Get from GSTMind support"/>
+      <label class="lbl">First Name</label><input class="inp" type="text" id="adminFname" placeholder="First name"/>
+      <label class="lbl">Last Name</label><input class="inp" type="text" id="adminLname" placeholder="Last name"/>
+      <label class="lbl">Email</label><input class="inp" type="email" id="adminSignupEmail" placeholder="your@email.com"/>
+      <label class="lbl">Invite Code</label><input class="inp" type="text" id="adminInviteCode" placeholder="Invite code"/>
       <button class="login-btn" onclick="adminDoSignup()" id="adminSignupBtn">Create Account & Send OTP</button>
       <div style="text-align:center;margin-top:10px">
-        <span style="font-size:12px;color:#c9a96e;cursor:pointer" onclick="showAdminStep1()">← Back to login</span>
+        <span style="font-size:12px;color:#c9a96e;cursor:pointer" onclick="showAdminStep1()">← Back</span>
       </div>
     </div>
   </div>
@@ -1541,6 +1534,47 @@ let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
 const API = 'https://web-production-399b0.up.railway.app';
 // Admin Railway token — stored after admin logs in via API
 let adminApiToken = localStorage.getItem('gm_admin_api_token') || '';
+
+// ── LOCAL PASSWORD LOGIN (primary) ──
+const ADMIN_CREDS = {user:'admin', pass:'gstmind@admin123'};
+let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
+
+async function adminLocalLogin(){
+  const u = document.getElementById('adminUser').value.trim();
+  const p = document.getElementById('adminPass').value;
+  const err = document.getElementById('loginErr');
+  const btn = document.getElementById('adminLoginBtn');
+
+  if(u !== ADMIN_CREDS.user || p !== adminPass){
+    err.style.display='block';
+    err.textContent='Incorrect username or password.';
+    return;
+  }
+  err.style.display='none';
+  if(btn){ btn.textContent='Logging in...'; btn.disabled=true; }
+
+  // Get Railway token in background using /auth/admin/token
+  try{
+    const res = await fetch(API+'/auth/admin/token',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password: p})
+    });
+    const data = await res.json();
+    if(data.token){
+      adminApiToken = data.token;
+      localStorage.setItem('gm_admin_api_token', adminApiToken);
+    }
+  } catch(e){ console.log('Railway token fetch failed (offline mode):', e.message); }
+
+  // Grant access regardless — local password was correct
+  localStorage.setItem('gm_admin_session','1');
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('adminShell').style.display='flex';
+  if(btn){ btn.textContent='Access Admin Panel'; btn.disabled=false; }
+  initAdmin();
+}
+
 
 // ensureApiToken defined below with adminLogout
 
