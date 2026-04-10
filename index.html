@@ -1422,7 +1422,7 @@ button:focus:not(:focus-visible) { outline: none; }
         </div>
         <div class="inp-hint" style="max-width:720px">
           <span>📎 Attach notice photo/PDF · Enter to send · Shift+Enter for new line</span>
-          <span id="docHint">6 built-in docs</span>
+          <span id="docHint">Loading KB...</span>
         </div>
         <div class="disclaimer">GSTMind is for research purposes only. Not legal advice. Always verify with primary legislation.</div>
       </div>
@@ -1822,7 +1822,7 @@ function initApp(){
   document.getElementById('stg-plan').textContent=user.plan==='pro'?'Professional':user.plan==='unlimited'?'Unlimited':'Free Trial (10 queries)';
 
   renderBuiltin();
-  updateKBUI();
+  updateKBUI(kbDocs||[]);
   renderTrendingChips();
   loadChatHistory();
 
@@ -1994,9 +1994,9 @@ function addKBDoc(){
 }
 function pushDoc(name,content,type){
   docs.push({id:Date.now()+Math.random(),name,content,type,chunks:chunkText(content)});
-  renderDocs();updateKBUI();showToast('Added: '+name);
+  renderDocs();updateKBUI(kbDocs||[]);showToast('Added: '+name);
 }
-function delDoc(id){docs=docs.filter(d=>d.id!==id);invalidateChunkCache();renderDocs();updateKBUI();}
+function delDoc(id){docs=docs.filter(d=>d.id!==id);invalidateChunkCache();renderDocs();updateKBUI(kbDocs||[]);}
 function renderDocs(){
   const list=document.getElementById('docList');
   document.getElementById('docCount').textContent=docs.length;
@@ -2006,9 +2006,15 @@ function renderDocs(){
 function renderBuiltin(){
   document.getElementById('builtinList').innerHTML='<div style="font-size:12px;color:var(--light);padding:8px">All documents loaded from server knowledge base.</div>';
 }
-function updateKBUI(){
+function updateKBUI(docs){
   const hint=document.getElementById('docHint');
-  if(hint)hint.textContent=`Knowledge base loaded from server`;
+  if(!hint) return;
+  if(docs && docs.length > 0){
+    const chunks = docs.reduce((s,d)=>s+(d.chunk_count||d.chunks||0),0);
+    hint.textContent = `${docs.length} doc${docs.length!==1?'s':''} · ${chunks.toLocaleString()} chunks in KB`;
+  } else {
+    hint.textContent = 'Knowledge base loading...';
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3411,6 +3417,16 @@ window.addEventListener('load', ()=>{
 // Close sidebar on new chat (mobile)
 const _origNewChat = typeof startNewChat === 'function' ? startNewChat : null;
 
+
+function updateDocHint(count){
+  const el = document.getElementById('docHint');
+  if(!el) return;
+  if(count > 0){
+    el.textContent = count + ' doc' + (count!==1?'s':'') + ' in KB';
+  } else {
+    el.textContent = 'No docs in KB yet';
+  }
+}
 </script>
 
 </body>
