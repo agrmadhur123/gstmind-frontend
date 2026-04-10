@@ -133,6 +133,32 @@ button.ps-btn.processing{
 .recon-result.warn{ background:var(--accent-bg); border:1px solid var(--accent-border); color:var(--accent); }
 .recon-result.none{ background:var(--s2); border:1px solid var(--border); color:var(--text3); }
 
+
+/* ── WIKI BATCH PROGRESS ── */
+.wiki-progress-wrap{
+  margin-top:10px;padding:12px 14px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;display:none;
+}
+.wiki-progress-wrap.active{display:block}
+.wiki-progress-label{
+  font-size:12px;color:var(--text2);
+  font-family:'DM Mono',monospace;margin-bottom:8px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.wiki-progress-label span{color:var(--accent);font-weight:600}
+.wiki-progress-bar-track{
+  height:6px;background:var(--border);border-radius:3px;overflow:hidden;
+}
+.wiki-progress-bar-fill{
+  height:100%;background:var(--accent);border-radius:3px;
+  transition:width .4s ease;width:0%;
+}
+.wiki-progress-entries{
+  font-size:11px;color:var(--text3);
+  font-family:'DM Mono',monospace;margin-top:6px;
+}
+
 .wiki-empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .wiki-summary-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;margin-bottom:14px;font-size:12.5px;color:var(--green)}
 
@@ -1155,6 +1181,7 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
             <span>🧠</span>
             <span id="wikiSummaryText">0 wiki entries</span>
             <button class="btn btn-ghost btn-sm" onclick="pipeGenerateAllWiki()" style="margin-left:auto">⚡ Generate All Missing</button>
+            <button class="btn btn-danger btn-sm" onclick="cleanupSuperseded()" id="cleanupBtn" style="display:none">🗑 Clean Up Superseded</button>
           </div>
           <div id="wikiEntryList">
             <div class="wiki-empty"><div style="font-size:32px;margin-bottom:12px">🧠</div><div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">No Wiki Entries Yet</div><div style="font-size:12px;color:var(--text3)">Upload a document and click <strong style="color:var(--accent)">🧠 Generate Wiki</strong> in the pipeline to get started.</div></div>
@@ -1783,7 +1810,7 @@ function showPanel(name, btn){
   const kbStats = document.getElementById('kbVerifyStats');
   if(kbStats) kbStats.style.display = (name==='kb') ? 'inline' : 'none';
   if(name==='users')renderUserTable(getAllUsers());
-  if(name==='kb'){ renderKBList(); loadKBHealth(); loadWikiEntries(); }
+  if(name==='kb'){ renderKBList(); loadKBHealth(); loadWikiEntries(); updateCleanupBtn(); }
   if(name==='prompts') loadPromptPanel();
   if(name==='subscriptions')renderSubTable();
   if(name==='analytics')renderAnalytics();
@@ -3309,7 +3336,7 @@ async function pipeGenerateWiki(docId){
   if(!doc){ showToast('Document not found', 'error'); return; }
 
   if(wikiEntries.some(function(w){ return w.docId === docId; })){
-    if(!confirm('This document already has wiki entries. Regenerate?')) return;
+    if(!confirm('This document already has wiki entries. Regenerate all batches?')) return;
     wikiEntries = wikiEntries.filter(function(w){ return w.docId !== docId; });
     saveWikiEntries();
   }
@@ -3320,67 +3347,79 @@ async function pipeGenerateWiki(docId){
   var token = await ensureApiToken();
   if(!token){ showToast('Not connected to server', 'error'); return; }
 
-  // Get the content — fetch from server (text lives in Supabase, not localStorage)
-  var content = doc.content || doc.text || '';
-  if(!content){
-    // Fetch text from backend /kb/preview endpoint
-    try{
-      if(btn) btn.textContent = '\uD83E\uDDE0 Fetching text...';
-      var previewRes = await fetch(API+'/kb/text/'+docId, {
-        headers:{'Authorization':'Bearer '+token}
-      });
-      if(previewRes.ok){
-        var previewData = await previewRes.json();
-        content = previewData.text || '';
-      }
-    } catch(e){ content = ''; }
-  }
-  if(!content){
-    showToast('No text content found on server — please re-extract text first', 'error');
-    if(btn){ btn.textContent = '\uD83E\uDDE0 Generate Wiki'; btn.disabled = false; btn.classList.remove('processing'); }
-    return;
-  }
+  // Show progress bar
+  var wrap = document.getElementById('wikiProgressWrap');
+  var barFill = document.getElementById('wikiProgressBar');
+  var pctEl = document.getElementById('wikiProgressPct');
+  var docEl = document.getElementById('wikiProgressDoc');
+  var entriesEl = document.getElementById('wikiProgressEntries');
+  if(wrap){ wrap.classList.add('active'); }
+  if(docEl) docEl.textContent = doc.name;
+  if(barFill) barFill.style.width = '0%';
+  if(pctEl) pctEl.textContent = '0%';
+  if(entriesEl) entriesEl.textContent = '⏳ Starting batch 1...';
+
+  // ── BATCH LOOP ──
+  var chunkOffset = 0;
+  var chunkBatchSize = 60;
+  var totalEntriesGenerated = 0;
+  var batchNum = 0;
+  var totalChunks = 0;
+  var done = false;
+  var errors = 0;
 
   try{
-    if(btn) btn.textContent = '\uD83E\uDDE0 Calling AI...';
+    while(!done){
+      batchNum++;
+      if(entriesEl) entriesEl.textContent =
+        '⚙ Batch '+batchNum+' · chunks '+chunkOffset+' → '+(chunkOffset+chunkBatchSize)+
+        ' · '+totalEntriesGenerated+' entries so far';
 
-    // Call Railway wiki endpoint
-    var res = await fetch(API+'/wiki/generate',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({
-        doc_id: docId,
-        doc_name: doc.name,
-        doc_type: doc.type || 'GST Document',
-        text: content
-      })
-    });
+      var res = await fetch(API+'/wiki/generate-batch', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({
+          doc_id: docId,
+          doc_name: doc.name,
+          doc_type: doc.type || 'GST Document',
+          chunk_offset: chunkOffset,
+          chunk_batch_size: chunkBatchSize
+        })
+      });
 
-    if(!res.ok){
-      var err = await res.json().catch(function(){return {};});
-      throw new Error(err.detail || 'Wiki generation failed on server');
-    }
+      if(!res.ok){
+        var errData = await res.json().catch(function(){return {};});
+        throw new Error(errData.detail || 'Batch '+batchNum+' failed');
+      }
 
-    var data = await res.json();
-    var entries = data.entries || [];
-    if(!entries.length) throw new Error('No wiki entries returned');
+      var data = await res.json();
+      done = data.done;
+      chunkOffset = data.next_offset;
+      totalChunks = data.total_chunks || totalChunks;
+      var batchEntries = data.entries || [];
+      totalEntriesGenerated += data.entries_count || 0;
 
-    // Store entries locally
-    var now = new Date().toISOString();
-    entries.forEach(function(e){
-      wikiEntries.push({
-        id: 'w'+Date.now()+Math.random().toString(36).slice(2,5),
-        docId: docId,
-        docName: doc.name,
-        docType: doc.type,
-        topic: e.topic || '',
-        subtopics: e.subtopics || [],
-        keywords: e.keywords || [],
-        legalPosition: e.legal_position || e.legalPosition || '',
-        keyProvisions: e.key_provisions || e.keyProvisions || '',
-        conditions: e.conditions || '',
-        exceptions: e.exceptions || 'None specified',
-        practicalImplication: e.practical_implication || e.practicalImplication || '',
+      // Update progress UI
+      var pct = data.progress_pct || (totalChunks > 0 ? Math.round(chunkOffset/totalChunks*100) : 0);
+      if(barFill) barFill.style.width = pct+'%';
+      if(pctEl) pctEl.textContent = pct+'%';
+
+      // Add entries to local wiki list
+      var now = new Date().toISOString();
+      batchEntries.forEach(function(e){
+        wikiEntries.push({
+          id: 'w'+Date.now()+Math.random().toString(36).slice(2,5),
+          docId: docId,
+          docName: doc.name,
+          docType: doc.type,
+          topic: e.topic || '',
+          subtopics: e.subtopics || [],
+          keywords: e.keywords || [],
+          legalPosition: e.legal_position || '',
+          keyProvisions: e.key_provisions || '',
+          conditions: e.conditions || '',
+          exceptions: e.exceptions || 'None specified',
+          practicalImplication: e.practical_implication || '',
         sourceSection: e.source_section || e.sourceSection || '',
         confidence: e.confidence || 'MEDIUM',
         createdAt: now,
@@ -3440,8 +3479,8 @@ async function pipeReconcile(docId){
 
     // Build result summary
     var parts = [];
+    if(data.merges > 0) parts.push(data.merges+' merged');
     if(data.supersessions > 0) parts.push(data.supersessions+' superseded');
-    if(data.duplicates_resolved > 0) parts.push(data.duplicates_resolved+' duplicates resolved');
     if(data.cross_refs_added > 0) parts.push(data.cross_refs_added+' cross-refs added');
 
     var type = 'none';
@@ -3462,10 +3501,10 @@ async function pipeReconcile(docId){
 
     // Show detail if actions taken
     if(data.actions && data.actions.length > 0){
-      var detail = data.actions.slice(0,5).map(function(a){
-        if(a.action==='superseded') return '\u2718 Superseded: '+a.entry_id.slice(0,8)+'... — '+a.reason;
-        if(a.action==='cross_ref_added') return '\uD83D\uDD17 '+a.on_topic+' → '+a.references;
-        if(a.action==='duplicate_resolved') return '\uD83D\uDDD1 Duplicate resolved (kept '+a.kept+')';
+      var detail = data.actions.slice(0,8).map(function(a){
+        if(a.action==='merged') return '\uD83D\uDD00 Merged into: '+a.merged_topic+' ('+a.source_ids.length+' sources)';
+        if(a.action==='superseded') return '\u2718 Superseded: '+(a.entry_id||'').slice(0,8)+'... — '+a.reason;
+        if(a.action==='cross_ref_added') return '\uD83D\uDD17 Cross-ref added: '+a.references;
         return a.action;
       }).join('\n');
       if(data.actions.length > 5) detail += '\n...and '+(data.actions.length-5)+' more';
@@ -3480,6 +3519,39 @@ async function pipeReconcile(docId){
 }
 
 // ── Bulk reconcile all wiki-ready docs ──
+// ── WIKI CLEANUP — hard-delete superseded entries ──
+async function cleanupSuperseded(){
+  if(!confirm('Hard-delete all superseded wiki entries? This cannot be undone.\n\nSuperseded entries are already excluded from queries — this is just housekeeping.')) return;
+  var token = await ensureApiToken();
+  if(!token){ showToast('Not connected', 'error'); return; }
+  var btn = document.getElementById('cleanupBtn');
+  if(btn){ btn.textContent = '🗑 Cleaning...'; btn.disabled = true; }
+  try{
+    var res = await fetch(API+'/wiki/cleanup', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token}
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.detail || 'Cleanup failed');
+    showToast('✓ Deleted '+data.deleted+' superseded entries', 'success');
+    renderWikiList();
+    updateWikiTabCount();
+  } catch(e){
+    showToast('Cleanup failed: '+e.message, 'error');
+  } finally {
+    if(btn){ btn.textContent = '🗑 Clean Up Superseded'; btn.disabled = false; }
+  }
+}
+
+// Show cleanup button only when superseded entries exist
+function updateCleanupBtn(){
+  var btn = document.getElementById('cleanupBtn');
+  if(!btn) return;
+  // Check localStorage wiki entries for any superseded ones
+  var allWiki = JSON.parse(localStorage.getItem('gm_wiki_entries')||'[]');
+  btn.style.display = 'flex';  // Always show — server has the truth
+}
+
 async function pipeReconcileAll(){
   var pending = adminDocs.filter(function(d){
     return wikiEntries.some(function(w){ return w.docId === d.id; }) && !d.reconciled;
