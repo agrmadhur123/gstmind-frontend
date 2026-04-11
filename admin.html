@@ -3314,7 +3314,7 @@ async function pipeGenerateWiki(docId){
 
   // ── BATCH LOOP ──
   var chunkOffset = 0;
-  var chunkBatchSize = 60;
+  var chunkBatchSize = 30;
   var totalEntriesGenerated = 0;
   var batchNum = 0;
   var totalChunks = 0;
@@ -3325,8 +3325,8 @@ async function pipeGenerateWiki(docId){
     while(!done){
       batchNum++;
       if(entriesEl) entriesEl.textContent =
-        '⚙ Batch '+batchNum+' · chunks '+chunkOffset+' → '+(chunkOffset+chunkBatchSize)+
-        ' · '+totalEntriesGenerated+' entries so far';
+        '⚙ Batch '+batchNum+' · chunks '+chunkOffset+'-'+(chunkOffset+chunkBatchSize)+
+        ' of '+totalChunks+' · '+totalEntriesGenerated+' wiki entries so far';
 
       var res = await fetch(API+'/wiki/generate-batch', {
         method:'POST',
