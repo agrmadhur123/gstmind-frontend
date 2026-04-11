@@ -1182,6 +1182,8 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
             <span id="wikiSummaryText">0 wiki entries</span>
             <button class="btn btn-ghost btn-sm" onclick="pipeGenerateAllWiki()" style="margin-left:auto">⚡ Generate All Missing</button>
             <button class="btn btn-ghost btn-sm" onclick="loadWikiEntries()" title="Refresh from server">↺ Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteSelectedWikiEntries()" id="deleteSelectedWikiBtn" style="display:none">🗑 Delete Selected (<span id="selectedWikiCount">0</span>)</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAllWikiEntries()">🗑 Delete All Wiki</button>
             <button class="btn btn-danger btn-sm" onclick="cleanupSuperseded()" id="cleanupBtn" style="display:none">🗑 Clean Up Superseded</button>
           </div>
 
