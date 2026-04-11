@@ -3059,8 +3059,19 @@ function viewWikiEntry(docId){
   }, 100);
 }
 
-function deleteWikiEntry(wikiId){
+async function deleteWikiEntry(wikiId){
   if(!confirm('Delete this wiki entry? You can regenerate it anytime.')) return;
+  // Delete from Supabase first
+  try{
+    const token = await ensureApiToken();
+    if(token){
+      await fetch(API+'/wiki/entries/'+wikiId, {
+        method:'DELETE',
+        headers:{'Authorization':'Bearer '+token}
+      });
+    }
+  } catch(e){ console.log('Server delete failed:', e.message); }
+  // Then update local state
   wikiEntries = wikiEntries.filter(w => w.id !== wikiId);
   saveWikiEntries();
   renderWikiList();
@@ -3069,6 +3080,16 @@ function deleteWikiEntry(wikiId){
 }
 
 async function regenerateWikiEntry(wikiId, docId){
+  // Delete from Supabase
+  try{
+    const token = await ensureApiToken();
+    if(token){
+      await fetch(API+'/wiki/entries/'+wikiId, {
+        method:'DELETE',
+        headers:{'Authorization':'Bearer '+token}
+      });
+    }
+  } catch(e){}
   wikiEntries = wikiEntries.filter(w => w.id !== wikiId);
   saveWikiEntries();
   await generateWikiEntry(docId);
@@ -3289,7 +3310,18 @@ async function pipeGenerateWiki(docId){
   if(!doc){ showToast('Document not found', 'error'); return; }
 
   if(wikiEntries.some(function(w){ return w.docId === docId; })){
-    if(!confirm('This document already has wiki entries. Regenerate all batches?')) return;
+    if(!confirm('This document already has wiki entries. Delete all existing entries and regenerate?')) return;
+    // Delete from Supabase first
+    try{
+      var delToken = await ensureApiToken();
+      if(delToken){
+        await fetch(API+'/wiki/entries/doc/'+docId, {
+          method:'DELETE',
+          headers:{'Authorization':'Bearer '+delToken}
+        });
+      }
+    } catch(e){ console.log('Server wiki delete failed:', e.message); }
+    // Clear local cache
     wikiEntries = wikiEntries.filter(function(w){ return w.docId !== docId; });
     saveWikiEntries();
   }
