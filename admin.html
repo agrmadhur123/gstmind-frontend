@@ -1183,6 +1183,7 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
             <button class="btn btn-ghost btn-sm" onclick="pipeGenerateAllWiki()" style="margin-left:auto">⚡ Generate All Missing</button>
             <button class="btn btn-ghost btn-sm" onclick="loadWikiEntries()" title="Refresh from server">↺ Refresh</button>
             <button class="btn btn-ghost btn-sm" onclick="deleteSelectedWikiEntries()" id="deleteSelectedWikiBtn" style="display:none">🗑 Delete Selected (<span id="selectedWikiCount">0</span>)</button>
+            <button class="btn btn-ghost btn-sm" onclick="showRetryBatchDialog()">⚡ Retry Missing Batch</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAllWikiEntries()">🗑 Delete All Wiki</button>
             <button class="btn btn-danger btn-sm" onclick="cleanupSuperseded()" id="cleanupBtn" style="display:none">🗑 Clean Up Superseded</button>
           </div>
@@ -3027,6 +3028,40 @@ async function deleteAllWikiEntries(){
     console.error('deleteAllWikiEntries error:', e);
     // Refresh to show actual state
     await loadWikiEntries();
+  }
+}
+
+
+async function showRetryBatchDialog(){
+  var docId = prompt('Enter document ID (from Supabase kb_documents table):');
+  if(!docId) return;
+  var docName = prompt('Enter document name (for display):') || 'Unknown Document';
+  var offset = prompt('Enter chunk offset to retry (e.g. 660 for batch 23):');
+  if(offset === null) return;
+  offset = parseInt(offset) || 0;
+
+  showToast('Running batch at offset '+offset+'...', 'success');
+  try{
+    const token = await ensureApiToken();
+    const res = await fetch(API+'/wiki/fill-gaps', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        doc_id: docId,
+        doc_name: docName,
+        doc_type: 'GST Document',
+        chunk_offset: offset,
+        chunk_batch_size: 30
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail||'Failed');
+    var msg = 'Batch at offset '+offset+': '+
+      (data.entries_generated||0)+' new entries generated';
+    showToast(msg, 'success');
+    await loadWikiEntries();
+  } catch(e){
+    showToast('Retry failed: '+e.message, 'error');
   }
 }
 
