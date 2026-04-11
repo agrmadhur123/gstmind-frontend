@@ -1181,8 +1181,28 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
             <span>🧠</span>
             <span id="wikiSummaryText">0 wiki entries</span>
             <button class="btn btn-ghost btn-sm" onclick="pipeGenerateAllWiki()" style="margin-left:auto">⚡ Generate All Missing</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadWikiEntries()" title="Refresh from server">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" onclick="cleanupSuperseded()" id="cleanupBtn" style="display:none">🗑 Clean Up Superseded</button>
           </div>
+
+          <!-- LIVE PROGRESS PANEL — shown while wiki is generating -->
+          <div id="wikiProgressWrap" class="wiki-progress-wrap" style="display:none;background:var(--s2);border:1px solid var(--accent-border);border-radius:10px;padding:16px 20px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">
+                🧠 Generating Wiki — <span id="wikiProgressDoc" style="color:var(--accent)">Document</span>
+              </div>
+              <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent)" id="wikiProgressPct">0%</div>
+            </div>
+            <div class="wiki-progress-bar-track" style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:10px">
+              <div id="wikiProgressBar" class="wiki-progress-bar-fill" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .4s ease"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div id="wikiProgressEntries" style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">⏳ Starting...</div>
+              <div id="wikiProgressBatch" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace"></div>
+            </div>
+            <div id="wikiProgressLog" style="margin-top:10px;max-height:80px;overflow-y:auto;font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);line-height:1.6;"></div>
+          </div>
+
           <div id="wikiEntryList">
             <div class="wiki-empty"><div style="font-size:32px;margin-bottom:12px">🧠</div><div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">No Wiki Entries Yet</div><div style="font-size:12px;color:var(--text3)">Upload a document and click <strong style="color:var(--accent)">🧠 Generate Wiki</strong> in the pipeline to get started.</div></div>
           </div>
@@ -3333,16 +3353,24 @@ async function pipeGenerateWiki(docId){
   if(!token){ showToast('Not connected to server', 'error'); return; }
 
   // Show progress bar
+  // Show progress panel
   var wrap = document.getElementById('wikiProgressWrap');
   var barFill = document.getElementById('wikiProgressBar');
   var pctEl = document.getElementById('wikiProgressPct');
   var docEl = document.getElementById('wikiProgressDoc');
   var entriesEl = document.getElementById('wikiProgressEntries');
-  if(wrap){ wrap.classList.add('active'); }
+  var batchEl = document.getElementById('wikiProgressBatch');
+  var logEl = document.getElementById('wikiProgressLog');
+  if(wrap){ wrap.style.display='block'; }
   if(docEl) docEl.textContent = doc.name;
   if(barFill) barFill.style.width = '0%';
   if(pctEl) pctEl.textContent = '0%';
-  if(entriesEl) entriesEl.textContent = '⏳ Starting batch 1...';
+  if(entriesEl) entriesEl.textContent = '⏳ Starting...';
+  if(batchEl) batchEl.textContent = '';
+  if(logEl) logEl.innerHTML = '';
+  // Switch to wiki tab so admin can see progress
+  var wikiTabBtn = document.getElementById('kbTab-wiki');
+  if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
 
   // ── BATCH LOOP ──
   var chunkOffset = 0;
@@ -3374,10 +3402,36 @@ async function pipeGenerateWiki(docId){
 
       if(!res.ok){
         var errData = await res.json().catch(function(){return {};});
-        throw new Error(errData.detail || 'Batch '+batchNum+' failed');
+        var errMsg = errData.detail || 'Batch '+batchNum+' failed';
+        console.error('Batch error:', errMsg);
+        // Log error in progress panel but CONTINUE to next batch
+        if(logEl){
+          var errLine = document.createElement('div');
+          errLine.style.color = 'var(--red)';
+          errLine.textContent = '✗ Batch '+batchNum+' failed: '+errMsg+' — skipping';
+          logEl.appendChild(errLine);
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        errors++;
+        // Skip this batch — advance offset and continue
+        chunkOffset += chunkBatchSize;
+        done = chunkOffset >= (totalChunks || chunkOffset + 1);
+        if(!done) await new Promise(function(r){ setTimeout(r, 3000); }); // wait before retry
+        continue;
       }
 
       var data = await res.json();
+      // If backend returned a soft error (graceful), log and continue
+      if(data.error){
+        if(logEl){
+          var softErrLine = document.createElement('div');
+          softErrLine.style.color = 'var(--accent)';
+          softErrLine.textContent = '⚠ Batch '+batchNum+': '+data.error.slice(0,80);
+          logEl.appendChild(softErrLine);
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        errors++;
+      }
       done = data.done;
       chunkOffset = data.next_offset;
       totalChunks = data.total_chunks || totalChunks;
@@ -3388,6 +3442,15 @@ async function pipeGenerateWiki(docId){
       var pct = data.progress_pct || (totalChunks > 0 ? Math.round(chunkOffset/totalChunks*100) : 0);
       if(barFill) barFill.style.width = pct+'%';
       if(pctEl) pctEl.textContent = pct+'%';
+      var batchEntryCount = data.entries_count || 0;
+      if(batchEl) batchEl.textContent = 'Batch '+batchNum+' of ~'+Math.ceil(totalChunks/chunkBatchSize);
+      if(entriesEl) entriesEl.textContent = totalEntriesGenerated+' wiki entries generated so far';
+      if(logEl){
+        var logLine = document.createElement('div');
+        logLine.textContent = '✓ Batch '+batchNum+' — chunks '+(chunkOffset-chunkBatchSize)+'-'+chunkOffset+' → '+batchEntryCount+' entries';
+        logEl.appendChild(logLine);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
 
       // Add entries to local wiki list
       var now = new Date().toISOString();
