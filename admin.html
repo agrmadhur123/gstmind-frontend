@@ -2949,6 +2949,87 @@ function updateWikiTabCount(){
   if(el) el.textContent = wikiEntries.length;
 }
 
+
+// ════════════════════════════════
+// WIKI DELETE FUNCTIONS — all sync with Supabase
+// ════════════════════════════════
+
+function updateWikiDeleteBtn(){
+  const checked = document.querySelectorAll('.wiki-chk:checked');
+  const btn = document.getElementById('deleteSelectedWikiBtn');
+  const countEl = document.getElementById('selectedWikiCount');
+  if(btn) btn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+  if(countEl) countEl.textContent = checked.length;
+}
+
+async function deleteSelectedWikiEntries(){
+  const checked = [...document.querySelectorAll('.wiki-chk:checked')];
+  if(!checked.length) return;
+  if(!confirm('Delete '+checked.length+' selected wiki entr'+(checked.length===1?'y':'ies')+'? This cannot be undone.')) return;
+  const token = await ensureApiToken();
+  var deleted = 0, failed = 0;
+  for(var chk of checked){
+    var id = chk.dataset.id;
+    try{
+      if(token){
+        const res = await fetch(API+'/wiki/entries/'+id, {method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+        if(res.ok) deleted++;
+        else failed++;
+      }
+    } catch(e){ failed++; }
+  }
+  var msg = deleted+' entr'+(deleted===1?'y':'ies')+' deleted';
+  if(failed) msg += ', '+failed+' failed';
+  showToast(msg, failed?'error':'success');
+  await loadWikiEntries();
+}
+
+async function deleteAllWikiForDoc(docId, docName){
+  if(!confirm('Delete ALL wiki entries for: "'+docName+'"?\n\nThis cannot be undone. You can regenerate anytime.')) return;
+  const token = await ensureApiToken();
+  if(!token){ showToast('Not authenticated','error'); return; }
+  try{
+    const res = await fetch(API+'/wiki/entries/doc/'+docId, {
+      method:'DELETE',
+      headers:{'Authorization':'Bearer '+token}
+    });
+    const data = await res.json().catch(function(){return {};});
+    if(!res.ok) throw new Error(data.detail || 'Delete failed: '+res.status);
+    wikiEntries = wikiEntries.filter(function(w){ return w.docId !== docId; });
+    saveWikiEntries();
+    await loadWikiEntries();
+    showToast('All wiki entries for "'+docName+'" deleted', 'success');
+  } catch(e){
+    showToast('Delete failed: '+e.message, 'error');
+    console.error('deleteAllWikiForDoc error:', e);
+  }
+}
+
+async function deleteAllWikiEntries(){
+  const total = wikiEntries.length;
+  if(!total){ showToast('No wiki entries to delete', 'error'); return; }
+  if(!confirm('Delete ALL '+total+' wiki entries from the knowledge base?\n\nThis affects ALL documents and cannot be undone.\nYou can regenerate them anytime from the KB pipeline.')) return;
+  const token = await ensureApiToken();
+  if(!token){ showToast('Not authenticated','error'); return; }
+  try{
+    const res = await fetch(API+'/wiki/entries/all', {
+      method:'DELETE',
+      headers:{'Authorization':'Bearer '+token}
+    });
+    const data = await res.json().catch(function(){return {};});
+    if(!res.ok) throw new Error(data.detail || 'Delete failed: '+res.status);
+    wikiEntries = [];
+    localStorage.removeItem('gm_wiki_entries');
+    await loadWikiEntries();
+    showToast('All '+total+' wiki entries deleted from Supabase', 'success');
+  } catch(e){
+    showToast('Delete failed: '+e.message, 'error');
+    console.error('deleteAllWikiEntries error:', e);
+    // Refresh to show actual state
+    await loadWikiEntries();
+  }
+}
+
 async function generateWikiEntry(docId){
   const allDocs = [...adminDocs, ...BUILTIN_KB];
   const doc = allDocs.find(d => d.id === docId);
