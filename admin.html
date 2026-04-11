@@ -1543,46 +1543,6 @@ const API = 'https://web-production-399b0.up.railway.app';
 let adminApiToken = localStorage.getItem('gm_admin_api_token') || '';
 
 
-const ADMIN_CREDS = {user:'admin', pass:'gstmind@admin123'};
-let adminPass = localStorage.getItem('gm_admin_pass') || ADMIN_CREDS.pass;
-
-async function adminLocalLogin(){
-  const u = document.getElementById('adminUser').value.trim();
-  const p = document.getElementById('adminPass').value;
-  const err = document.getElementById('loginErr');
-  const btn = document.getElementById('adminLoginBtn');
-
-  if(u !== ADMIN_CREDS.user || p !== adminPass){
-    err.style.display='block';
-    err.textContent='Incorrect username or password.';
-    return;
-  }
-  err.style.display='none';
-  if(btn){ btn.textContent='Logging in...'; btn.disabled=true; }
-
-  // Get Railway token in background using /auth/admin/token
-  try{
-    const res = await fetch(API+'/auth/admin/token',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password: p})
-    });
-    const data = await res.json();
-    if(data.token){
-      adminApiToken = data.token;
-      localStorage.setItem('gm_admin_api_token', adminApiToken);
-    }
-  } catch(e){ console.log('Railway token fetch failed (offline mode):', e.message); }
-
-  // Grant access regardless — local password was correct
-  localStorage.setItem('gm_admin_session','1');
-  document.getElementById('loginWrap').style.display='none';
-  document.getElementById('adminShell').style.display='flex';
-  if(btn){ btn.textContent='Access Admin Panel'; btn.disabled=false; }
-  initAdmin();
-}
-
-
 // ensureApiToken defined below with adminLogout
 
 // ════════════════════════════════
@@ -3413,21 +3373,25 @@ async function pipeGenerateWiki(docId){
           conditions: e.conditions || '',
           exceptions: e.exceptions || 'None specified',
           practicalImplication: e.practical_implication || '',
-        sourceSection: e.source_section || e.sourceSection || '',
-        confidence: e.confidence || 'MEDIUM',
-        createdAt: now,
-        updatedAt: now
+          sourceSection: e.source_section || e.sourceSection || '',
+          confidence: e.confidence || 'MEDIUM',
+          createdAt: now,
+          updatedAt: now
+        });
       });
-    });
 
-    saveWikiEntries();
-    renderWikiList();
-    renderKBList();
-    showToast('\u2713 '+entries.length+' wiki entr'+(entries.length===1?'y':'ies')+' generated for '+doc.name);
+      saveWikiEntries();
+      renderWikiList();
+      renderKBList();
+      showToast('\u2713 '+totalEntriesGenerated+' wiki entries generated for '+doc.name);
 
-    // Switch to wiki tab to show result
-    var wikiTabBtn = document.getElementById('kbTab-wiki');
-    if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
+      // Switch to wiki tab to show result
+      var wikiTabBtn = document.getElementById('kbTab-wiki');
+      if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
+
+      // Pause between batches
+      if(!done) await new Promise(function(r){ setTimeout(r, 2000); });
+    } // end while
 
   } catch(e){
     console.error('Wiki generation error:', e);
