@@ -3463,6 +3463,7 @@ async function pipeGenerateWiki(docId){
   var errors = 0;
   var globalDone = false;
   var completedBatches = 0;
+  var failedOffsets = []; // track which chunk offsets failed
 
   // Helper: run one batch and return result
   async function runBatch(offset, batchNum){
@@ -3505,6 +3506,10 @@ async function pipeGenerateWiki(docId){
         errLine.textContent = (data.entries_count>0?'⚠':'✗')+' Batch '+data.batchNum+' (chunks '+data.offset+'): '+data.error.slice(0,60)+(data.entries_count?' → '+data.entries_count+' salvaged':'');
         logEl.appendChild(errLine);
         logEl.scrollTop = logEl.scrollHeight;
+      }
+      // Track failed offset for retry
+      if(data.entries_count === 0 && data.offset !== undefined){
+        failedOffsets.push(data.offset);
       }
       errors++;
     } else {
