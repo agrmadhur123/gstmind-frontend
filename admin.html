@@ -3455,22 +3455,18 @@ async function pipeGenerateWiki(docId){
   var wikiTabBtn = document.getElementById('kbTab-wiki');
   if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
 
-  // ── BATCH LOOP ──
-  var chunkOffset = 0;
+  // ── PARALLEL BATCH LOOP — 3 batches at a time for 3x speed ──
   var chunkBatchSize = 30;
+  var parallelCount = 3; // run 3 batches simultaneously
   var totalEntriesGenerated = 0;
-  var batchNum = 0;
   var totalChunks = 0;
-  var done = false;
   var errors = 0;
+  var globalDone = false;
+  var completedBatches = 0;
 
-  try{
-    while(!done){
-      batchNum++;
-      if(entriesEl) entriesEl.textContent =
-        '⚙ Batch '+batchNum+' · chunks '+chunkOffset+'-'+(chunkOffset+chunkBatchSize)+
-        ' of '+totalChunks+' · '+totalEntriesGenerated+' wiki entries so far';
-
+  // Helper: run one batch and return result
+  async function runBatch(offset, batchNum){
+    try{
       var res = await fetch(API+'/wiki/generate-batch', {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
@@ -3478,98 +3474,134 @@ async function pipeGenerateWiki(docId){
           doc_id: docId,
           doc_name: doc.name,
           doc_type: doc.type || 'GST Document',
-          chunk_offset: chunkOffset,
+          chunk_offset: offset,
           chunk_batch_size: chunkBatchSize
         })
       });
-
       if(!res.ok){
         var errData = await res.json().catch(function(){return {};});
-        var errMsg = errData.detail || 'Batch '+batchNum+' failed';
-        console.error('Batch error:', errMsg);
-        // Log error in progress panel but CONTINUE to next batch
-        if(logEl){
-          var errLine = document.createElement('div');
-          errLine.style.color = 'var(--red)';
-          errLine.textContent = '✗ Batch '+batchNum+' failed: '+errMsg+' — skipping';
-          logEl.appendChild(errLine);
-          logEl.scrollTop = logEl.scrollHeight;
-        }
-        errors++;
-        // Skip this batch — advance offset and continue
-        chunkOffset += chunkBatchSize;
-        done = chunkOffset >= (totalChunks || chunkOffset + 1);
-        if(!done) await new Promise(function(r){ setTimeout(r, 3000); }); // wait before retry
-        continue;
+        return {offset:offset, batchNum:batchNum, error: errData.detail||'HTTP '+res.status, entries:[], entries_count:0, done:false, next_offset:offset+chunkBatchSize, total_chunks:totalChunks};
       }
-
       var data = await res.json();
-      // If backend returned a soft error (graceful), log and continue
-      if(data.error){
-        if(logEl){
-          var softErrLine = document.createElement('div');
-          softErrLine.style.color = 'var(--accent)';
-          softErrLine.textContent = '⚠ Batch '+batchNum+': '+data.error.slice(0,80);
-          logEl.appendChild(softErrLine);
-          logEl.scrollTop = logEl.scrollHeight;
-        }
-        errors++;
-      }
-      done = data.done;
-      chunkOffset = data.next_offset;
-      totalChunks = data.total_chunks || totalChunks;
-      var batchEntries = data.entries || [];
-      totalEntriesGenerated += data.entries_count || 0;
+      data.batchNum = batchNum;
+      data.offset = offset;
+      return data;
+    } catch(e){
+      return {offset:offset, batchNum:batchNum, error:e.message, entries:[], entries_count:0, done:false, next_offset:offset+chunkBatchSize, total_chunks:totalChunks};
+    }
+  }
 
-      // Update progress UI
-      var pct = data.progress_pct || (totalChunks > 0 ? Math.round(chunkOffset/totalChunks*100) : 0);
-      if(barFill) barFill.style.width = pct+'%';
-      if(pctEl) pctEl.textContent = pct+'%';
-      var batchEntryCount = data.entries_count || 0;
-      if(batchEl) batchEl.textContent = 'Batch '+batchNum+' of ~'+Math.ceil(totalChunks/chunkBatchSize);
-      if(entriesEl) entriesEl.textContent = totalEntriesGenerated+' wiki entries generated so far';
+  // Helper: handle a completed batch result
+  function processBatchResult(data){
+    completedBatches++;
+    if(data.total_chunks) totalChunks = data.total_chunks;
+    var count = data.entries_count || 0;
+    totalEntriesGenerated += count;
+
+    if(data.error){
+      if(logEl){
+        var errLine = document.createElement('div');
+        errLine.style.color = data.entries_count > 0 ? 'var(--accent)' : 'var(--red)';
+        errLine.textContent = (data.entries_count>0?'⚠':'✗')+' Batch '+data.batchNum+' (chunks '+data.offset+'): '+data.error.slice(0,60)+(data.entries_count?' → '+data.entries_count+' salvaged':'');
+        logEl.appendChild(errLine);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      errors++;
+    } else {
       if(logEl){
         var logLine = document.createElement('div');
-        logLine.textContent = '✓ Batch '+batchNum+' — chunks '+(chunkOffset-chunkBatchSize)+'-'+chunkOffset+' → '+batchEntryCount+' entries';
+        logLine.textContent = '✓ Batch '+data.batchNum+' (chunks '+data.offset+'-'+(data.offset+chunkBatchSize)+') → '+count+' entries';
         logEl.appendChild(logLine);
         logEl.scrollTop = logEl.scrollHeight;
       }
+    }
 
-      // Add entries to local wiki list
-      var now = new Date().toISOString();
-      batchEntries.forEach(function(e){
-        wikiEntries.push({
-          id: 'w'+Date.now()+Math.random().toString(36).slice(2,5),
-          docId: docId,
-          docName: doc.name,
-          docType: doc.type,
-          topic: e.topic || '',
-          subtopics: e.subtopics || [],
-          keywords: e.keywords || [],
-          legalPosition: e.legal_position || '',
-          keyProvisions: e.key_provisions || '',
-          conditions: e.conditions || '',
-          exceptions: e.exceptions || 'None specified',
-          practicalImplication: e.practical_implication || '',
-          sourceSection: e.source_section || e.sourceSection || '',
-          confidence: e.confidence || 'MEDIUM',
-          createdAt: now,
-          updatedAt: now
-        });
+    // Update progress
+    var pct = totalChunks > 0 ? Math.round(Math.min(100, completedBatches / Math.ceil(totalChunks/chunkBatchSize) * 100)) : 0;
+    if(barFill) barFill.style.width = pct+'%';
+    if(pctEl) pctEl.textContent = pct+'%';
+    if(batchEl) batchEl.textContent = completedBatches+' of ~'+Math.ceil(totalChunks/chunkBatchSize)+' batches done';
+    if(entriesEl) entriesEl.textContent = totalEntriesGenerated+' wiki entries generated so far';
+
+    // Add entries to local cache
+    var now = new Date().toISOString();
+    (data.entries||[]).forEach(function(e){
+      wikiEntries.push({
+        id: 'w'+Date.now()+Math.random().toString(36).slice(2,5),
+        docId: docId, docName: doc.name, docType: doc.type,
+        topic: e.topic||'', subtopics: e.subtopics||[],
+        keywords: e.keywords||[], legalPosition: e.legal_position||'',
+        keyProvisions: e.key_provisions||'', conditions: e.conditions||'',
+        exceptions: e.exceptions||'None specified',
+        practicalImplication: e.practical_implication||'',
+        sourceSection: e.source_section||e.sourceSection||'',
+        confidence: e.confidence||'MEDIUM', createdAt: now, updatedAt: now
       });
+    });
+    saveWikiEntries();
+  }
 
-      saveWikiEntries();
-      renderWikiList();
-      renderKBList();
-      showToast('\u2713 '+totalEntriesGenerated+' wiki entries generated for '+doc.name);
+  try{
+    // First: get total chunk count
+    var firstRes = await fetch(API+'/wiki/generate-batch', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({doc_id:docId, doc_name:doc.name, doc_type:doc.type||'GST Document', chunk_offset:0, chunk_batch_size:chunkBatchSize})
+    });
+    var firstData = await firstRes.json();
+    firstData.batchNum = 1;
+    firstData.offset = 0;
+    totalChunks = firstData.total_chunks || 0;
+    if(firstData.done && (!firstData.entries || !firstData.entries.length)){
+      // No chunks at all
+      showToast('No chunks found for this document. Run Extract Text first.', 'error');
+      if(wrap) wrap.style.display='none';
+      if(btn){ btn.textContent='\uD83E\uDDE0 Generate Wiki'; btn.disabled=false; btn.classList.remove('processing'); }
+      return;
+    }
+    processBatchResult(firstData);
+    if(totalChunks) if(batchEl) batchEl.textContent = completedBatches+' of ~'+Math.ceil(totalChunks/chunkBatchSize)+' batches done';
 
-      // Switch to wiki tab to show result
-      var wikiTabBtn = document.getElementById('kbTab-wiki');
-      if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
+    if(firstData.done){
+      globalDone = true;
+    } else {
+      // Now run remaining batches in parallel groups of parallelCount
+      var nextOffset = firstData.next_offset || chunkBatchSize;
+      var batchCounter = 2; // batch 1 already done
 
-      // Pause between batches
-      if(!done) await new Promise(function(r){ setTimeout(r, 2000); });
-    } // end while
+      while(!globalDone){
+        // Build a group of parallel batches
+        var group = [];
+        for(var p = 0; p < parallelCount && !globalDone; p++){
+          if(nextOffset >= totalChunks && totalChunks > 0){ globalDone=true; break; }
+          group.push(runBatch(nextOffset, batchCounter));
+          nextOffset += chunkBatchSize;
+          batchCounter++;
+        }
+        if(!group.length) break;
+
+        // Run group in parallel
+        var results = await Promise.all(group);
+
+        // Process results
+        results.forEach(function(data){
+          processBatchResult(data);
+          if(data.done) globalDone = true;
+        });
+
+        // Check if all chunks covered
+        if(totalChunks > 0 && nextOffset >= totalChunks) globalDone = true;
+
+        // Short pause between groups (rate limit protection)
+        if(!globalDone) await new Promise(function(r){ setTimeout(r, 1000); });
+
+        renderWikiList();
+        renderKBList();
+      }
+    }
+
+    renderWikiList();
+    renderKBList();
 
   } catch(e){
     console.error('Wiki generation error:', e);
