@@ -3033,35 +3033,81 @@ async function deleteAllWikiEntries(){
 
 
 async function showRetryBatchDialog(){
-  var docId = prompt('Enter document ID (from Supabase kb_documents table):');
-  if(!docId) return;
-  var docName = prompt('Enter document name (for display):') || 'Unknown Document';
-  var offset = prompt('Enter chunk offset to retry (e.g. 660 for batch 23):');
-  if(offset === null) return;
-  offset = parseInt(offset) || 0;
+  // Show doc picker from existing adminDocs
+  var docs = adminDocs.filter(function(d){ return d.chunks && d.chunks > 0; });
+  if(!docs.length){ showToast('No documents with chunks found','error'); return; }
 
-  showToast('Running batch at offset '+offset+'...', 'success');
+  // Build a list to pick from
+  var docList = docs.map(function(d,i){ return i+': '+d.name+' ('+d.chunks+' chunks)'; }).join('\n');
+  var pick = prompt('Pick a document by number:\n\n'+docList+'\n\nEnter number:');
+  if(pick === null) return;
+  var doc = docs[parseInt(pick)];
+  if(!doc){ showToast('Invalid selection','error'); return; }
+
+  var token = await ensureApiToken();
+  if(!token) return;
+
+  showToast('Analysing gaps for: '+doc.name+'...', 'success');
+
+  // Call gap detection endpoint
   try{
-    const token = await ensureApiToken();
-    const res = await fetch(API+'/wiki/fill-gaps', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body: JSON.stringify({
-        doc_id: docId,
-        doc_name: docName,
-        doc_type: 'GST Document',
-        chunk_offset: offset,
-        chunk_batch_size: 30
-      })
+    var res = await fetch(API+'/wiki/gaps/'+doc.id+'?batch_size=30', {
+      headers:{'Authorization':'Bearer '+token}
     });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.detail||'Failed');
-    var msg = 'Batch at offset '+offset+': '+
-      (data.entries_generated||0)+' new entries generated';
-    showToast(msg, 'success');
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.detail||'Gap check failed');
+
+    var missing = data.missing_offsets || [];
+    if(!missing.length){
+      showToast('No gaps found! Wiki looks complete ('+data.wiki_count+' entries for '+data.total_batches+' batches)', 'success');
+      return;
+    }
+
+    var confirm_msg = 'Found '+missing.length+' missing batch'+(missing.length>1?'es':'')+' for:\n'+doc.name+
+      '\n\nMissing offsets: '+missing.slice(0,10).join(', ')+(missing.length>10?'...':'')+
+      '\n\nTotal wiki entries: '+data.wiki_count+' / expected ~'+(data.total_batches*5)+
+      '\n\nFill '+missing.length+' missing batch'+(missing.length>1?'es':'')+'?';
+
+    if(!confirm(confirm_msg)) return;
+
+    // Run missing batches in parallel groups of 3
+    showToast('Filling '+missing.length+' missing batches...', 'success');
+    var filled = 0, totalNew = 0;
+    var PARALLEL = 3;
+
+    for(var i=0; i<missing.length; i+=PARALLEL){
+      var group = missing.slice(i, i+PARALLEL);
+      var promises = group.map(function(offset){
+        return fetch(API+'/wiki/fill-gaps', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body: JSON.stringify({
+            doc_id: doc.id,
+            doc_name: doc.name,
+            doc_type: doc.type||'GST Document',
+            chunk_offset: offset,
+            chunk_batch_size: 30
+          })
+        }).then(function(r){ return r.json(); }).catch(function(e){ return {error:e.message, entries_generated:0}; });
+      });
+
+      var results = await Promise.all(promises);
+      results.forEach(function(r){
+        totalNew += (r.entries_generated||0);
+        filled++;
+        if(r.error) console.log('Fill error at offset:', r.error);
+      });
+
+      showToast('Filled '+(i+group.length)+'/'+missing.length+' batches → '+totalNew+' new entries', 'success');
+      if(i+PARALLEL < missing.length) await new Promise(function(r){ setTimeout(r,1000); });
+    }
+
+    showToast('✓ Done! '+totalNew+' new wiki entries added for '+doc.name, 'success');
     await loadWikiEntries();
+
   } catch(e){
-    showToast('Retry failed: '+e.message, 'error');
+    showToast('Gap fill failed: '+e.message, 'error');
+    console.error(e);
   }
 }
 
