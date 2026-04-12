@@ -1785,7 +1785,7 @@ function showPanel(name, btn){
   document.getElementById('topbarSub').textContent = sub;
   const kbStats = document.getElementById('kbVerifyStats');
   if(kbStats) kbStats.style.display = (name==='kb') ? 'inline' : 'none';
-  if(name==='users')renderUserTable(getAllUsers());
+  if(name==='users'){ loadUsersFromServer().then(function(u){ renderUserTable(u||[]); }); }
   if(name==='kb'){ renderKBList(); loadKBHealth(); loadWikiEntries(); updateCleanupBtn(); }
   if(name==='prompts') loadPromptPanel();
   if(name==='subscriptions')renderSubTable();
@@ -1795,22 +1795,53 @@ function showPanel(name, btn){
 // ════════════════════════════════
 // DATA HELPERS
 // ════════════════════════════════
+// Users are now loaded from Supabase via backend
+let _cachedUsers = [];
+
 function getAllUsers(){
-  const users = JSON.parse(localStorage.getItem('gm_users')||'[]');
-  const single = JSON.parse(localStorage.getItem('gm_user')||'null');
-  const all = [...users];
-  if(single && !all.find(u=>u.email===single.email&&u.phone===single.phone)) all.push(single);
-  return all;
+  return _cachedUsers;
+}
+
+async function loadUsersFromServer(){
+  try{
+    const token = await ensureApiToken();
+    if(!token) return;
+    const res = await fetch(API+'/admin/users', {
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(!res.ok) throw new Error('Failed to load users: '+res.status);
+    const data = await res.json();
+    // Normalise field names from Supabase snake_case to camelCase
+    _cachedUsers = (Array.isArray(data) ? data : []).map(function(u){
+      return {
+        id: u.id,
+        name: u.name || (u.fname+' '+u.lname),
+        fname: u.fname || '',
+        lname: u.lname || '',
+        email: u.email || '',
+        phone: u.phone || '',
+        prof: u.profession || '',
+        plan: u.plan || 'free',
+        queryCount: u.query_count || 0,
+        queryLimit: u.query_limit || 10,
+        blocked: u.blocked || false,
+        is_admin: u.is_admin || false,
+        joinDate: u.joined_at || u.joinDate || ''
+      };
+    });
+    console.log('Loaded '+_cachedUsers.length+' users from Supabase');
+    return _cachedUsers;
+  } catch(e){
+    console.error('loadUsersFromServer error:', e.message);
+    showToast('Could not load users from server: '+e.message, 'error');
+    return [];
+  }
 }
 
 function saveAllUsers(users){
-  localStorage.setItem('gm_users', JSON.stringify(users));
-  // Update current user if they're in the list
-  const curr = JSON.parse(localStorage.getItem('gm_user')||'null');
-  if(curr){
-    const updated = users.find(u=>(u.email&&u.email===curr.email)||(u.phone&&u.phone===curr.phone));
-    if(updated) localStorage.setItem('gm_user', JSON.stringify(updated));
-  }
+  // No-op — users are managed server-side
+  // Individual updates go through PATCH /admin/users/{id}
+  _cachedUsers = users;
 }
 
 // ════════════════════════════════
@@ -1819,6 +1850,7 @@ function saveAllUsers(users){
 async function initAdmin(){
   loadAdminTheme();
   loadPrompts();
+  await loadUsersFromServer();
   if(skippedDocs.length>0){
     document.getElementById('kbTabCount-skipped').textContent = skippedDocs.length;
     document.getElementById('kbTabCount-skipped').style.cssText='background:var(--red-bg);color:var(--red)';
@@ -1841,7 +1873,8 @@ async function initAdmin(){
   startSyncMonitor();
 }
 
-function refreshData(){
+async function refreshData(){
+  await loadUsersFromServer();
   const users = getAllUsers();
   const free = users.filter(u=>u.plan==='free'||!u.plan).length;
   const pro = users.filter(u=>u.plan==='pro').length;
@@ -1977,20 +2010,29 @@ function openChangePlan(idx){
   document.getElementById('changePlanModal').classList.add('show');
 }
 
-function saveChangePlan(){
-  const users = getAllUsers();
+async function saveChangePlan(){
   const u = currentUsers[selectedUserIdx];
-  const target = users.find(x=>(x.email&&x.email===u.email)||(x.phone&&x.phone===u.phone));
-  if(!target){showToast('User not found','error');return;}
-  target.plan = document.getElementById('cpm-plan').value;
+  if(!u){showToast('User not found','error');return;}
+  const plan = document.getElementById('cpm-plan').value;
   const lim = document.getElementById('cpm-limit').value;
-  if(lim) target.queryLimit = parseInt(lim);
-  else target.queryLimit = target.plan==='pro'?100:target.plan==='unlimited'?999999:10;
-  saveAllUsers(users);
-  document.getElementById('changePlanModal').classList.remove('show');
-  renderUserTable(getAllUsers());
-  refreshData();
-  showToast('Plan updated for '+target.name,'success');
+  const queryLimit = lim ? parseInt(lim) : (plan==='pro'?100:plan==='unlimited'?999999:10);
+  try{
+    const token = await ensureApiToken();
+    if(!token) return;
+    const res = await fetch(API+'/admin/users/'+u.id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({plan: plan, query_limit: queryLimit})
+    });
+    if(!res.ok) throw new Error('Update failed: '+res.status);
+    document.getElementById('changePlanModal').classList.remove('show');
+    showToast('Plan updated for '+u.name,'success');
+    await loadUsersFromServer();
+    renderUserTable(getAllUsers());
+    refreshData();
+  } catch(e){
+    showToast('Error: '+e.message,'error');
+  }
 }
 
 function toggleBlock(idx){
@@ -3059,7 +3101,15 @@ async function showRetryBatchDialog(){
 
     var missing = data.missing_offsets || [];
     if(!missing.length){
-      showToast('No gaps found! Wiki looks complete ('+data.wiki_count+' entries for '+data.total_batches+' batches)', 'success');
+      var msg = 'Wiki analysis for: '+doc.name+
+        '\n\nTotal chunks: '+data.total_chunks+
+        '\n\nTotal batches: '+data.total_batches+
+        '\n\nWiki entries: '+data.wiki_count+
+        '\n\nAvg per batch: '+data.avg_per_batch+
+        '\n\nCoverage: '+data.coverage_pct+'% of typical'+
+        '\n\n'+data.message+
+        (data.coverage_pct < 60 ? '\n\n⚠ Coverage seems low. Consider full regeneration.' : '\n\n✓ Looks good!');
+      alert(msg);
       return;
     }
 
