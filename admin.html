@@ -3110,92 +3110,233 @@ async function deleteAllWikiEntries(){
 }
 
 
+
+// ════════════════════════════════
+// FAILED BATCH TRACKING
+// ════════════════════════════════
+
+function getFailedBatchKey(docId){ return 'gm_failed_batches_'+docId; }
+
+function logFailedBatch(docId, docName, batchNum, offset, errorMsg){
+  var key = getFailedBatchKey(docId);
+  var existing = [];
+  try{ existing = JSON.parse(localStorage.getItem(key)||'[]'); } catch(e){}
+  // Remove if already logged (avoid duplicates)
+  existing = existing.filter(function(b){ return b.offset !== offset; });
+  existing.push({
+    batchNum: batchNum,
+    offset: offset,
+    docName: docName,
+    error: errorMsg,
+    time: new Date().toLocaleString('en-IN')
+  });
+  localStorage.setItem(key, JSON.stringify(existing));
+}
+
+function clearFailedBatch(docId, offset){
+  var key = getFailedBatchKey(docId);
+  var existing = [];
+  try{ existing = JSON.parse(localStorage.getItem(key)||'[]'); } catch(e){}
+  existing = existing.filter(function(b){ return b.offset !== offset; });
+  localStorage.setItem(key, JSON.stringify(existing));
+}
+
+function clearAllFailedBatches(docId){
+  localStorage.removeItem(getFailedBatchKey(docId));
+}
+
+function getFailedBatches(docId){
+  try{ return JSON.parse(localStorage.getItem(getFailedBatchKey(docId))||'[]'); }
+  catch(e){ return []; }
+}
+
+function getAllFailedBatches(){
+  // Collect failed batches across all docs
+  var all = [];
+  for(var i=0; i<localStorage.length; i++){
+    var key = localStorage.key(i);
+    if(key && key.startsWith('gm_failed_batches_')){
+      try{
+        var batches = JSON.parse(localStorage.getItem(key)||'[]');
+        all = all.concat(batches);
+      } catch(e){}
+    }
+  }
+  return all;
+}
+
+
 async function showRetryBatchDialog(){
-  // Show doc picker from existing adminDocs
   var docs = adminDocs.filter(function(d){ return d.chunks && d.chunks > 0; });
   if(!docs.length){ showToast('No documents with chunks found','error'); return; }
 
-  // Build a list to pick from
-  var docList = docs.map(function(d,i){ return i+': '+d.name+' ('+d.chunks+' chunks)'; }).join('\n');
-  var pick = prompt('Pick a document by number:\n\n'+docList+'\n\nEnter number:');
-  if(pick === null) return;
-  var doc = docs[parseInt(pick)];
-  if(!doc){ showToast('Invalid selection','error'); return; }
+  // Check if there are any logged failed batches
+  var allFailed = getAllFailedBatches();
+
+  // Build choice menu
+  var menuMsg = 'RETRY WIKI BATCHES\n\n';
+  if(allFailed.length > 0){
+    menuMsg += '⚠ '+allFailed.length+' previously failed batch'+(allFailed.length>1?'es':'')+' logged:\n';
+    allFailed.slice(0,8).forEach(function(b){
+      menuMsg += '  • Batch '+b.batchNum+' ('+b.docName.slice(0,25)+'): '+b.error.slice(0,40)+'\n';
+    });
+    menuMsg += '\nEnter:\n1 → Retry all failed batches above\n2 → Fill from a specific batch number\n3 → Fill from a specific batch number for a different doc';
+  } else {
+    menuMsg += 'No failed batches logged.\n\nEnter:\n2 → Fill from a specific batch number';
+  }
+
+  var choice = prompt(menuMsg);
+  if(choice === null) return;
 
   var token = await ensureApiToken();
   if(!token) return;
 
-  showToast('Analysing gaps for: '+doc.name+'...', 'success');
+  var offsets = [];
+  var doc = null;
+  var batchSize = 30;
 
-  // Call gap detection endpoint
-  try{
-    var res = await fetch(API+'/wiki/gaps/'+doc.id+'?batch_size=30', {
-      headers:{'Authorization':'Bearer '+token}
+  if(choice === '1' && allFailed.length > 0){
+    // Group by doc and get offsets
+    // For simplicity: retry all failed batches (may span multiple docs)
+    // Group by docId first
+    var byDoc = {};
+    allFailed.forEach(function(b){
+      var d = adminDocs.find(function(d){ return d.name === b.docName; });
+      if(d){
+        if(!byDoc[d.id]) byDoc[d.id] = {doc:d, offsets:[]};
+        byDoc[d.id].offsets.push(b.offset);
+      }
     });
-    var data = await res.json();
-    if(!res.ok) throw new Error(data.detail||'Gap check failed');
+    var docIds = Object.keys(byDoc);
+    if(!docIds.length){ showToast('Could not match failed batches to documents','error'); return; }
 
-    var missing = data.missing_offsets || [];
-    if(!missing.length){
-      var msg = 'Wiki analysis for: '+doc.name+
-        '\n\nTotal chunks: '+data.total_chunks+
-        '\n\nTotal batches: '+data.total_batches+
-        '\n\nWiki entries: '+data.wiki_count+
-        '\n\nAvg per batch: '+data.avg_per_batch+
-        '\n\nCoverage: '+data.coverage_pct+'% of typical'+
-        '\n\n'+data.message+
-        (data.coverage_pct < 60 ? '\n\n⚠ Coverage seems low. Consider full regeneration.' : '\n\n✓ Looks good!');
-      alert(msg);
-      return;
+    // For now handle first doc — loop through all
+    for(var di=0; di<docIds.length; di++){
+      var entry = byDoc[docIds[di]];
+      await runBatchFill(entry.doc, entry.offsets, token, batchSize);
+      clearAllFailedBatches(entry.doc.id);
+    }
+    return;
+
+  } else {
+    // Manual batch number entry
+    var docList = docs.map(function(d,i){ return i+': '+d.name+' ('+d.chunks+' chunks, batch size 30)'; }).join('\n');
+    var pick = prompt('Pick document:\n\n'+docList+'\n\nEnter number:');
+    if(pick === null) return;
+    doc = docs[parseInt(pick)];
+    if(!doc){ showToast('Invalid selection','error'); return; }
+
+    var batchInput = prompt(
+      'Document: '+doc.name+
+      '\nTotal chunks: '+doc.chunks+
+      '\nTotal batches: '+Math.ceil(doc.chunks/batchSize)+
+      '\n\nEnter batch NUMBER to start from\n(e.g. enter 23 to fill from batch 23 onwards):\n\nOr enter a range like "23-25" to fill specific batches only:'
+    );
+    if(batchInput === null) return;
+
+    var totalChunks = doc.chunks;
+    if(batchInput.includes('-')){
+      // Range: "23-25"
+      var parts = batchInput.split('-');
+      var fromBatch = parseInt(parts[0]);
+      var toBatch = parseInt(parts[1]);
+      for(var bn=fromBatch; bn<=toBatch; bn++){
+        var o = (bn-1)*batchSize;
+        if(o < totalChunks) offsets.push(o);
+      }
+    } else {
+      // Single start batch
+      var startBatch = parseInt(batchInput) || 1;
+      var startOffset = (startBatch-1)*batchSize;
+      for(var o=startOffset; o<totalChunks; o+=batchSize){
+        offsets.push(o);
+      }
     }
 
-    var confirm_msg = 'Found '+missing.length+' missing batch'+(missing.length>1?'es':'')+' for:\n'+doc.name+
-      '\n\nMissing offsets: '+missing.slice(0,10).join(', ')+(missing.length>10?'...':'')+
-      '\n\nTotal wiki entries: '+data.wiki_count+' / expected ~'+(data.total_batches*5)+
-      '\n\nFill '+missing.length+' missing batch'+(missing.length>1?'es':'')+'?';
-
-    if(!confirm(confirm_msg)) return;
-
-    // Run missing batches in parallel groups of 3
-    showToast('Filling '+missing.length+' missing batches...', 'success');
-    var filled = 0, totalNew = 0;
-    var PARALLEL = 3;
-
-    for(var i=0; i<missing.length; i+=PARALLEL){
-      var group = missing.slice(i, i+PARALLEL);
-      var promises = group.map(function(offset){
-        return fetch(API+'/wiki/fill-gaps', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-          body: JSON.stringify({
-            doc_id: doc.id,
-            doc_name: doc.name,
-            doc_type: doc.type||'GST Document',
-            chunk_offset: offset,
-            chunk_batch_size: 30
-          })
-        }).then(function(r){ return r.json(); }).catch(function(e){ return {error:e.message, entries_generated:0}; });
-      });
-
-      var results = await Promise.all(promises);
-      results.forEach(function(r){
-        totalNew += (r.entries_generated||0);
-        filled++;
-        if(r.error) console.log('Fill error at offset:', r.error);
-      });
-
-      showToast('Filled '+(i+group.length)+'/'+missing.length+' batches → '+totalNew+' new entries', 'success');
-      if(i+PARALLEL < missing.length) await new Promise(function(r){ setTimeout(r,1000); });
-    }
-
-    showToast('✓ Done! '+totalNew+' new wiki entries added for '+doc.name, 'success');
-    await loadWikiEntries();
-
-  } catch(e){
-    showToast('Gap fill failed: '+e.message, 'error');
-    console.error(e);
+    if(!offsets.length){ showToast('No valid batches in range','error'); return; }
+    if(!confirm('Fill '+offsets.length+' batch'+(offsets.length>1?'es':'')+' for:\n'+doc.name+'\n\nBatches: '+(offsets.map(function(o){return Math.floor(o/batchSize)+1;}).join(', '))+'\n\n2 at a time. Proceed?')) return;
+    await runBatchFill(doc, offsets, token, batchSize);
   }
 }
+
+async function runBatchFill(doc, offsets, token, batchSize){
+
+  // Show progress in wiki tab
+  var wrap = document.getElementById('wikiProgressWrap');
+  var barFill = document.getElementById('wikiProgressBar');
+  var pctEl = document.getElementById('wikiProgressPct');
+  var docEl = document.getElementById('wikiProgressDoc');
+  var entriesEl = document.getElementById('wikiProgressEntries');
+  var logEl = document.getElementById('wikiProgressLog');
+  var batchEl = document.getElementById('wikiProgressBatch');
+  if(wrap) wrap.style.display='block';
+  if(docEl) docEl.textContent = doc.name;
+  if(barFill) barFill.style.width='0%';
+  if(pctEl) pctEl.textContent='0%';
+  if(entriesEl) entriesEl.textContent='Starting...';
+  if(logEl) logEl.innerHTML='';
+  var wikiTabBtn = document.getElementById('kbTab-wiki');
+  if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
+
+  var totalNew = 0;
+  var PARALLEL = 2; // 2 × 4000 tokens = 8000 TPM (at rate limit)
+
+  for(var i = 0; i < offsets.length; i += PARALLEL){
+    var group = offsets.slice(i, i+PARALLEL);
+    var batchNums = group.map(function(o){ return Math.floor(o/batchSize)+1; });
+
+    if(entriesEl) entriesEl.textContent = 'Running batches at offsets '+group.join(', ')+'...';
+    if(batchEl) batchEl.textContent = (i+group.length)+' of '+offsets.length+' batches done';
+
+    var promises = group.map(function(offset){
+      return fetch(API+'/wiki/fill-gaps', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({
+          doc_id: doc.id,
+          doc_name: doc.name,
+          doc_type: doc.type||'GST Document',
+          chunk_offset: offset,
+          chunk_batch_size: batchSize
+        })
+      }).then(function(r){ return r.json(); })
+        .catch(function(e){ return {error:e.message, entries_generated:0, filled_offset:offset}; });
+    });
+
+    var results = await Promise.all(promises);
+    results.forEach(function(r){
+      var count = r.entries_generated || 0;
+      totalNew += count;
+      if(logEl){
+        var line = document.createElement('div');
+        if(r.error){
+          line.style.color='var(--red)';
+          line.textContent='✗ Offset '+r.filled_offset+': '+r.error.slice(0,60);
+        } else {
+          line.textContent='✓ Offset '+r.filled_offset+' → '+count+' entries';
+        }
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    });
+
+    var pct = Math.round((i+group.length)/offsets.length*100);
+    if(barFill) barFill.style.width=pct+'%';
+    if(pctEl) pctEl.textContent=pct+'%';
+    if(entriesEl) entriesEl.textContent=totalNew+' new wiki entries generated so far';
+
+    // Pause between groups
+    if(i+PARALLEL < offsets.length){
+      await new Promise(function(r){ setTimeout(r, 2000); });
+    }
+  }
+
+  // Done
+  if(entriesEl) entriesEl.textContent='✓ Complete — '+totalNew+' new wiki entries added';
+  showToast('✓ Done! '+totalNew+' new entries added for '+doc.name, 'success');
+  setTimeout(function(){ if(wrap) wrap.style.display='none'; }, 3000);
+  await loadWikiEntries();
+} // end runBatchFill
 
 async function generateWikiEntry(docId){
   const allDocs = [...adminDocs, ...BUILTIN_KB];
@@ -3683,6 +3824,8 @@ async function pipeGenerateWiki(docId){
       }
       errors++;
     } else {
+      // Clear from failed batch log since it succeeded
+      clearFailedBatch(docId, data.offset);
       if(logEl){
         var logLine = document.createElement('div');
         logLine.textContent = '✓ Batch '+data.batchNum+' (chunks '+data.offset+'-'+(data.offset+chunkBatchSize)+') → '+count+' entries';
