@@ -2974,16 +2974,52 @@ async function loadKBFromServer(){
 
 // wikiEntries declared at top with globals
 
-function loadWikiEntries(){
-  try{ wikiEntries = JSON.parse(localStorage.getItem('gm_wiki_entries')||'[]'); }
-  catch(e){ wikiEntries = []; }
+async function loadWikiEntries(){
+  try{
+    const token = await ensureApiToken();
+    if(!token){ wikiEntries = []; renderWikiList(); return; }
+    const res = await fetch(API+'/wiki/entries', {
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(res.ok){
+      const data = await res.json();
+      wikiEntries = (data.entries || data || []).map(function(e){
+        return {
+          id: e.id,
+          docId: e.doc_id,
+          docName: e.doc_name,
+          topic: e.topic||'',
+          subtopics: e.subtopics||[],
+          keywords: e.keywords||[],
+          legalPosition: e.legal_position||'',
+          keyProvisions: e.key_provisions||'',
+          conditions: e.conditions||'',
+          exceptions: e.exceptions||'',
+          practicalImplication: e.practical_implication||'',
+          sourceSection: e.source_section||'',
+          confidence: e.confidence||'MEDIUM',
+          superseded: e.superseded||false,
+          createdAt: e.created_at||''
+        };
+      });
+      try{ localStorage.setItem('gm_wiki_entries', JSON.stringify(wikiEntries)); }catch(e){}
+    } else {
+      try{ wikiEntries = JSON.parse(localStorage.getItem('gm_wiki_entries')||'[]'); }
+      catch(e){ wikiEntries = []; }
+    }
+  } catch(err){
+    console.log('Wiki load from server failed, using cache:', err.message);
+    try{ wikiEntries = JSON.parse(localStorage.getItem('gm_wiki_entries')||'[]'); }
+    catch(e){ wikiEntries = []; }
+  }
   renderWikiList();
   updateWikiTabCount();
+  renderKBList();
 }
 
 function saveWikiEntries(){
   try{ localStorage.setItem('gm_wiki_entries', JSON.stringify(wikiEntries)); }
-  catch(e){ showToast('Wiki storage full','error'); }
+  catch(e){}
   updateWikiTabCount();
 }
 
@@ -3579,16 +3615,19 @@ async function pipeGenerateWiki(docId){
   if(docEl) docEl.textContent = doc.name;
   if(barFill) barFill.style.width = '0%';
   if(pctEl) pctEl.textContent = '0%';
-  if(entriesEl) entriesEl.textContent = '⏳ Starting...';
-  if(batchEl) batchEl.textContent = '';
+  if(entriesEl) entriesEl.textContent = '⏳ Starting batch generation...';
+  if(batchEl) batchEl.textContent = 'Initialising...';
   if(logEl) logEl.innerHTML = '';
-  // Switch to wiki tab so admin can see progress
+  // Switch to wiki tab so admin can see live progress
   var wikiTabBtn = document.getElementById('kbTab-wiki');
   if(wikiTabBtn) switchKBTab('wiki', wikiTabBtn);
+  // Make sure summary bar is visible
+  var wikiBar = document.getElementById('wikiSummaryBar');
+  if(wikiBar) wikiBar.style.display = 'flex';
 
   // ── PARALLEL BATCH LOOP — 3 batches at a time for 3x speed ──
   var chunkBatchSize = 30;
-  var parallelCount = 3; // run 3 batches simultaneously
+  var parallelCount = 2; // run 2 batches simultaneously (8000 TPM limit: 2×4000=8000)
   var totalEntriesGenerated = 0;
   var totalChunks = 0;
   var errors = 0;
@@ -3653,11 +3692,12 @@ async function pipeGenerateWiki(docId){
     }
 
     // Update progress
-    var pct = totalChunks > 0 ? Math.round(Math.min(100, completedBatches / Math.ceil(totalChunks/chunkBatchSize) * 100)) : 0;
+    var totalBatches = totalChunks > 0 ? Math.ceil(totalChunks/chunkBatchSize) : (completedBatches + 3);
+    var pct = Math.round(Math.min(99, completedBatches / totalBatches * 100));
     if(barFill) barFill.style.width = pct+'%';
     if(pctEl) pctEl.textContent = pct+'%';
-    if(batchEl) batchEl.textContent = completedBatches+' of ~'+Math.ceil(totalChunks/chunkBatchSize)+' batches done';
-    if(entriesEl) entriesEl.textContent = totalEntriesGenerated+' wiki entries generated so far';
+    if(batchEl) batchEl.textContent = 'Batch '+completedBatches+' of ~'+totalBatches+' done';
+    if(entriesEl) entriesEl.textContent = totalEntriesGenerated+' wiki entries saved to Supabase so far';
 
     // Add entries to local cache
     var now = new Date().toISOString();
@@ -3719,30 +3759,52 @@ async function pipeGenerateWiki(docId){
         // Run group in parallel
         var results = await Promise.all(group);
 
-        // Process results
-        results.forEach(function(data){
-          processBatchResult(data);
-          if(data.done) globalDone = true;
-        });
+        // Process results — yield to browser between each so UI paints
+        for(var ri=0; ri<results.length; ri++){
+          processBatchResult(results[ri]);
+          if(results[ri].done) globalDone = true;
+          await new Promise(function(r){ setTimeout(r, 0); }); // yield to browser
+        }
+
+        // Update UI after each group — reload from Supabase for accurate data
+        if(completedBatches % 3 === 0){  // refresh every 3 groups (9 batches)
+          await loadWikiEntries();
+          if(wikiBar) wikiBar.style.display = 'flex';
+        } else {
+          renderWikiList();
+        }
+        renderKBList();
+
+        // Update tab count
+        var tabCount = document.getElementById('kbTabCount-wiki');
+        if(tabCount) tabCount.textContent = wikiEntries.length;
 
         // Check if all chunks covered
         if(totalChunks > 0 && nextOffset >= totalChunks) globalDone = true;
 
-        // Short pause between groups (rate limit protection)
-        if(!globalDone) await new Promise(function(r){ setTimeout(r, 1000); });
-
-        renderWikiList();
-        renderKBList();
+        // Short pause between groups
+        if(!globalDone) await new Promise(function(r){ setTimeout(r, 500); });
       }
     }
 
+    // Reload from Supabase to get real IDs and accurate count
+    showToast('\u2713 '+totalEntriesGenerated+' wiki entries saved — reloading...', 'success');
+    await loadWikiEntries();
     renderWikiList();
     renderKBList();
+
+    if(pctEl) pctEl.textContent = '100%';
+    if(barFill) barFill.style.width = '100%';
+    if(entriesEl) entriesEl.textContent = '\u2713 Complete \u2014 '+totalEntriesGenerated+' entries generated';
+    if(batchEl) batchEl.textContent = completedBatches+' batches done'+(errors?' ('+errors+' errors)':'');
+    if(btn){ btn.textContent = '\u2705 Wiki Ready'; btn.disabled = false; btn.classList.remove('processing'); }
+    setTimeout(function(){ if(wrap) wrap.style.display='none'; }, 5000);
 
   } catch(e){
     console.error('Wiki generation error:', e);
     showToast('Wiki generation failed: '+e.message, 'error');
     if(btn){ btn.textContent = '\uD83E\uDDE0 Generate Wiki'; btn.disabled = false; btn.classList.remove('processing'); }
+    if(entriesEl) entriesEl.textContent = '\u2717 Error: '+e.message;
   }
 }
 
@@ -4562,6 +4624,13 @@ function deleteKBDoc(id){
           showToast('Server delete failed: '+(err.detail||'Error'),'error');
           return;
         }
+        // Also delete wiki entries for this document
+        try{
+          await fetch(API+'/wiki/entries/doc/'+id,{
+            method:'DELETE',
+            headers:{'Authorization':'Bearer '+adminApiToken}
+          });
+        }catch(we){ console.log('Wiki delete failed (non-critical):', we.message); }
       }catch(e){
         showToast('Could not reach server','error');
         return;
@@ -4569,9 +4638,11 @@ function deleteKBDoc(id){
     }
     adminDocs = adminDocs.filter(d=>d.id!==id);
     localStorage.setItem('gm_admin_kb', JSON.stringify(adminDocs));
-    renderKBList(); refreshData();
+    // Refresh wiki entries display
+    await loadWikiEntries();
+    renderKBList(); renderWikiList(); refreshData();
     releaseKBLock();
-    showToast('Document deleted ✓','success');
+    showToast('Document and its wiki entries deleted ✓','success');
     setTimeout(checkKBSync, 500);
   });
 }
