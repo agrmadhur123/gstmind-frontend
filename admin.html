@@ -1183,7 +1183,7 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
             <button class="btn btn-ghost btn-sm" onclick="pipeGenerateAllWiki()" style="margin-left:auto">⚡ Generate All Missing</button>
             <button class="btn btn-ghost btn-sm" onclick="loadWikiEntries()" title="Refresh from server">↺ Refresh</button>
             <button class="btn btn-ghost btn-sm" onclick="deleteSelectedWikiEntries()" id="deleteSelectedWikiBtn" style="display:none">🗑 Delete Selected (<span id="selectedWikiCount">0</span>)</button>
-            <button class="btn btn-ghost btn-sm" onclick="showRetryBatchDialog()">⚡ Retry Missing Batch</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleRetryPanel()">⚡ Fill Gaps</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAllWikiEntries()">🗑 Delete All Wiki</button>
             <button class="btn btn-danger btn-sm" onclick="cleanupSuperseded()" id="cleanupBtn" style="display:none">🗑 Clean Up Superseded</button>
           </div>
@@ -1204,6 +1204,45 @@ body.dark-mode .uq-item { background:#221a10;border-color:#3d2e1a; }
               <div id="wikiProgressBatch" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace"></div>
             </div>
             <div id="wikiProgressLog" style="margin-top:10px;max-height:80px;overflow-y:auto;font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);line-height:1.6;"></div>
+          </div>
+
+          <!-- FILL GAPS PANEL -->
+          <div id="wikiGapsPanel" style="display:none;background:var(--s2);border:1px solid var(--accent-border);border-radius:10px;padding:16px 20px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">⚡ Fill Missing Wiki Batches</div>
+              <button class="btn btn-ghost btn-sm" onclick="toggleRetryPanel()">✕ Close</button>
+            </div>
+
+            <!-- Failed batch log -->
+            <div id="failedBatchLog" style="margin-bottom:14px;display:none">
+              <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Previously Failed Batches</div>
+              <div id="failedBatchList" style="font-size:12px;font-family:'DM Mono',monospace;max-height:100px;overflow-y:auto;"></div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn-ghost btn-sm" onclick="retryAllFailed()">↻ Retry All Failed</button>
+                <button class="btn btn-ghost btn-sm" onclick="clearFailedLog()">🗑 Clear Log</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Document</label>
+                <select id="gapDocSelect" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;">
+                  <option value="">— Select document —</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Batch Range</label>
+                <input id="gapBatchInput" type="text" placeholder="e.g. 23  or  23-37  or  all"
+                  style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;box-sizing:border-box"/>
+              </div>
+            </div>
+
+            <div id="gapDocInfo" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;min-height:16px;"></div>
+
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-ghost btn-sm" onclick="previewGapBatches()" style="color:var(--accent)">Preview batches</button>
+              <button class="btn" onclick="startGapFill()" style="background:var(--accent);color:#000;font-size:12px;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-weight:600">▶ Fill Batches</button>
+            </div>
           </div>
 
           <div id="wikiEntryList">
@@ -3166,7 +3205,164 @@ function getAllFailedBatches(){
 }
 
 
+// ════════════════════════════════
+// FILL GAPS PANEL FUNCTIONS
+// ════════════════════════════════
+
+function toggleRetryPanel(){
+  var panel = document.getElementById('wikiGapsPanel');
+  if(!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  if(isOpen){
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+    populateGapDocSelect();
+    renderFailedBatchLog();
+  }
+}
+
+function populateGapDocSelect(){
+  var sel = document.getElementById('gapDocSelect');
+  if(!sel) return;
+  var docs = adminDocs.filter(function(d){ return d.chunks && d.chunks > 0 && d.supabase; });
+  sel.innerHTML = '<option value="">— Select document —</option>';
+  docs.forEach(function(d){
+    var totalBatches = Math.ceil(d.chunks / 30);
+    var opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = d.name + ' (' + d.chunks + ' chunks, ' + totalBatches + ' batches)';
+    opt.dataset.chunks = d.chunks;
+    opt.dataset.name = d.name;
+    opt.dataset.type = d.type || 'GST Document';
+    sel.appendChild(opt);
+  });
+  sel.onchange = function(){
+    var opt = sel.options[sel.selectedIndex];
+    if(!opt || !opt.value) {
+      document.getElementById('gapDocInfo').textContent = '';
+      return;
+    }
+    var chunks = parseInt(opt.dataset.chunks||0);
+    var batches = Math.ceil(chunks/30);
+    document.getElementById('gapDocInfo').textContent =
+      'Total chunks: ' + chunks + '  |  Total batches: ' + batches +
+      '  |  Batch 1=offset 0, Batch '+batches+'=offset '+(batches-1)*30;
+    document.getElementById('gapBatchInput').placeholder = 'e.g. 23  or  23-' + batches + '  or  all';
+  };
+}
+
+function renderFailedBatchLog(){
+  var allFailed = getAllFailedBatches();
+  var logWrap = document.getElementById('failedBatchLog');
+  var logList = document.getElementById('failedBatchList');
+  if(!logWrap || !logList) return;
+  if(!allFailed.length){
+    logWrap.style.display = 'none';
+    return;
+  }
+  logWrap.style.display = 'block';
+  logList.innerHTML = allFailed.map(function(b){
+    return '<div style="padding:2px 0;color:var(--text2)">' +
+      '<span style="color:var(--red)">✗</span> Batch ' + b.batchNum +
+      ' — ' + b.docName.slice(0,30) +
+      ' <span style="color:var(--text3)">(' + b.error.slice(0,50) + ')</span>' +
+      ' <span style="color:var(--text3);font-size:10px">' + b.time + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function previewGapBatches(){
+  var sel = document.getElementById('gapDocSelect');
+  var input = document.getElementById('gapBatchInput').value.trim();
+  var info = document.getElementById('gapDocInfo');
+  if(!sel || !sel.value){ info.textContent = '⚠ Please select a document first'; return; }
+  var opt = sel.options[sel.selectedIndex];
+  var chunks = parseInt(opt.dataset.chunks||0);
+  var offsets = parseBatchInput(input, chunks);
+  if(!offsets.length){ info.textContent = '⚠ No batches in that range'; return; }
+  var batchNums = offsets.map(function(o){ return Math.floor(o/30)+1; });
+  info.textContent = '→ Will fill ' + offsets.length + ' batch' + (offsets.length>1?'es':'') +
+    ': batches ' + batchNums.slice(0,6).join(', ') + (batchNums.length>6?'...':'');
+  info.style.color = 'var(--accent)';
+}
+
+function parseBatchInput(input, totalChunks){
+  var offsets = [];
+  var batchSize = 30;
+  var totalBatches = Math.ceil(totalChunks / batchSize);
+  if(!input || input.toLowerCase() === 'all'){
+    for(var o=0; o<totalChunks; o+=batchSize) offsets.push(o);
+  } else if(input.includes('-')){
+    var parts = input.split('-');
+    var from = Math.max(1, parseInt(parts[0])||1);
+    var to = Math.min(totalBatches, parseInt(parts[1])||totalBatches);
+    for(var bn=from; bn<=to; bn++) offsets.push((bn-1)*batchSize);
+  } else {
+    var startBatch = parseInt(input)||1;
+    for(var bn=startBatch; bn<=totalBatches; bn++) offsets.push((bn-1)*batchSize);
+  }
+  return offsets.filter(function(o){ return o < totalChunks; });
+}
+
+async function retryAllFailed(){
+  var allFailed = getAllFailedBatches();
+  if(!allFailed.length){ showToast('No failed batches logged','error'); return; }
+  var token = await ensureApiToken();
+  if(!token) return;
+  // Group by doc
+  var byDoc = {};
+  allFailed.forEach(function(b){
+    var d = adminDocs.find(function(d){ return d.name === b.docName; });
+    if(d){
+      if(!byDoc[d.id]) byDoc[d.id] = {doc:d, offsets:[]};
+      if(!byDoc[d.id].offsets.includes(b.offset)) byDoc[d.id].offsets.push(b.offset);
+    }
+  });
+  for(var docId in byDoc){
+    var entry = byDoc[docId];
+    await runBatchFill(entry.doc, entry.offsets.sort(function(a,b){return a-b;}), token, 30);
+    clearAllFailedBatches(docId);
+  }
+  renderFailedBatchLog();
+}
+
+function clearFailedLog(){
+  var allFailed = getAllFailedBatches();
+  allFailed.forEach(function(b){
+    var d = adminDocs.find(function(d){ return d.name === b.docName; });
+    if(d) clearAllFailedBatches(d.id);
+  });
+  renderFailedBatchLog();
+  showToast('Failed batch log cleared','success');
+}
+
+async function startGapFill(){
+  var sel = document.getElementById('gapDocSelect');
+  var input = document.getElementById('gapBatchInput').value.trim();
+  var info = document.getElementById('gapDocInfo');
+  if(!sel || !sel.value){ info.textContent = '⚠ Please select a document'; return; }
+  var opt = sel.options[sel.selectedIndex];
+  var doc = {
+    id: sel.value,
+    name: opt.dataset.name,
+    type: opt.dataset.type || 'GST Document',
+    chunks: parseInt(opt.dataset.chunks||0)
+  };
+  var offsets = parseBatchInput(input, doc.chunks);
+  if(!offsets.length){ info.textContent = '⚠ No batches in that range'; return; }
+  var token = await ensureApiToken();
+  if(!token) return;
+  document.getElementById('wikiGapsPanel').style.display = 'none';
+  await runBatchFill(doc, offsets, token, 30);
+}
+
 async function showRetryBatchDialog(){
+  // Legacy — just open the panel now
+  toggleRetryPanel();
+}
+
+async function showRetryBatchDialog_old(){
   var docs = adminDocs.filter(function(d){ return d.chunks && d.chunks > 0; });
   if(!docs.length){ showToast('No documents with chunks found','error'); return; }
 
