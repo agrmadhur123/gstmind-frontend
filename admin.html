@@ -2754,16 +2754,7 @@ async function processBulkFiles(files){ return kbProcessBulk(files); }
 
 // Load KB documents from server and merge with local list
 
-async 
-async function uploadAllLocal(){
-  const localDocs = adminDocs.filter(d=>!d.supabase && !d.builtin);
-  if(!localDocs.length){ showToast('No local-only docs found','info'); return; }
-  showToast(`Select files for ${localDocs.length} local docs — upload them one by one`,'info');
-  // Guide user to use individual ↑ Upload buttons
-  document.querySelectorAll('[onclick^="reuploadDoc"]').forEach(btn=>{
-    btn.style.animation='pulse 1s ease 3';
-  });
-}
+// uploadAllLocal defined below
 
 
 async function reuploadWithContent(doc, content){
@@ -4427,14 +4418,7 @@ function toggleSelectAll(checked){
   updateDeleteBtn();
 }
 
-function updateDeleteBtn(){
-  const checked = document.querySelectorAll('.kb-select-chk:checked').length;
-  const total = document.querySelectorAll('.kb-select-chk').length;
-  const btn = document.getElementById('deleteSelectedBtn');
-  const selectAll = document.getElementById('selectAllChk');
-  if(btn){ 
-    btn.style.display = checked > 0 ? 'inline-flex' : 'none';
-    btn.textContent = `🗑 Delete Selected (${checked})`;
+// updateDeleteBtn defined below)`;
   }
   if(selectAll){
     selectAll.indeterminate = checked > 0 && checked < total;
@@ -4730,10 +4714,7 @@ function filterKBType(type){
   renderKBList(kbSearchFilter);
 }
 
-function filterKB(val){
-  kbSearchFilter = val;
-  renderKBList(val);
-}
+// filterKB defined below
 
 // ── KB Health Check ──
 async function loadKBHealth(){
@@ -5610,7 +5591,7 @@ function wmStopPoll(){
 }
 
 // Load wiki manager data when wiki tab opens
-var _origSwitchKBTab = typeof switchKBTab === 'function' ? switchKBTab : null;
+// wiki manager loaded
 
 </script>
 </body>
