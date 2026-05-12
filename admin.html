@@ -496,7 +496,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
             <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="docCountLabel">Loading...</span>
             <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All from Store</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All</button>
           </div>
         </div>
 
@@ -1288,7 +1288,7 @@ async function loadSyncStatus(){
     // Run/stop btn state
     const runBtn=document.getElementById('syncRunBtn');
     const stopBtn=document.getElementById('syncStopBtn');
-    if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; runBtn.style.display=running?'none':'flex'; }
+            if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; runBtn.style.display=running?'none':'flex'; }
     if(stopBtn){ stopBtn.style.display=running?'inline-flex':'none'; }
 
   }catch(e){ console.error('loadSyncStatus:', e.message); }
