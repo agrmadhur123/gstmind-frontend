@@ -496,6 +496,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
             <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="docCountLabel">Loading...</span>
             <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All from Store</button>
           </div>
         </div>
 
@@ -525,6 +526,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary" id="syncRunBtn" onclick="triggerSync()" style="flex:1">▶ Trigger Sync</button>
+              <button class="btn btn-danger" id="syncStopBtn" onclick="stopSync()" style="display:none">⏹ Stop</button>
               <button class="btn btn-ghost btn-sm" onclick="loadSyncStatus()">↺ Status</button>
             </div>
 
@@ -1283,11 +1285,32 @@ async function loadSyncStatus(){
       txt.textContent='Sync: '+( db.status||'Never run');
     }
 
-    // Run btn state
+    // Run/stop btn state
     const runBtn=document.getElementById('syncRunBtn');
-    if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; }
+    const stopBtn=document.getElementById('syncStopBtn');
+    if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; runBtn.style.display=running?'none':'flex'; }
+    if(stopBtn){ stopBtn.style.display=running?'inline-flex':'none'; }
 
   }catch(e){ console.error('loadSyncStatus:', e.message); }
+}
+
+async function stopSync(){
+  try{
+    const r = await apiFetch('/sync/stop','POST',{},true);
+    toast(r.message,'success');
+    setTimeout(loadSyncStatus, 1000);
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+async function deleteAllDocs(){
+  confirmAct('Delete ALL documents from the Gemini File Search store? Google Drive files are untouched. You can re-sync afterwards.', async()=>{
+    toast('Deleting all documents... please wait','');
+    try{
+      const r = await apiFetch('/kb/documents','DELETE',null,true);
+      toast('✓ '+r.deleted+' deleted'+(r.failed?' · '+r.failed+' failed':''), r.failed?'error':'success');
+      await loadKBDocs(); await loadKBStats();
+    }catch(e){ toast('Error: '+e.message,'error'); }
+  });
 }
 
 async function triggerSync(){
