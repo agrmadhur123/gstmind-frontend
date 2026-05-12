@@ -1314,12 +1314,18 @@ async function deleteAllDocs(){
 }
 
 async function triggerSync(){
+  const btn = document.getElementById('syncRunBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Starting...'; }
   try{
     const r = await apiFetch('/sync/run','POST',{},true);
-    toast(r.already_running?'Sync already running':'Sync started','success');
-    setTimeout(loadSyncStatus, 1000);
+    toast(r.already_running?'Sync already running':'Sync started ✓','success');
+    setTimeout(loadSyncStatus, 1500);
+    setTimeout(loadSyncHistory, 2000);
     startSyncPoll();
-  }catch(e){ toast('Error: '+e.message,'error'); }
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    if(btn){ btn.disabled=false; btn.textContent='▶ Trigger Sync'; }
+  }
 }
 
 async function loadSyncHistory(){
@@ -1346,11 +1352,19 @@ async function loadSyncHistory(){
 
 function startSyncPoll(){
   stopSyncPoll();
+  let errs = 0;
   _syncPollTimer = setInterval(async()=>{
-    await loadSyncStatus();
-    const running = document.getElementById('syncRunBtn')?.disabled;
-    if(!running) stopSyncPoll();
-  }, 5000);
+    try{
+      await loadSyncStatus();
+      await loadKBStats();
+      errs = 0;
+      // Stop polling when sync no longer running
+      const stopBtn = document.getElementById('syncStopBtn');
+      if(!stopBtn || stopBtn.style.display === 'none') stopSyncPoll();
+    }catch(e){
+      if(++errs >= 3) stopSyncPoll();
+    }
+  }, 6000);
 }
 function stopSyncPoll(){ if(_syncPollTimer){ clearInterval(_syncPollTimer); _syncPollTimer=null; } }
 
