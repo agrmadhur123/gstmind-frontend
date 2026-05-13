@@ -659,6 +659,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
           <div class="card-sub">Irreversible actions. Use with extreme caution.</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-danger" onclick="confirmAct('Reset ALL user query counts to zero?',resetQueryCounts)">Reset Query Counts</button>
+            <button class="btn btn-danger" onclick="forceDeleteStore()" title="Nuke the entire Gemini File Search store. Frees the full 10 GB quota. Requires manual env var update + re-sync afterward.">⚠ Force-Delete Gemini Store</button>
           </div>
         </div>
       </div>
@@ -1559,6 +1560,43 @@ async function changePass(){
 
 async function resetQueryCounts(){
   toast('Reset query counts not yet implemented','error');
+}
+
+async function forceDeleteStore(){
+  const typed = prompt(
+    'NUCLEAR ACTION — this will:\n\n' +
+    '1. Delete the entire Gemini File Search store and ALL indexed documents\n' +
+    '2. Create a NEW empty store (with the same display name)\n' +
+    '3. Reset every gst_documents row so the admin UI shows everything as un-indexed\n' +
+    '4. The new store will have a different name — you MUST update the GEMINI_STORE_NAME env var on Railway and restart the service\n' +
+    '5. Then run "Trigger Sync" from the Drive Sync panel to re-upload everything\n\n' +
+    'There is NO undo. Frees the full 10 GB Gemini quota.\n\n' +
+    'Type DELETE EVERYTHING (all caps, exact) to proceed:'
+  );
+  if(typed !== 'DELETE EVERYTHING'){
+    if(typed !== null) toast('Confirmation phrase did not match. Aborted.','error');
+    return;
+  }
+  toast('Force-deleting store... this can take a minute','');
+  try{
+    const r = await apiFetch('/kb/force-delete-store','POST',{confirm:'DELETE EVERYTHING'},true);
+    const newStore = r.new_store || '(create failed — see response)';
+    alert(
+      '✓ Store deleted and replacement created.\n\n' +
+      'OLD store: ' + (r.deleted_store || '?') + '\n' +
+      'NEW store: ' + newStore + '\n\n' +
+      'NEXT STEPS:\n' +
+      '1. Update Railway env var GEMINI_STORE_NAME to:\n   ' + newStore + '\n' +
+      '2. Restart the Railway service\n' +
+      '3. Run "Trigger Sync" to repopulate from Drive\n\n' +
+      (r.create_error ? 'WARNING: replacement create failed: ' + r.create_error + '\nCreate one manually in the Gemini console.\n\n' : '') +
+      (r.db_reset === false ? 'WARNING: DB reset failed: ' + (r.db_reset_error || '?') + '\n' : '')
+    );
+    toast('Done. See alert for next steps.','success');
+    await loadKBStats();
+  }catch(e){
+    toast('Error: '+e.message,'error');
+  }
 }
 
 // ══════════════════════════════════════════════
