@@ -784,7 +784,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 /* ══════════════════════════════════════════
    CONFIG
 ══════════════════════════════════════════ */
-const API = 'https://gstmind-backend.onrender.com';
+const API = 'https://web-production-399b0.up.railway.app';
 
 /* ══════════════════════════════════════════
    AUTH
@@ -817,7 +817,7 @@ async function sendOTP(){
   const btn = document.getElementById('sendBtn');
   btn.disabled = true; btn.textContent = 'Sending...';
   try{
-    await apiFetch('/admin/send-otp','POST',{email});
+    await apiFetch('/auth/admin/otp/send','POST',{email});
     loginEmail = email;
     document.getElementById('emailShow').textContent = email;
     showStep2();
@@ -831,10 +831,10 @@ async function verifyOTP(){
   const btn = document.getElementById('verifyBtn');
   btn.disabled=true; btn.textContent='Verifying...';
   try{
-    const d = await apiFetch('/admin/verify-otp','POST',{email:loginEmail, otp});
-    _token = d.access_token;
+    const d = await apiFetch('/auth/admin/otp/verify','POST',{email:loginEmail, otp});
+    _token = d.token;
     localStorage.setItem('adm_token', _token);
-    initShell(d);
+    initShell(d.user);
   }catch(e){ showErr('err2', e.message); }
   finally{ btn.disabled=false; btn.textContent='Verify & Login'; }
 }
@@ -848,7 +848,7 @@ async function doSignup(){
   const btn=document.getElementById('signupBtn');
   btn.disabled=true; btn.textContent='Creating...';
   try{
-    await apiFetch('/admin/signup','POST',{first_name:fname,last_name:lname,email,invite_code:invite});
+    await apiFetch('/auth/admin/signup','POST',{fname,lname,email,invite_code:invite});
     loginEmail=email;
     document.getElementById('emailShow').textContent=email;
     showStep2();
@@ -895,16 +895,17 @@ function logout(){
 function initShell(d){
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('shell').style.display='flex';
-  const name = (d.first_name||'Admin')+' '+(d.last_name||'');
-  document.getElementById('adminName').textContent=name.trim();
-  document.getElementById('adminAv').textContent=(d.first_name||'A')[0].toUpperCase();
+  const first = d.fname || d.first_name || 'Admin';
+  const last  = d.lname || d.last_name  || '';
+  document.getElementById('adminName').textContent=(first+' '+last).trim();
+  document.getElementById('adminAv').textContent=first[0].toUpperCase();
   refreshAll();
 }
 
 async function checkAuth(){
   if(!_token) return;
   try{
-    const d = await apiFetch('/admin/me','GET',null,true);
+    const d = await apiFetch('/auth/admin/me','GET',null,true);
     initShell(d);
   }catch{ localStorage.removeItem('adm_token'); _token=null; }
 }
@@ -1329,7 +1330,7 @@ async function loadSyncStatus(){
 async function loadSyncLogs(){
   const wrap=document.getElementById('syncLogWrap');
   try{
-    const d = await apiFetch('/sync/logs','GET',null,true);
+    const d = await apiFetch('/sync/history','GET',null,true);
     const logs=d.logs||[];
     if(!logs.length){ wrap.innerHTML='<div class="empty"><p>No sync logs yet</p></div>'; return; }
     wrap.innerHTML='<div>'+logs.map(l=>`
@@ -1346,7 +1347,7 @@ async function triggerSync(){
   const btn=document.getElementById('syncBtn');
   btn.disabled=true; btn.textContent='Starting...';
   try{
-    const r=await apiFetch('/sync/trigger','POST',null,true);
+    const r=await apiFetch('/sync/run','POST',null,true);
     toast('Sync started: '+r.message,'success');
     setTimeout(()=>{ loadSyncStatus(); loadSyncLogs(); }, 2000);
   }catch(e){ toast('Error: '+e.message,'error'); }
@@ -1611,8 +1612,6 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{
 /* Error helpers */
 function showErr(id,msg){ const e=document.getElementById(id); if(e){e.textContent=msg;e.classList.add('show');} }
 function hideErr(id){ const e=document.getElementById(id); if(e)e.classList.remove('show'); }
-
-document.getElementById('confirmModal').classList.add('show');
 </script>
 </body>
 </html>
