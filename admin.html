@@ -497,212 +497,167 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
             <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All</button>
-            <button class="btn btn-ghost btn-sm" onclick="cleanupStorage()" title="Delete orphaned documents from Gemini store to free up the 10 GB storage quota">🧹 Clean Up Storage</button>
           </div>
         </div>
 
-        <!-- Document list -->
-        <div class="table-wrap" id="kbDocList">
-          <div class="empty"><p>Loading documents...</p></div>
+        <div class="table-wrap">
+          <div class="select-all-row" style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)">
+            <input type="checkbox" id="selectAllDocs" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--accent);cursor:pointer"/>
+            <span>Select all</span>
+          </div>
+          <div id="docList"><div class="empty"><p>Loading documents...</p></div></div>
         </div>
       </div>
 
       <!-- ── DRIVE SYNC ── -->
       <div class="panel" id="panel-sync">
+        <div class="grid2">
+          <!-- Controls -->
+          <div class="card">
+            <div class="card-title">Sync Controls</div>
+            <div class="card-sub">Manually trigger Drive → Gemini File Search sync</div>
 
-        <div class="sync-box" id="syncInfoBox">
-          <div class="sync-row"><span class="sync-lbl">Status</span><span class="sync-val" id="si-status">Checking...</span></div>
-          <div class="sync-row"><span class="sync-lbl">Last sync</span><span class="sync-val" id="si-last">—</span></div>
-          <div class="sync-row"><span class="sync-lbl">Next sync</span><span class="sync-val" id="si-next">—</span></div>
-          <div class="sync-row"><span class="sync-lbl">Folder</span><span class="sync-val" id="si-folder">—</span></div>
-          <div class="sync-row"><span class="sync-lbl">Files found / indexed</span><span class="sync-val" id="si-counts">—</span></div>
+            <div class="sync-box" id="syncStatusBox">
+              <div class="sync-row"><span class="sync-lbl">Status</span><span class="sync-val" id="syncStat">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Triggered by</span><span class="sync-val" id="syncTrigger">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Started</span><span class="sync-val" id="syncStarted">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Last result</span><span class="sync-val" id="syncLastResult">—</span></div>
+            </div>
+
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" id="syncRunBtn" onclick="triggerSync()" style="flex:1">▶ Trigger Sync</button>
+              <button class="btn btn-danger" id="syncStopBtn" onclick="stopSync()" style="display:none">⏹ Stop</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadSyncStatus()">↺ Status</button>
+            </div>
+
+            <div style="margin-top:12px" id="syncLiveProgress" style="display:none">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-family:var(--mono)" id="syncProgressTxt">—</div>
+              <div class="prog-track"><div class="prog-fill green" id="syncProgBar" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- Latest run stats -->
+          <div class="card">
+            <div class="card-title">Latest Run</div>
+            <div class="card-sub">Statistics from the most recent sync</div>
+            <div class="sync-box">
+              <div class="sync-row"><span class="sync-lbl">Drive scanned</span><span class="sync-val" id="lr-scanned">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Files added</span><span class="sync-val" style="color:var(--green)" id="lr-added">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Files deleted</span><span class="sync-val" style="color:var(--red)" id="lr-deleted">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Files failed</span><span class="sync-val" style="color:var(--amber)" id="lr-failed">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Duration</span><span class="sync-val" id="lr-duration">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Completed</span><span class="sync-val" id="lr-completed">—</span></div>
+            </div>
+          </div>
         </div>
 
+        <!-- Sync history -->
         <div class="sec-hdr">
-          <div>
-            <div class="sec-title">Sync Logs</div>
-            <div class="sec-sub">Last 50 sync events</div>
-          </div>
-          <div class="sec-right">
-            <button class="btn btn-primary btn-sm" onclick="triggerSync()" id="syncBtn">▶ Trigger Sync Now</button>
-          </div>
+          <div class="sec-title">Sync History</div>
+          <div class="sec-right"><button class="btn btn-ghost btn-sm" onclick="loadSyncHistory()">↺ Refresh</button></div>
         </div>
-        <div class="table-wrap" id="syncLogWrap">
-          <div class="empty"><p>Loading logs...</p></div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>Started</th><th>Triggered By</th><th>Scanned</th><th>Added</th><th>Failed</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody id="syncHistoryTbody"><tr><td colspan="7"><div class="empty"><p>Loading history...</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
 
       <!-- ── SUBSCRIPTIONS ── -->
       <div class="panel" id="panel-subscriptions">
-        <div class="filter-bar">
-          <input class="search-inp" type="text" placeholder="Search user..." oninput="filterSubs(this.value)" id="subSearch"/>
-          <select class="filter-sel" onchange="filterSubs()" id="subPlanFilter">
-            <option value="">All Plans</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="unlimited">Unlimited</option>
-          </select>
-          <div class="sec-right" style="margin-left:auto">
-            <button class="btn btn-ghost btn-sm" onclick="loadSubscriptions()">↺ Refresh</button>
-          </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card gold"><div class="stat-lbl">Monthly Revenue</div><div class="stat-val" id="sub-mrr">₹0</div><div class="stat-sub">Pro + Unlimited</div></div>
+          <div class="stat-card green"><div class="stat-lbl">Paid Subscribers</div><div class="stat-val" id="sub-paid">0</div><div class="stat-sub">Active billing</div></div>
+          <div class="stat-card blue"><div class="stat-lbl">Free Trial Users</div><div class="stat-val" id="sub-trial">0</div><div class="stat-sub">Potential conversions</div></div>
         </div>
+
+        <div class="card">
+          <div class="card-title">Plan Limits</div>
+          <div class="card-sub">Query limits per plan per month</div>
+          <table class="tbl" style="margin-top:0">
+            <thead><tr><th>Plan</th><th>Price</th><th>Query Limit</th><th>Users</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Free Trial</strong></td><td>₹0</td><td style="font-family:var(--mono)"><span id="limit-free">10</span> queries</td><td id="pc-free" style="font-family:var(--mono)">0</td></tr>
+              <tr><td><strong>Professional</strong></td><td>₹999/mo</td><td style="font-family:var(--mono)"><span id="limit-pro">100</span> queries</td><td id="pc-pro" style="font-family:var(--mono)">0</td></tr>
+              <tr><td><strong>Unlimited</strong></td><td>₹1,999/mo</td><td style="color:var(--green);font-family:var(--mono)">∞ Unlimited</td><td id="pc-unlimited" style="font-family:var(--mono)">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec-hdr"><div class="sec-title">All Subscriptions</div></div>
         <div class="table-wrap">
           <table class="tbl">
-            <thead><tr>
-              <th>User</th><th>Plan</th><th>Monthly Queries</th><th>Used This Month</th><th>Reset Date</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="subTbody">
-              <tr><td colspan="6"><div class="empty"><p>Loading...</p></div></td></tr>
-            </tbody>
+            <thead><tr><th>User</th><th>Plan</th><th>Queries Used</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="subTbody"><tr><td colspan="6"><div class="empty"><p>Loading...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
 
       <!-- ── ANALYTICS ── -->
       <div class="panel" id="panel-analytics">
-        <div class="stats-grid">
-          <div class="stat-card gold">
-            <div class="stat-lbl">Total Queries</div>
-            <div class="stat-val" id="a-total">—</div>
-            <div class="stat-sub">All time</div>
-          </div>
-          <div class="stat-card green">
-            <div class="stat-lbl">Queries Today</div>
-            <div class="stat-val" id="a-today">—</div>
-            <div class="stat-sub">Last 24 hours</div>
-          </div>
-          <div class="stat-card blue">
-            <div class="stat-lbl">Avg per Day</div>
-            <div class="stat-val" id="a-avg">—</div>
-            <div class="stat-sub">Last 30 days</div>
-          </div>
-          <div class="stat-card amber">
-            <div class="stat-lbl">Active Users</div>
-            <div class="stat-val" id="a-active">—</div>
-            <div class="stat-sub">Queried this week</div>
-          </div>
-        </div>
-
         <div class="grid2">
           <div class="card">
-            <div class="card-title">Top Users by Queries</div>
-            <div class="card-sub">Most active users this month</div>
-            <div class="bar-chart" id="topUsersBars" style="margin-top:8px">
+            <div class="card-title">Plan Conversion</div>
+            <div class="card-sub">Free → paid conversion funnel</div>
+            <div class="bar-chart" style="margin-top:10px" id="convBars">
               <div class="empty"><p>Loading...</p></div>
             </div>
           </div>
           <div class="card">
-            <div class="card-title">Top Topics / Keywords</div>
-            <div class="card-sub">Most queried GST topics</div>
-            <div class="bar-chart" id="topTopicsBars" style="margin-top:8px">
+            <div class="card-title">KB by Category</div>
+            <div class="card-sub">Documents indexed per category</div>
+            <div class="bar-chart" style="margin-top:10px" id="catBars">
               <div class="empty"><p>Loading...</p></div>
             </div>
           </div>
         </div>
-
         <div class="card">
-          <div class="card-title">Recent Query Log</div>
-          <div class="card-sub">Last 50 queries across all users</div>
-          <div class="table-wrap" style="margin-bottom:0">
-            <table class="tbl">
-              <thead><tr>
-                <th>Time</th><th>User</th><th>Query</th><th>Status</th><th>Duration</th>
-              </tr></thead>
-              <tbody id="queryLogTbody">
-                <tr><td colspan="5"><div class="empty"><p>Loading...</p></div></td></tr>
-              </tbody>
-            </table>
+          <div class="card-title">Top Queries</div>
+          <div class="card-sub">Most asked questions across all users</div>
+          <div class="bar-chart" style="margin-top:10px" id="queryBars">
+            <div class="empty"><p>No query data yet.</p></div>
           </div>
         </div>
       </div>
 
       <!-- ── PROMPTS & AI ── -->
       <div class="panel" id="panel-prompts">
-
-        <div class="prompt-wrap">
-          <div class="prompt-hdr">
-            <div>
-              <div class="prompt-title">System Prompt</div>
-              <div class="prompt-sub">Core AI personality and expertise definition</div>
-            </div>
-            <span class="prompt-saved" id="ps-system" style="display:none">✓ Saved</span>
-          </div>
-          <div class="prompt-body">
-            <textarea id="pt-system" placeholder="Enter system prompt..." rows="12"></textarea>
-          </div>
-          <div class="prompt-footer">
-            <button class="btn btn-ghost btn-sm" onclick="loadPrompts()">↺ Reset</button>
-            <button class="btn btn-primary btn-sm" onclick="savePrompt('system')">Save System Prompt</button>
-          </div>
+        <div id="promptsContainer">
+          <div class="empty"><p>Loading prompts...</p></div>
         </div>
-
-        <div class="prompt-wrap">
-          <div class="prompt-hdr">
-            <div>
-              <div class="prompt-title">RAG Prompt</div>
-              <div class="prompt-sub">Instructions for answering with retrieved documents</div>
-            </div>
-            <span class="prompt-saved" id="ps-rag" style="display:none">✓ Saved</span>
-          </div>
-          <div class="prompt-body">
-            <textarea id="pt-rag" placeholder="Enter RAG prompt..." rows="10"></textarea>
-          </div>
-          <div class="prompt-footer">
-            <button class="btn btn-ghost btn-sm" onclick="loadPrompts()">↺ Reset</button>
-            <button class="btn btn-primary btn-sm" onclick="savePrompt('rag')">Save RAG Prompt</button>
-          </div>
-        </div>
-
-        <div class="prompt-wrap">
-          <div class="prompt-hdr">
-            <div>
-              <div class="prompt-title">Fallback Prompt</div>
-              <div class="prompt-sub">Response when no documents are found</div>
-            </div>
-            <span class="prompt-saved" id="ps-fallback" style="display:none">✓ Saved</span>
-          </div>
-          <div class="prompt-body">
-            <textarea id="pt-fallback" placeholder="Enter fallback prompt..." rows="6"></textarea>
-          </div>
-          <div class="prompt-footer">
-            <button class="btn btn-ghost btn-sm" onclick="loadPrompts()">↺ Reset</button>
-            <button class="btn btn-primary btn-sm" onclick="savePrompt('fallback')">Save Fallback Prompt</button>
-          </div>
-        </div>
-
       </div>
 
       <!-- ── SETTINGS ── -->
       <div class="panel" id="panel-settings">
-        <div class="card">
-          <div class="card-title">Plan Limits</div>
-          <div class="card-sub">Configure monthly query limits for each plan</div>
-          <div class="form2">
-            <div class="fg"><label>Free Trial Queries / Month</label><input type="number" id="cfg-free-limit" value="10"/></div>
-            <div class="fg"><label>Pro Queries / Month</label><input type="number" id="cfg-pro-limit" value="200"/></div>
-            <div class="fg"><label>Unlimited Queries / Month</label><input type="number" id="cfg-unlimited-limit" value="99999"/></div>
-            <div class="fg"><label>Free Trial Days</label><input type="number" id="cfg-trial-days" value="14"/></div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Change Password</div>
+            <div class="card-sub">Update your admin login password</div>
+            <div class="fg"><label>Current Password</label><input type="password" id="currPass" placeholder="Current password"/></div>
+            <div class="fg"><label>New Password</label><input type="password" id="newPass" placeholder="New password (min 8 chars)"/></div>
+            <div class="fg"><label>Confirm New Password</label><input type="password" id="confPass" placeholder="Confirm new password"/></div>
+            <button class="btn btn-primary" onclick="changePass()">Update Password</button>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="savePlanConfig()">Save Plan Settings</button>
+
+          <div class="card">
+            <div class="card-title">System Info</div>
+            <div class="card-sub">Current configuration</div>
+            <div class="sync-box">
+              <div class="sync-row"><span class="sync-lbl">API URL</span><span class="sync-val" style="font-size:10px">web-production-399b0.up.railway.app</span></div>
+              <div class="sync-row"><span class="sync-lbl">Gemini Store</span><span class="sync-val" style="font-size:10px">gstmindcbic-8iqlexnxmrph</span></div>
+              <div class="sync-row"><span class="sync-lbl">Drive Root</span><span class="sync-val" style="font-size:10px" id="si-drive">—</span></div>
+              <div class="sync-row"><span class="sync-lbl">Supabase</span><span class="sync-val">neokzihiohjd... (Seoul)</span></div>
+              <div class="sync-row"><span class="sync-lbl">Admin Panel</span><span class="sync-val">v6.0</span></div>
+            </div>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Admin Accounts</div>
-          <div class="card-sub">Manage admin users who can access this panel</div>
-          <div class="table-wrap" style="margin-bottom:12px">
-            <table class="tbl">
-              <thead><tr><th>Name</th><th>Email</th><th>Created</th><th>Actions</th></tr></thead>
-              <tbody id="adminTbody"><tr><td colspan="4"><div class="empty"><p>Loading...</p></div></td></tr></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Danger Zone</div>
-          <div class="card-sub">Irreversible operations — use with extreme caution</div>
+        <div class="card" style="border-color:var(--red-border)">
+          <div class="card-title" style="color:var(--red)">Danger Zone</div>
+          <div class="card-sub">Irreversible actions. Use with extreme caution.</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-danger btn-sm" onclick="resetAllQuotas()">↺ Reset All Monthly Quotas</button>
-            <button class="btn btn-danger btn-sm" onclick="purgeQueryLogs()">🗑 Purge Query Logs</button>
+            <button class="btn btn-danger" onclick="confirmAct('Reset ALL user query counts to zero?',resetQueryCounts)">Reset Query Counts</button>
           </div>
         </div>
       </div>
@@ -711,132 +666,127 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
   </div><!-- /main -->
 </div><!-- /shell -->
 
-<!-- ════ MODALS ════ -->
-
-<!-- Add/Edit User Modal -->
-<div class="modal-bg" id="userModal">
+<!-- CHANGE PLAN MODAL -->
+<div class="modal-bg" id="planModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="modal">
-    <div class="modal-title" id="userModalTitle">Add User</div>
-    <div class="modal-sub">Fill in user details below</div>
-    <div class="form2">
-      <div class="fg"><label>First Name</label><input type="text" id="uf-fname"/></div>
-      <div class="fg"><label>Last Name</label><input type="text" id="uf-lname"/></div>
-    </div>
-    <div class="fg"><label>Email</label><input type="email" id="uf-email"/></div>
-    <div class="fg"><label>Phone</label><input type="tel" id="uf-phone" placeholder="+91..."/></div>
-    <div class="form2">
-      <div class="fg"><label>Plan</label>
-        <select id="uf-plan">
-          <option value="free">Free Trial</option>
-          <option value="pro">Professional</option>
-          <option value="unlimited">Unlimited</option>
-        </select>
-      </div>
-      <div class="fg"><label>Status</label>
-        <select id="uf-status">
-          <option value="active">Active</option>
-          <option value="blocked">Blocked</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('userModal')">Cancel</button>
-      <button class="btn btn-primary" id="userSaveBtn" onclick="saveUser()">Save User</button>
-    </div>
-  </div>
-</div>
-
-<!-- Confirm Modal -->
-<div class="modal-bg" id="confirmModal">
-  <div class="modal">
-    <div class="modal-title">Confirm Action</div>
-    <div class="modal-sub" id="confirmMsg">Are you sure?</div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
-      <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
-    </div>
-  </div>
-</div>
-
-<!-- Plan Modal -->
-<div class="modal-bg" id="planModal">
-  <div class="modal">
-    <div class="modal-title">Change Plan</div>
-    <div class="modal-sub" id="planModalUser">Select new plan for user</div>
+    <div class="modal-title">Change User Plan</div>
+    <div class="modal-sub" id="planModalUser">User: —</div>
     <div class="fg"><label>Plan</label>
-      <select id="pm-plan">
+      <select id="planModalSel">
         <option value="free">Free Trial</option>
         <option value="pro">Professional (₹999/mo)</option>
         <option value="unlimited">Unlimited (₹1,999/mo)</option>
       </select>
     </div>
+    <div class="fg"><label>Query Limit Override (optional)</label><input type="number" id="planModalLimit" placeholder="Leave blank for plan default"/></div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('planModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePlan()">Update Plan</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('planModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePlan()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
+<!-- ADD USER MODAL -->
+<div class="modal-bg" id="addUserModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <div class="modal-title">Add New User</div>
+    <div class="modal-sub">Manually create a user account.</div>
+    <div class="form2">
+      <div class="fg"><label>First Name</label><input type="text" id="au-fname" placeholder="Rajesh"/></div>
+      <div class="fg"><label>Last Name</label><input type="text" id="au-lname" placeholder="Kumar"/></div>
+    </div>
+    <div class="fg"><label>Email</label><input type="email" id="au-email" placeholder="rajesh@example.com"/></div>
+    <div class="fg"><label>Mobile (optional)</label><input type="tel" id="au-phone" placeholder="9876543210"/></div>
+    <div class="form2">
+      <div class="fg"><label>Plan</label><select id="au-plan"><option value="free">Free Trial</option><option value="pro">Professional</option><option value="unlimited">Unlimited</option></select></div>
+      <div class="fg"><label>Profession</label><select id="au-prof"><option>Chartered Accountant</option><option>Tax Consultant</option><option>Advocate</option><option>Company Secretary</option><option>Others</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('addUserModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-primary" onclick="addUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirmModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <div class="modal-title">Confirm Action</div>
+    <div class="modal-sub" id="confirmMsg">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-danger" id="confirmOK">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════
-   CONFIG
-══════════════════════════════════════════ */
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
 const API = 'https://web-production-399b0.up.railway.app';
+let TOKEN = localStorage.getItem('gm_admin_token') || '';
+let adminEmail = localStorage.getItem('gm_admin_email') || '';
+let _users = [];
+let _allDocs = [];
+let _syncPollTimer = null;
 
-/* ══════════════════════════════════════════
-   AUTH
-══════════════════════════════════════════ */
-let _token = localStorage.getItem('adm_token');
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function showStep1(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('step1').style.display='block'; }
+function showStep2(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('step2').style.display='block'; }
+function showSignup(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('stepSignup').style.display='block'; }
 
-function authHeader(){ return _token ? {'Authorization':'Bearer '+_token} : {}; }
-
-async function apiFetch(path, method='GET', body=null, auth=false){
-  const opts = {
-    method,
-    headers: { 'Content-Type': 'application/json', ...(auth ? authHeader() : {}) }
-  };
-  if(body) opts.body = JSON.stringify(body);
-  const r = await fetch(API+path, opts);
-  if(!r.ok){
-    let msg = 'HTTP '+r.status;
-    try{ const d=await r.json(); msg=d.detail||d.message||msg; }catch{}
-    throw new Error(msg);
-  }
-  return r.json();
+function otpInput(el){
+  el.value = el.value.replace(/\D/g,'');
+  const ids=['o1','o2','o3','o4','o5','o6'];
+  const idx = ids.indexOf(el.id);
+  if(el.value && idx<5) document.getElementById(ids[idx+1]).focus();
+  if(ids.every(id=>document.getElementById(id).value)) verifyOTP();
 }
-
-/* ── LOGIN ── */
-let loginEmail = '';
+function getOTP(){ return ['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join(''); }
 
 async function sendOTP(){
   const email = document.getElementById('loginEmail').value.trim();
-  if(!email){ showErr('err1','Enter your email'); return; }
+  if(!email||!email.includes('@')){ showErr('err1','Enter a valid email'); return; }
   const btn = document.getElementById('sendBtn');
-  btn.disabled = true; btn.textContent = 'Sending...';
+  btn.textContent='Sending...'; btn.disabled=true;
+  hideErr('err1');
   try{
-    await apiFetch('/auth/admin/otp/send','POST',{email});
-    loginEmail = email;
+    const r = await apiFetch('/auth/admin/otp/send', 'POST', {email}, false);
+    adminEmail = email;
+    localStorage.setItem('gm_admin_email', email);
     document.getElementById('emailShow').textContent = email;
     showStep2();
+    document.getElementById('o1').focus();
+    if(r.dev_otp) toast('Dev OTP: '+r.dev_otp, 'success');
   }catch(e){ showErr('err1', e.message); }
-  finally{ btn.disabled=false; btn.textContent='Send OTP →'; }
+  finally{ btn.textContent='Send OTP →'; btn.disabled=false; }
 }
 
 async function verifyOTP(){
-  const otp = ['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join('');
-  if(otp.length<6){ showErr('err2','Enter all 6 digits'); return; }
+  const otp = getOTP();
+  if(otp.length!==6) return;
   const btn = document.getElementById('verifyBtn');
-  btn.disabled=true; btn.textContent='Verifying...';
+  btn.textContent='Verifying...'; btn.disabled=true;
+  hideErr('err2');
   try{
-    const d = await apiFetch('/auth/admin/otp/verify','POST',{email:loginEmail, otp});
-    _token = d.token;
-    localStorage.setItem('adm_token', _token);
-    initShell(d.user);
-  }catch(e){ showErr('err2', e.message); }
-  finally{ btn.disabled=false; btn.textContent='Verify & Login'; }
+    const r = await apiFetch('/auth/admin/otp/verify', 'POST', {email:adminEmail, otp}, false);
+    if(!r.user?.is_admin) throw new Error('This account does not have admin privileges.');
+    TOKEN = r.token;
+    localStorage.setItem('gm_admin_token', TOKEN);
+    localStorage.setItem('gm_admin_email', r.user.email||adminEmail);
+    localStorage.setItem('gm_admin_session','1');
+    enterShell(r.user);
+  }catch(e){
+    showErr('err2', e.message);
+    ['o1','o2','o3','o4','o5','o6'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('o1').focus();
+  }
+  finally{ btn.textContent='Verify & Login'; btn.disabled=false; }
 }
 
 async function doSignup(){
@@ -844,435 +794,550 @@ async function doSignup(){
   const lname=document.getElementById('slname').value.trim();
   const email=document.getElementById('semail').value.trim();
   const invite=document.getElementById('sinvite').value.trim();
-  if(!fname||!email||!invite){ showErr('errSignup','All fields required'); return; }
+  if(!fname||!lname||!email||!invite){ showErr('errSignup','Fill all fields'); return; }
   const btn=document.getElementById('signupBtn');
-  btn.disabled=true; btn.textContent='Creating...';
+  btn.textContent='Creating...'; btn.disabled=true;
+  hideErr('errSignup');
   try{
-    await apiFetch('/auth/admin/signup','POST',{fname,lname,email,invite_code:invite});
-    loginEmail=email;
+    const r = await apiFetch('/auth/admin/signup', 'POST', {fname,lname,email,invite_code:invite}, false);
+    adminEmail=email;
+    localStorage.setItem('gm_admin_email',email);
     document.getElementById('emailShow').textContent=email;
     showStep2();
+    document.getElementById('o1').focus();
+    if(r.dev_otp) toast('Dev OTP: '+r.dev_otp,'success');
+    else toast('Account created! Check email for OTP.','success');
   }catch(e){ showErr('errSignup',e.message); }
-  finally{ btn.disabled=false; btn.textContent='Create Account & Send OTP'; }
+  finally{ btn.textContent='Create Account & Send OTP'; btn.disabled=false; }
 }
 
-function showStep2(){
-  document.getElementById('step1').style.display='none';
-  document.getElementById('stepSignup').style.display='none';
-  document.getElementById('step2').style.display='block';
-  setTimeout(()=>document.getElementById('o1').focus(),100);
-}
-function showStep1(){
-  document.getElementById('step2').style.display='none';
-  document.getElementById('stepSignup').style.display='none';
-  document.getElementById('step1').style.display='block';
-}
-function showSignup(){
-  document.getElementById('step1').style.display='none';
-  document.getElementById('stepSignup').style.display='block';
-}
-
-function otpInput(el){
-  el.value=el.value.replace(/\D/g,'');
-  if(el.value && el.nextElementSibling && el.nextElementSibling.tagName==='INPUT') el.nextElementSibling.focus();
-  const all=['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join('');
-  if(all.length===6) verifyOTP();
-}
-
-function showErr(id,msg){
-  const e=document.getElementById(id);
-  e.textContent=msg; e.classList.add('show');
-  setTimeout(()=>e.classList.remove('show'),3500);
+function enterShell(user){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('shell').style.display='flex';
+  const initials = ((user.fname||'A')[0]).toUpperCase();
+  document.getElementById('adminAv').textContent = initials;
+  document.getElementById('adminName').textContent = user.fname ? user.fname+' '+(user.lname||'') : 'Admin';
+  initAdmin();
 }
 
 function logout(){
-  _token=null; localStorage.removeItem('adm_token');
-  document.getElementById('shell').style.display='none';
+  stopSyncPoll();
+  TOKEN='';
+  localStorage.removeItem('gm_admin_token');
+  localStorage.removeItem('gm_admin_session');
   document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('shell').style.display='none';
+  showStep1();
 }
 
-/* ── INIT SHELL ── */
-function initShell(d){
-  document.getElementById('loginWrap').style.display='none';
-  document.getElementById('shell').style.display='flex';
-  const first = d.fname || d.first_name || 'Admin';
-  const last  = d.lname || d.last_name  || '';
-  document.getElementById('adminName').textContent=(first+' '+last).trim();
-  document.getElementById('adminAv').textContent=first[0].toUpperCase();
-  refreshAll();
-}
-
-async function checkAuth(){
-  if(!_token) return;
-  try{
-    const d = await apiFetch('/auth/admin/me','GET',null,true);
-    initShell(d);
-  }catch{ localStorage.removeItem('adm_token'); _token=null; }
-}
-
-/* ══════════════════════════════════════════
-   NAV
-══════════════════════════════════════════ */
-const PANEL_TITLES = {
-  dashboard:  ['Dashboard','GSTMind platform overview'],
-  users:      ['Users','Manage registered users'],
-  kb:         ['Knowledge Base','Gemini File Search documents'],
-  sync:       ['Drive Sync','Google Drive sync status & logs'],
-  subscriptions:['Subscriptions','User plan management'],
-  analytics:  ['Analytics','Usage statistics'],
-  prompts:    ['Prompts & AI','AI prompt configuration'],
-  settings:   ['Settings','Platform configuration']
+// Auto-login
+window.onload = async ()=>{
+  const token = localStorage.getItem('gm_admin_token');
+  if(token && localStorage.getItem('gm_admin_session')==='1'){
+    try{
+      TOKEN = token;
+      const r = await apiFetch('/auth/admin/me','GET',null,true);
+      if(r && r.is_admin){ enterShell(r); return; }
+    }catch(e){}
+    localStorage.removeItem('gm_admin_session');
+    localStorage.removeItem('gm_admin_token');
+    TOKEN='';
+  }
+  const savedEmail = localStorage.getItem('gm_admin_email');
+  if(savedEmail) document.getElementById('loginEmail').value = savedEmail;
 };
 
-function nav(id, btn){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  if(btn) btn.classList.add('active');
-  const [title,sub] = PANEL_TITLES[id]||[id,''];
-  document.getElementById('topTitle').textContent=title;
-  document.getElementById('topSub').textContent=sub;
-  if(id==='users') loadUsers();
-  if(id==='kb'){ loadKBStats(); loadKBDocs(); }
-  if(id==='sync'){ loadSyncStatus(); loadSyncLogs(); }
-  if(id==='subscriptions') loadSubscriptions();
-  if(id==='analytics') loadAnalytics();
-  if(id==='prompts') loadPrompts();
-  if(id==='settings') loadSettings();
-}
-
-function refreshAll(){
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function initAdmin(){
   checkApiStatus();
-  loadDashboard();
-  loadKBStats();
+  await loadUsers();
+  await loadKBStats();
+  await loadSyncStatus();
+  renderDashboard();
+  startSyncPoll();
 }
 
-/* ══════════════════════════════════════════
-   API STATUS
-══════════════════════════════════════════ */
+async function refreshAll(){
+  await loadUsers();
+  await loadKBStats();
+  await loadSyncStatus();
+  renderDashboard();
+  // Refresh current panel
+  const active = document.querySelector('.panel.active');
+  if(active?.id==='panel-kb') await loadKBDocs();
+  if(active?.id==='panel-sync') await loadSyncHistory();
+  if(active?.id==='panel-analytics') renderAnalytics();
+  toast('Refreshed','success');
+}
+
 async function checkApiStatus(){
   try{
-    await apiFetch('/health');
+    await apiFetch('/health','GET',null,false);
     document.getElementById('apiStatus').className='status-pill pill-green';
     document.getElementById('apiStatusTxt').textContent='API Online';
-  }catch{
+  }catch(e){
     document.getElementById('apiStatus').className='status-pill pill-red';
     document.getElementById('apiStatusTxt').textContent='API Offline';
   }
 }
 
-/* ══════════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════════ */
-async function loadDashboard(){
-  try{
-    const [users, kb] = await Promise.all([
-      apiFetch('/admin/users',  'GET',null,true).catch(()=>({users:[]})),
-      apiFetch('/kb/stats',     'GET',null,true).catch(()=>({}))
-    ]);
+// ══════════════════════════════════════════════
+// PANEL NAV
+// ══════════════════════════════════════════════
+const PANEL_META = {
+  dashboard: ['Dashboard','GSTMind platform overview'],
+  users: ['User Management','Add, edit and manage all users'],
+  kb: ['Knowledge Base','Gemini File Search document management'],
+  sync: ['Drive Sync','Google Drive → Gemini File Search pipeline'],
+  subscriptions: ['Subscriptions','Plans, revenue and billing'],
+  analytics: ['Analytics','Usage patterns and insights'],
+  prompts: ['Prompts & AI','Control AI behaviour without code changes'],
+  settings: ['Settings','Admin credentials and system config']
+};
 
-    const all = users.users||[];
-    document.getElementById('s-users').textContent = all.length;
-    document.getElementById('s-users-sub').textContent = all.length+' registered';
-
-    const paid = all.filter(u=>u.plan==='pro'||u.plan==='unlimited').length;
-    document.getElementById('s-paid').textContent = paid;
-
-    document.getElementById('s-docs').textContent = kb.total_documents??'—';
-    document.getElementById('s-docs-sub').textContent = (kb.total_documents??0)+' files';
-
-    const rev = all.filter(u=>u.plan==='pro').length*999 + all.filter(u=>u.plan==='unlimited').length*1999;
-    document.getElementById('s-rev').textContent = '₹'+rev.toLocaleString('en-IN');
-
-    /* recent signups */
-    const recent = [...all].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
-    document.getElementById('recentSignups').innerHTML = recent.length
-      ? recent.map(u=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
-          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent)">${(u.first_name||'?')[0]}</div>
-          <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">${u.first_name||''} ${u.last_name||''}</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${u.email}</div></div>
-          <span class="badge badge-${u.plan||'free'}">${u.plan||'free'}</span>
-        </div>`).join('')
-      : '<div class="empty"><p>No users yet</p></div>';
-
-    /* plan bars */
-    const free=all.filter(u=>!u.plan||u.plan==='free').length;
-    const pro=all.filter(u=>u.plan==='pro').length;
-    const unl=all.filter(u=>u.plan==='unlimited').length;
-    const tot=all.length||1;
-    document.getElementById('b-free').style.width=(free/tot*100)+'%';
-    document.getElementById('b-pro').style.width=(pro/tot*100)+'%';
-    document.getElementById('b-unlimited').style.width=(unl/tot*100)+'%';
-    document.getElementById('bc-free').textContent=free;
-    document.getElementById('bc-pro').textContent=pro;
-    document.getElementById('bc-unlimited').textContent=unl;
-    document.getElementById('nc-users').textContent=all.length;
-
-    /* KB dash */
-    if(kb.total_documents!==undefined){
-      const idx=kb.indexed||0, pend=kb.pending||0, fail=kb.failed||0, tot2=kb.total_documents||1;
-      document.getElementById('kbStoreDash').innerHTML=`
-        <div style="margin-top:4px">
-          <div class="prog-track"><div class="prog-fill green" style="width:${idx/tot2*100}%"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px">
-            <span>✓ ${idx} indexed</span><span>⏳ ${pend} pending</span><span>✗ ${fail} failed</span>
-          </div>
-          <div style="margin-top:8px;font-size:11px;color:var(--text3)">${kb.total_size_mb??'—'} MB used</div>
-        </div>`;
-    }
-
-    /* sync status in topbar */
-    loadSyncStatusBadge();
-
-  }catch(e){ console.error('Dashboard error:',e); }
+function nav(name, btn){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const [title,sub] = PANEL_META[name]||[name,''];
+  document.getElementById('topTitle').textContent=title;
+  document.getElementById('topSub').textContent=sub;
+  if(name==='users') renderUserTable(_users);
+  if(name==='kb'){ loadKBDocs(); }
+  if(name==='sync'){ loadSyncStatus(); loadSyncHistory(); }
+  if(name==='analytics') renderAnalytics();
+  if(name==='prompts') loadPrompts();
+  if(name==='subscriptions') renderSubs();
 }
 
-async function loadSyncStatusBadge(){
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+async function renderDashboard(){
+  const users = _users;
+  const free = users.filter(u=>(!u.plan||u.plan==='free')).length;
+  const pro = users.filter(u=>u.plan==='pro').length;
+  const unlimited = users.filter(u=>u.plan==='unlimited').length;
+  const paid = pro+unlimited;
+  const rev = pro*999 + unlimited*1999;
+
+  document.getElementById('s-users').textContent = users.length;
+  document.getElementById('s-users-sub').textContent = users.length+' registered';
+  document.getElementById('s-paid').textContent = paid;
+  document.getElementById('s-rev').textContent = '₹'+(rev.toLocaleString('en-IN'));
+  document.getElementById('nc-users').textContent = users.length;
+
+  const mx = Math.max(users.length,1);
+  document.getElementById('b-free').style.width=(free/mx*100)+'%';
+  document.getElementById('b-pro').style.width=(pro/mx*100)+'%';
+  document.getElementById('b-unlimited').style.width=(unlimited/mx*100)+'%';
+  document.getElementById('bc-free').textContent=free;
+  document.getElementById('bc-pro').textContent=pro;
+  document.getElementById('bc-unlimited').textContent=unlimited;
+
+  // Recent signups
+  const rs = document.getElementById('recentSignups');
+  const recent = [...users].sort((a,b)=>new Date(b.joined_at||0)-new Date(a.joined_at||0)).slice(0,5);
+  if(!recent.length){ rs.innerHTML='<div class="empty"><p>No users yet</p></div>'; }
+  else rs.innerHTML = recent.map(u=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${(u.fname?.[0]||'?').toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.name||u.fname+' '+(u.lname||''))}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${esc(u.email||'—')}</div>
+      </div>
+      <span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Pro':u.plan==='unlimited'?'∞':'Free'}</span>
+    </div>`).join('');
+
+  // KB store summary in dashboard
+  const kbEl = document.getElementById('kbStoreDash');
   try{
-    const s = await apiFetch('/sync/status','GET',null,true);
-    const dot = document.getElementById('syncDot');
-    const txt = document.getElementById('syncStatusTxt');
-    if(s.status==='running'){ dot.className='s-dot pulse'; txt.textContent='Sync: Running'; document.getElementById('syncStatus').className='status-pill pill-green'; }
-    else if(s.status==='idle'){ dot.className='s-dot'; txt.textContent='Sync: Idle'; document.getElementById('syncStatus').className='status-pill pill-amber'; }
-    else{ dot.className='s-dot'; txt.textContent='Sync: '+s.status; document.getElementById('syncStatus').className='status-pill pill-amber'; }
-  }catch{ document.getElementById('syncStatusTxt').textContent='Sync: Unknown'; }
+    const stats = await apiFetch('/kb/stats','GET',null,true);
+    document.getElementById('s-docs').textContent = stats.total||0;
+    document.getElementById('s-docs-sub').textContent = `${stats.indexed||0} indexed · ${stats.failed||0} failed`;
+    document.getElementById('nc-kb').textContent = stats.total||0;
+    kbEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+        <div style="padding:10px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;text-align:center">
+          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--green)">${stats.indexed||0}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Indexed</div>
+        </div>
+        <div style="padding:10px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;text-align:center">
+          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--amber)">${stats.pending||0}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Pending</div>
+        </div>
+        <div style="padding:10px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;text-align:center">
+          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--red)">${stats.failed||0}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Failed</div>
+        </div>
+        <div style="padding:10px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;text-align:center">
+          <div style="font-size:22px;font-weight:600;font-family:var(--serif)">${stats.total_size_mb||0} MB</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Total Size</div>
+        </div>
+      </div>`;
+  }catch(e){ kbEl.innerHTML='<div class="empty"><p>Could not load KB stats</p></div>'; }
 }
 
-/* ══════════════════════════════════════════
-   USERS
-══════════════════════════════════════════ */
-let allUsers=[];
-
+// ══════════════════════════════════════════════
+// USERS
+// ══════════════════════════════════════════════
 async function loadUsers(){
   try{
-    const d = await apiFetch('/admin/users','GET',null,true);
-    allUsers = d.users||[];
-    renderUsers(allUsers);
-  }catch(e){ document.getElementById('userTbody').innerHTML=`<tr><td colspan="7"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`; }
+    const data = await apiFetch('/admin/users','GET',null,true);
+    _users = (Array.isArray(data)?data:[]).map(u=>({
+      ...u,
+      name: u.name||(u.fname+' '+(u.lname||'')).trim()
+    }));
+    document.getElementById('nc-users').textContent = _users.length;
+  }catch(e){ console.error('loadUsers:', e.message); }
 }
 
-function renderUsers(list){
-  const tb = document.getElementById('userTbody');
-  if(!list.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><p>No users found</p></div></td></tr>`; return; }
-  tb.innerHTML = list.map(u=>`
+let _selUserId = null;
+let _currentUsers = [];
+
+function renderUserTable(users){
+  _currentUsers = users;
+  const tbody = document.getElementById('userTbody');
+  if(!users.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty"><p>No users yet.</p></div></td></tr>'; return; }
+  tbody.innerHTML = users.map((u,i)=>`
     <tr>
-      <td><strong>${u.first_name||''} ${u.last_name||''}</strong></td>
-      <td><div style="font-family:var(--mono);font-size:11px">${u.email}</div><div style="font-size:10px;color:var(--text3)">${u.phone||'—'}</div></td>
-      <td><span class="badge badge-${u.plan||'free'}">${u.plan||'free'}</span></td>
-      <td style="font-family:var(--mono)">${u.query_count??0}</td>
-      <td style="font-size:11px">${fmtDate(u.created_at)}</td>
-      <td><span class="badge badge-${u.status||'active'}">${u.status||'active'}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${(u.fname?.[0]||'?').toUpperCase()}</div>
+          <strong>${esc(u.name||'Unknown')}</strong>
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:11px">${esc(u.email||u.phone||'—')}</td>
+      <td><span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Professional':u.plan==='unlimited'?'Unlimited':'Free Trial'}</span></td>
+      <td style="font-family:var(--mono)">${u.query_count||0}/${u.plan==='unlimited'?'∞':(u.query_limit||10)}</td>
+      <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'—'}</td>
+      <td><span class="badge badge-${u.blocked?'blocked':'active'}"><span class="badge-dot"></span>${u.blocked?'Blocked':'Active'}</span></td>
       <td>
         <div style="display:flex;gap:5px">
-          <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">Edit</button>
-          <button class="btn btn-ghost btn-sm" onclick="showPlanModal('${u.id}','${u.email}')">Plan</button>
-          <button class="btn btn-ghost btn-sm" onclick="toggleBlock('${u.id}','${u.status}')">${u.status==='blocked'?'Unblock':'Block'}</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Del</button>
+          <button class="btn btn-ghost btn-sm" onclick="openPlanModal(${i})">Plan</button>
+          <button class="btn ${u.blocked?'btn-primary':'btn-danger'} btn-sm" onclick="toggleBlock(${i})">${u.blocked?'Unblock':'Block'}</button>
         </div>
       </td>
     </tr>`).join('');
 }
 
 function filterUsers(val){
-  const q = (val||document.getElementById('userSearch').value||'').toLowerCase();
-  const plan = document.getElementById('planFilter').value;
-  const status = document.getElementById('statusFilter').value;
-  let list = allUsers;
-  if(q) list=list.filter(u=>(u.first_name+' '+u.last_name+' '+u.email).toLowerCase().includes(q));
-  if(plan) list=list.filter(u=>(u.plan||'free')===plan);
-  if(status) list=list.filter(u=>(u.status||'active')===status);
-  renderUsers(list);
+  const search=(val||document.getElementById('userSearch').value||'').toLowerCase();
+  const plan=document.getElementById('planFilter').value;
+  const status=document.getElementById('statusFilter').value;
+  let users=[..._users];
+  if(search) users=users.filter(u=>(u.name||'').toLowerCase().includes(search)||(u.email||'').toLowerCase().includes(search));
+  if(plan) users=users.filter(u=>(u.plan||'free')===plan);
+  if(status==='blocked') users=users.filter(u=>u.blocked);
+  if(status==='active') users=users.filter(u=>!u.blocked);
+  renderUserTable(users);
 }
 
-let editingUserId=null;
-function showAddUser(){
-  editingUserId=null;
-  document.getElementById('userModalTitle').textContent='Add User';
-  ['fname','lname','email','phone'].forEach(f=>document.getElementById('uf-'+f).value='');
-  document.getElementById('uf-plan').value='free';
-  document.getElementById('uf-status').value='active';
-  document.getElementById('userModal').classList.add('show');
-}
-
-async function editUser(id){
-  const u=allUsers.find(x=>x.id===id); if(!u) return;
-  editingUserId=id;
-  document.getElementById('userModalTitle').textContent='Edit User';
-  document.getElementById('uf-fname').value=u.first_name||'';
-  document.getElementById('uf-lname').value=u.last_name||'';
-  document.getElementById('uf-email').value=u.email||'';
-  document.getElementById('uf-phone').value=u.phone||'';
-  document.getElementById('uf-plan').value=u.plan||'free';
-  document.getElementById('uf-status').value=u.status||'active';
-  document.getElementById('userModal').classList.add('show');
-}
-
-async function saveUser(){
-  const body={
-    first_name: document.getElementById('uf-fname').value.trim(),
-    last_name: document.getElementById('uf-lname').value.trim(),
-    email: document.getElementById('uf-email').value.trim(),
-    phone: document.getElementById('uf-phone').value.trim(),
-    plan: document.getElementById('uf-plan').value,
-    status: document.getElementById('uf-status').value
-  };
-  const btn=document.getElementById('userSaveBtn');
-  btn.disabled=true;
-  try{
-    if(editingUserId){
-      await apiFetch('/admin/users/'+editingUserId,'PUT',body,true);
-      toast('User updated','success');
-    }else{
-      await apiFetch('/admin/users','POST',body,true);
-      toast('User created','success');
-    }
-    closeModal('userModal');
-    loadUsers();
-  }catch(e){ toast('Error: '+e.message,'error'); }
-  finally{ btn.disabled=false; }
-}
-
-async function toggleBlock(id,status){
-  const newStatus = status==='blocked' ? 'active' : 'blocked';
-  confirmAct(`${newStatus==='blocked'?'Block':'Unblock'} this user?`, async()=>{
-    try{
-      await apiFetch('/admin/users/'+id,'PUT',{status:newStatus},true);
-      toast('User '+newStatus,'success');
-      loadUsers();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
-async function deleteUser(id){
-  confirmAct('Permanently delete this user? This cannot be undone.', async()=>{
-    try{
-      await apiFetch('/admin/users/'+id,'DELETE',null,true);
-      toast('User deleted','success');
-      loadUsers();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
-let planModalUserId=null;
-function showPlanModal(id,email){
-  planModalUserId=id;
-  document.getElementById('planModalUser').textContent='Change plan for '+email;
-  const u=allUsers.find(x=>x.id===id);
-  if(u) document.getElementById('pm-plan').value=u.plan||'free';
+function openPlanModal(idx){
+  const u=_currentUsers[idx]; if(!u)return;
+  _selUserId=u.id;
+  document.getElementById('planModalUser').textContent='User: '+(u.name||u.email||'Unknown');
+  document.getElementById('planModalSel').value=u.plan||'free';
+  document.getElementById('planModalLimit').value='';
   document.getElementById('planModal').classList.add('show');
 }
+
 async function savePlan(){
-  const plan=document.getElementById('pm-plan').value;
+  if(!_selUserId) return;
+  const plan=document.getElementById('planModalSel').value;
+  const lim=document.getElementById('planModalLimit').value;
+  const ql=lim?parseInt(lim):(plan==='pro'?100:plan==='unlimited'?999999:10);
   try{
-    await apiFetch('/admin/users/'+planModalUserId,'PUT',{plan},true);
+    await apiFetch('/admin/users/'+_selUserId,'PATCH',{plan,query_limit:ql},true);
+    document.getElementById('planModal').classList.remove('show');
     toast('Plan updated','success');
-    closeModal('planModal');
-    loadUsers();
+    await loadUsers(); renderUserTable(_users);
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+async function toggleBlock(idx){
+  const u=_currentUsers[idx]; if(!u)return;
+  try{
+    await apiFetch('/admin/users/'+u.id,'PATCH',{blocked:!u.blocked},true);
+    toast((u.blocked?'Unblocked: ':'Blocked: ')+u.name, u.blocked?'success':'error');
+    await loadUsers(); filterUsers();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+function showAddUser(){ document.getElementById('addUserModal').classList.add('show'); }
+
+async function addUser(){
+  const fname=document.getElementById('au-fname').value.trim();
+  const lname=document.getElementById('au-lname').value.trim();
+  const email=document.getElementById('au-email').value.trim();
+  const phone=document.getElementById('au-phone').value.trim();
+  const plan=document.getElementById('au-plan').value;
+  const profession=document.getElementById('au-prof').value;
+  if(!fname||!email){ toast('First name and email required','error'); return; }
+  try{
+    await apiFetch('/admin/users','POST',{fname,lname,email,phone,plan,profession},true);
+    document.getElementById('addUserModal').classList.remove('show');
+    toast('User created: '+fname+' '+lname,'success');
+    await loadUsers(); renderUserTable(_users);
+    ['au-fname','au-lname','au-email','au-phone'].forEach(id=>document.getElementById(id).value='');
   }catch(e){ toast('Error: '+e.message,'error'); }
 }
 
 function exportCSV(){
-  if(!allUsers.length){ toast('No users to export','error'); return; }
-  const headers=['ID','First Name','Last Name','Email','Phone','Plan','Queries','Status','Created'];
-  const rows=allUsers.map(u=>[u.id,u.first_name,u.last_name,u.email,u.phone||'',u.plan||'free',u.query_count||0,u.status||'active',u.created_at||'']);
-  const csv=[headers,...rows].map(r=>r.map(v=>JSON.stringify(v??'')).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='gstmind_users_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  toast('CSV exported','success');
+  if(!_users.length){ toast('No users to export','error'); return; }
+  const header='Name,Email,Phone,Plan,Queries,Joined,Status';
+  const rows=_users.map(u=>[u.name,u.email,u.phone,u.plan,u.query_count,u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'',u.blocked?'Blocked':'Active'].map(v=>`"${v||''}"`).join(','));
+  const csv=[header,...rows].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='GSTMind_Users.csv'; a.click();
+  toast('Exported '+_users.length+' users','success');
 }
 
-/* ══════════════════════════════════════════
-   KNOWLEDGE BASE
-══════════════════════════════════════════ */
-let allDocs=[], selectedDocs=new Set();
+// ══════════════════════════════════════════════
+// KNOWLEDGE BASE
+// ══════════════════════════════════════════════
+let _docSearchTimer=null;
+let _selDocs=new Set();
 
 async function loadKBStats(){
   try{
-    const s = await apiFetch('/kb/stats','GET',null,true);
-    document.getElementById('kb-indexed').textContent = s.indexed??'—';
-    document.getElementById('kb-pending').textContent = s.pending??'—';
-    document.getElementById('kb-failed').textContent  = s.failed??'—';
-    document.getElementById('kb-total').textContent   = s.total_documents??'—';
-    document.getElementById('kb-size').textContent    = (s.total_size_mb??'—')+' MB';
-    document.getElementById('nc-kb').textContent      = s.total_documents??'—';
-  }catch(e){ console.warn('KB stats error:',e); }
+    const stats = await apiFetch('/kb/stats','GET',null,true);
+    document.getElementById('kb-indexed').textContent=stats.indexed||0;
+    document.getElementById('kb-pending').textContent=stats.pending||0;
+    document.getElementById('kb-failed').textContent=stats.failed||0;
+    document.getElementById('kb-total').textContent=stats.total||0;
+    document.getElementById('kb-size').textContent=(stats.total_size_mb||0)+' MB';
+    document.getElementById('nc-kb').textContent=stats.total||0;
+
+    // Populate category filter
+    const catSel=document.getElementById('docCatFilter');
+    const cats=Object.keys(stats.by_category||{}).sort();
+    catSel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  }catch(e){ console.error('loadKBStats:', e.message); }
 }
 
 async function loadKBDocs(){
-  const wrap = document.getElementById('kbDocList');
-  wrap.innerHTML='<div class="empty"><p>Loading...</p></div>';
+  const search=document.getElementById('docSearch')?.value||'';
+  const status=document.getElementById('docStatusFilter')?.value||'';
+  const cat=document.getElementById('docCatFilter')?.value||'';
+
+  let url='/kb/documents?limit=200';
+  if(status) url+='&gemini_status='+encodeURIComponent(status);
+  if(cat) url+='&category='+encodeURIComponent(cat);
+  if(search) url+='&search='+encodeURIComponent(search);
+
+  document.getElementById('docList').innerHTML='<div class="empty"><p>Loading...</p></div>';
   try{
-    const d = await apiFetch('/kb/documents','GET',null,true);
-    allDocs = d.documents||[];
-    selectedDocs.clear();
-    document.getElementById('deleteSelBtn').style.display='none';
-
-    /* populate category filter */
-    const cats=[...new Set(allDocs.map(d=>d.category||'Uncategorized'))].sort();
-    const cf=document.getElementById('docCatFilter');
-    cf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-
-    renderDocs(allDocs);
-  }catch(e){ wrap.innerHTML=`<div class="empty"><p>Error: ${e.message}</p></div>`; }
-}
-
-function renderDocs(list){
-  const wrap=document.getElementById('kbDocList');
-  document.getElementById('docCountLabel').textContent=list.length+' documents';
-  if(!list.length){ wrap.innerHTML='<div class="empty"><p>No documents found</p></div>'; return; }
-  wrap.innerHTML=list.map(d=>`
-    <div class="doc-row">
-      <input type="checkbox" style="flex-shrink:0;accent-color:var(--accent)" ${selectedDocs.has(d.id)?'checked':''} onchange="toggleDocSel('${d.id}',this.checked)"/>
-      <div class="doc-icon">${docIcon(d.file_type)}</div>
-      <div class="doc-info">
-        <div class="doc-name">${d.title||d.filename||'Untitled'}</div>
-        <div class="doc-meta">${d.category||'—'} · ${d.file_type||'—'} · ${fmtSize(d.file_size)} · ${fmtDate(d.created_at)}</div>
-      </div>
-      <span class="badge badge-${d.status||'pending'}">${d.status||'pending'}</span>
-      <div class="doc-actions">
-        <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}','${(d.title||d.filename||'').replace(/'/g,'')}')">Del</button>
-      </div>
-    </div>`).join('');
-}
-
-function toggleDocSel(id,checked){
-  if(checked) selectedDocs.add(id); else selectedDocs.delete(id);
-  document.getElementById('deleteSelBtn').style.display=selectedDocs.size?'inline-flex':'none';
+    const data = await apiFetch(url,'GET',null,true);
+    _allDocs = data.documents||[];
+    document.getElementById('docCountLabel').textContent=`${_allDocs.length} of ${data.total||_allDocs.length} documents`;
+    renderDocList(_allDocs);
+    _selDocs.clear(); updateDeleteBtn();
+  }catch(e){
+    document.getElementById('docList').innerHTML='<div class="empty"><p>Error: '+esc(e.message)+'</p></div>';
+  }
 }
 
 function filterDocs(val){
-  const q=(val||document.getElementById('docSearch').value||'').toLowerCase();
-  const status=document.getElementById('docStatusFilter').value;
-  const cat=document.getElementById('docCatFilter').value;
-  let list=allDocs;
-  if(q) list=list.filter(d=>(d.title+' '+d.filename+' '+d.category).toLowerCase().includes(q));
-  if(status) list=list.filter(d=>(d.status||'pending')===status);
-  if(cat) list=list.filter(d=>(d.category||'Uncategorized')===cat);
-  renderDocs(list);
+  clearTimeout(_docSearchTimer);
+  _docSearchTimer = setTimeout(loadKBDocs, 300);
 }
 
-async function deleteDoc(id,name){
-  confirmAct(`Delete document "${name}"? This removes it from the Gemini store.`, async()=>{
+function renderDocList(docs){
+  const el = document.getElementById('docList');
+  if(!docs.length){ el.innerHTML='<div class="empty"><p>No documents found.</p></div>'; return; }
+
+  const statusIcon={'indexed':'✓','pending':'⏳','failed':'✗'};
+  const statusCls={'indexed':'indexed','pending':'pending','failed':'failed'};
+  const catIcon = c=>{
+    if(!c) return '📄';
+    const cl=c.toLowerCase();
+    if(cl.includes('act')) return '⚖';
+    if(cl.includes('rule')) return '📜';
+    if(cl.includes('circular')) return '📋';
+    if(cl.includes('notification')) return '🔔';
+    if(cl.includes('faq')) return '❓';
+    if(cl.includes('council')) return '🏛';
+    if(cl.includes('press')) return '📰';
+    return '📄';
+  };
+
+  el.innerHTML = docs.map(d=>{
+    const s = d.gemini_status||'pending';
+    const size = d.file_size_bytes ? (d.file_size_bytes/1024/1024).toFixed(1)+'MB' : '—';
+    const date = d.created_at ? new Date(d.created_at).toLocaleDateString('en-IN') : '—';
+    const indexed = d.gemini_indexed_at ? new Date(d.gemini_indexed_at).toLocaleDateString('en-IN') : '—';
+    return `<div class="doc-row">
+      <input type="checkbox" class="doc-chk" data-id="${d.id}" onchange="onDocSelect(this)" style="accent-color:var(--accent);cursor:pointer;flex-shrink:0"/>
+      <div class="doc-icon">${catIcon(d.category)}</div>
+      <div class="doc-info">
+        <div class="doc-name" title="${esc(d.doc_name||d.file_name||'Unknown')}">${esc(d.doc_name||d.file_name||'Unknown')}</div>
+        <div class="doc-meta">${esc(d.category||'—')} · ${size} · Added ${date}${d.gemini_status==='indexed'?' · Indexed '+indexed:''}</div>
+      </div>
+      ${d.drive_url?`<a href="${esc(d.drive_url)}" target="_blank" class="btn btn-ghost btn-sm" title="Open in Drive">Drive</a>`:''}
+      ${d.last_error?`<span title="${esc(d.last_error)}" style="font-size:10px;color:var(--red);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="btn btn-sm">⚠ Error</span>`:''}
+      <span class="badge badge-${statusCls[s]||'pending'}">${statusIcon[s]||'⏳'} ${s}</span>
+      <div class="doc-actions">
+        ${s==='failed'?`<button id="retry-btn-${d.id}" class="btn btn-ghost btn-sm" onclick="reindexDoc('${d.id}')">↺ Retry</button>`:''}
+        ${s==='pending'?`<button class="btn btn-danger btn-sm" onclick="stopReindex()">⏹ Stop</button>`:''}
+        <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onDocSelect(chk){
+  if(chk.checked) _selDocs.add(chk.dataset.id);
+  else _selDocs.delete(chk.dataset.id);
+  updateDeleteBtn();
+}
+
+function toggleSelectAll(checked){
+  document.querySelectorAll('.doc-chk').forEach(c=>{ c.checked=checked; if(checked) _selDocs.add(c.dataset.id); else _selDocs.delete(c.dataset.id); });
+  updateDeleteBtn();
+}
+
+function updateDeleteBtn(){
+  const btn=document.getElementById('deleteSelBtn');
+  if(btn) btn.style.display=_selDocs.size>0?'inline-flex':'none';
+  if(btn) btn.textContent=`🗑 Delete Selected (${_selDocs.size})`;
+}
+
+async function reindexDoc(docId){
+  const btn=document.getElementById('retry-btn-'+docId);
+  if(btn){btn.disabled=true;btn.textContent='⏳';}
+  try{
+    await apiFetch('/kb/documents/'+docId+'/reindex','POST',{},true);
+    toast('Reindex started — indexing in background, takes 2–5 minutes','success');
+    _startReindexPoll(docId);
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    if(btn){btn.disabled=false;btn.textContent='↺ Retry';}
+  }
+}
+
+function _startReindexPoll(docId){
+  let polls=0;
+  const iv=setInterval(async()=>{
+    polls++;
+    if(polls>72){clearInterval(iv);return;}
     try{
-      await apiFetch('/kb/documents/'+id,'DELETE',null,true);
+      const st=await apiFetch('/kb/reindex/status','GET',null,true);
+      if(!st.docs||!st.docs[docId]){
+        clearInterval(iv);
+        await loadKBDocs();
+        toast('Reindex complete','success');
+      }
+    }catch(e){clearInterval(iv);}
+  },5000);
+}
+
+async function stopReindex(){
+  try{
+    await apiFetch('/kb/reindex/stop','POST',{},true);
+    toast('Reindex stop requested','success');
+    setTimeout(loadKBDocs,2000);
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+async function deleteDoc(docId){
+  confirmAct('Delete this document from the knowledge base and Gemini store?', async()=>{
+    try{
+      await apiFetch('/kb/documents/'+docId,'DELETE',null,true);
       toast('Document deleted','success');
-      await loadKBDocs(); await loadKBStats();
+      _allDocs=_allDocs.filter(d=>d.id!==docId);
+      _selDocs.delete(docId);
+      renderDocList(_allDocs);
+      updateDeleteBtn();
+      loadKBStats();
     }catch(e){ toast('Error: '+e.message,'error'); }
   });
 }
 
 async function deleteSelectedDocs(){
-  if(!selectedDocs.size) return;
-  confirmAct(`Delete ${selectedDocs.size} selected document(s)?`, async()=>{
+  if(!_selDocs.size) return;
+  confirmAct(`Delete ${_selDocs.size} documents from the knowledge base?`, async()=>{
     let ok=0,fail=0;
-    for(const id of selectedDocs){
+    for(const id of _selDocs){
       try{ await apiFetch('/kb/documents/'+id,'DELETE',null,true); ok++; }
-      catch{ fail++; }
+      catch(e){ fail++; }
     }
     toast(`${ok} deleted${fail?' · '+fail+' failed':''}`, fail?'error':'success');
-    await loadKBDocs(); await loadKBStats();
+    _selDocs.clear();
+    await loadKBDocs();
+    await loadKBStats();
   });
+}
+
+// ══════════════════════════════════════════════
+// DRIVE SYNC
+// ══════════════════════════════════════════════
+async function loadSyncStatus(){
+  try{
+    const s = await apiFetch('/sync/status','GET',null,true);
+    const running = s.currently_running;
+    const lr = s.last_result||s.latest_db_run||{};
+
+    document.getElementById('syncStat').textContent = running ? '🔄 Running' : (lr.status||'Idle');
+    document.getElementById('syncStat').style.color = running ? 'var(--amber)' : lr.status==='done'?'var(--green)':'var(--text2)';
+    document.getElementById('syncTrigger').textContent = s.triggered_by||lr.triggered_by||'—';
+    document.getElementById('syncStarted').textContent = s.started_at ? new Date(s.started_at).toLocaleString('en-IN') : '—';
+
+    const lrr = s.last_result||{};
+    document.getElementById('syncLastResult').textContent = lrr.status ? `${lrr.status} · +${lrr.files_added||0} added · ${lrr.duration_seconds||0}s` : '—';
+
+    // Latest DB run details
+    const db = s.latest_db_run||{};
+    // If a sync is running, note that "Latest Run" shows last completed run
+    const lrCard = document.querySelector('#lr-scanned')?.closest('.card, .sync-card, [class*="card"]');
+    if(lrCard){
+      let lrTitle = lrCard.querySelector('h3,h4,.card-title,.panel-title');
+      if(lrTitle){
+        lrTitle.textContent = s.currently_running ? 'Latest Completed Run' : 'Latest Run';
+      }
+    }
+    document.getElementById('lr-scanned').textContent = db.drive_scanned??'—';
+    document.getElementById('lr-added').textContent = db.files_added??'—';
+    document.getElementById('lr-deleted').textContent = db.files_deleted??'—';
+    document.getElementById('lr-failed').textContent = db.files_failed??'—';
+    document.getElementById('lr-duration').textContent = db.duration_seconds!=null ? db.duration_seconds+'s' : '—';
+    document.getElementById('lr-completed').textContent = db.completed_at ? new Date(db.completed_at).toLocaleString('en-IN') : '—';
+
+    // Topbar sync status
+    const dot=document.getElementById('syncDot');
+    const txt=document.getElementById('syncStatusTxt');
+    const pill=document.getElementById('syncStatus');
+    if(running){
+      pill.className='status-pill pill-amber';
+      dot.classList.add('pulse');
+      txt.textContent='Sync: Running...';
+    } else if(db.status==='done'){
+      pill.className='status-pill pill-green';
+      dot.classList.remove('pulse');
+      txt.textContent='Sync: Idle';
+    } else {
+      pill.className='status-pill pill-amber';
+      dot.classList.remove('pulse');
+      txt.textContent='Sync: '+( db.status||'Never run');
+    }
+
+    // Run/stop btn state
+    const runBtn=document.getElementById('syncRunBtn');
+    const stopBtn=document.getElementById('syncStopBtn');
+            if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; runBtn.style.display=running?'none':'flex'; }
+    if(stopBtn){ stopBtn.style.display=running?'inline-flex':'none'; }
+
+  }catch(e){ console.error('loadSyncStatus:', e.message); }
+}
+
+async function stopSync(){
+  try{
+    const r = await apiFetch('/sync/stop','POST',{},true);
+    toast(r.message,'success');
+    setTimeout(loadSyncStatus, 1000);
+  }catch(e){ toast('Error: '+e.message,'error'); }
 }
 
 async function deleteAllDocs(){
@@ -1286,332 +1351,234 @@ async function deleteAllDocs(){
   });
 }
 
-async function cleanupStorage(){
-  confirmAct('Remove orphaned duplicate files from Gemini storage? This frees up your 10 GB quota. Your actual indexed documents will NOT be affected.', async()=>{
-    toast('Scanning Gemini store for orphans... please wait','');
-    try{
-      const r=await apiFetch('/kb/cleanup-storage','POST',null,true);
-      toast('✓ '+r.message,'success');
-      await loadKBStats();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
-function docIcon(t){
-  if(!t) return '📄';
-  t=t.toLowerCase();
-  if(t.includes('pdf')) return '📕';
-  if(t.includes('word')||t.includes('doc')) return '📘';
-  if(t.includes('sheet')||t.includes('excel')||t.includes('csv')) return '📗';
-  if(t.includes('image')||t.includes('png')||t.includes('jpg')) return '🖼';
-  return '📄';
-}
-function fmtSize(b){
-  if(!b) return '—';
-  if(b<1024) return b+'B';
-  if(b<1048576) return (b/1024).toFixed(1)+'KB';
-  return (b/1048576).toFixed(1)+'MB';
-}
-
-/* ══════════════════════════════════════════
-   DRIVE SYNC
-══════════════════════════════════════════ */
-async function loadSyncStatus(){
-  try{
-    const s = await apiFetch('/sync/status','GET',null,true);
-    document.getElementById('si-status').textContent = s.status||'—';
-    document.getElementById('si-last').textContent   = s.last_sync ? fmtDatetime(s.last_sync) : '—';
-    document.getElementById('si-next').textContent   = s.next_sync ? fmtDatetime(s.next_sync) : '—';
-    document.getElementById('si-folder').textContent = s.folder_name||s.folder_id||'—';
-    document.getElementById('si-counts').textContent = (s.files_found??'—')+' / '+(s.files_indexed??'—');
-  }catch(e){ console.warn('Sync status error:',e); }
-}
-
-async function loadSyncLogs(){
-  const wrap=document.getElementById('syncLogWrap');
-  try{
-    const d = await apiFetch('/sync/history','GET',null,true);
-    const logs=d.logs||[];
-    if(!logs.length){ wrap.innerHTML='<div class="empty"><p>No sync logs yet</p></div>'; return; }
-    wrap.innerHTML='<div>'+logs.map(l=>`
-      <div class="log-entry">
-        <span class="log-time">${fmtDatetime(l.created_at)}</span>
-        <span class="log-status"><span class="badge badge-${l.status==='success'?'indexed':l.status==='error'?'failed':'pending'}">${l.status}</span></span>
-        <span class="log-msg">${l.message||'—'}</span>
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0">${l.files_found!=null?l.files_found+' found':''} ${l.files_indexed!=null?'/ '+l.files_indexed+' indexed':''}</span>
-      </div>`).join('')+'</div>';
-  }catch(e){ wrap.innerHTML=`<div class="empty"><p>Error: ${e.message}</p></div>`; }
-}
-
 async function triggerSync(){
-  const btn=document.getElementById('syncBtn');
-  btn.disabled=true; btn.textContent='Starting...';
+  const btn = document.getElementById('syncRunBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Starting...'; }
   try{
-    const r=await apiFetch('/sync/run','POST',null,true);
-    toast('Sync started: '+r.message,'success');
-    setTimeout(()=>{ loadSyncStatus(); loadSyncLogs(); }, 2000);
-  }catch(e){ toast('Error: '+e.message,'error'); }
-  finally{ btn.disabled=false; btn.textContent='▶ Trigger Sync Now'; }
+    const r = await apiFetch('/sync/run','POST',{},true);
+    toast(r.already_running?'Sync already running':'Sync started ✓','success');
+    setTimeout(loadSyncStatus, 1500);
+    setTimeout(loadSyncHistory, 2000);
+    startSyncPoll();
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    if(btn){ btn.disabled=false; btn.textContent='▶ Trigger Sync'; }
+  }
 }
 
-/* ══════════════════════════════════════════
-   SUBSCRIPTIONS
-══════════════════════════════════════════ */
-let allSubs=[];
-
-async function loadSubscriptions(){
+async function loadSyncHistory(){
   try{
-    const d=await apiFetch('/admin/users','GET',null,true);
-    allSubs=d.users||[];
-    renderSubs(allSubs);
-  }catch(e){ document.getElementById('subTbody').innerHTML=`<tr><td colspan="6"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`; }
+    const data = await apiFetch('/sync/history?limit=20','GET',null,true);
+    const runs = data.runs||[];
+    const tbody = document.getElementById('syncHistoryTbody');
+    if(!runs.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty"><p>No sync history yet.</p></div></td></tr>'; return; }
+    tbody.innerHTML = runs.map(r=>{
+      const s=r.status||'—';
+      const cls=s==='done'?'badge-active':s==='running'?'badge-pending':'badge-failed';
+      return `<tr>
+        <td style="font-family:var(--mono);font-size:11px">${r.started_at?new Date(r.started_at).toLocaleString('en-IN'):'—'}</td>
+        <td>${esc(r.triggered_by||'—')}</td>
+        <td style="font-family:var(--mono)">${r.drive_scanned??'—'}</td>
+        <td style="font-family:var(--mono);color:var(--green)">${r.files_added??'—'}</td>
+        <td style="font-family:var(--mono);color:var(--amber)">${r.files_failed??'—'}</td>
+        <td style="font-family:var(--mono)">${r.duration_seconds!=null?r.duration_seconds+'s':'—'}</td>
+        <td><span class="badge ${cls}">${s}</span></td>
+      </tr>`;
+    }).join('');
+  }catch(e){ document.getElementById('syncHistoryTbody').innerHTML='<tr><td colspan="7"><div class="empty"><p>Error loading history</p></div></td></tr>'; }
 }
 
-function renderSubs(list){
-  const tb=document.getElementById('subTbody');
-  if(!list.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty"><p>No subscriptions</p></div></td></tr>`; return; }
-  tb.innerHTML=list.map(u=>`
+function startSyncPoll(){
+  stopSyncPoll();
+  let errs = 0;
+  _syncPollTimer = setInterval(async()=>{
+    try{
+      await loadSyncStatus();
+      await loadKBStats();
+      errs = 0;
+      // Stop polling when sync no longer running
+      const stopBtn = document.getElementById('syncStopBtn');
+      if(!stopBtn || stopBtn.style.display === 'none') stopSyncPoll();
+    }catch(e){
+      if(++errs >= 3) stopSyncPoll();
+    }
+  }, 6000);
+}
+function stopSyncPoll(){ if(_syncPollTimer){ clearInterval(_syncPollTimer); _syncPollTimer=null; } }
+
+// ══════════════════════════════════════════════
+// SUBSCRIPTIONS
+// ══════════════════════════════════════════════
+function renderSubs(){
+  const users=_users;
+  const free=users.filter(u=>(!u.plan||u.plan==='free')).length;
+  const pro=users.filter(u=>u.plan==='pro').length;
+  const unlimited=users.filter(u=>u.plan==='unlimited').length;
+  const paid=pro+unlimited;
+  const rev=pro*999+unlimited*1999;
+
+  document.getElementById('sub-mrr').textContent='₹'+(rev.toLocaleString('en-IN'));
+  document.getElementById('sub-paid').textContent=paid;
+  document.getElementById('sub-trial').textContent=free;
+  document.getElementById('pc-free').textContent=free;
+  document.getElementById('pc-pro').textContent=pro;
+  document.getElementById('pc-unlimited').textContent=unlimited;
+
+  const tbody=document.getElementById('subTbody');
+  if(!users.length){ tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>No subscribers yet</p></div></td></tr>'; return; }
+  _currentUsers=[...users];
+  tbody.innerHTML=users.map((u,i)=>`
     <tr>
-      <td><strong>${u.first_name||''} ${u.last_name||''}</strong><div style="font-size:10px;color:var(--text3)">${u.email}</div></td>
-      <td><span class="badge badge-${u.plan||'free'}">${u.plan||'free'}</span></td>
-      <td style="font-family:var(--mono)">${u.monthly_limit??'—'}</td>
-      <td>
-        <span style="font-family:var(--mono)">${u.monthly_queries_used??0}</span>
-        <div class="prog-track" style="width:80px;display:inline-block;margin-left:8px;vertical-align:middle">
-          <div class="prog-fill ${(u.monthly_queries_used/u.monthly_limit)>.8?'red':'green'}" style="width:${Math.min(100,(u.monthly_queries_used??0)/(u.monthly_limit||1)*100)}%"></div>
-        </div>
-      </td>
-      <td style="font-size:11px">${u.quota_reset_date?fmtDate(u.quota_reset_date):'—'}</td>
-      <td>
-        <div style="display:flex;gap:5px">
-          <button class="btn btn-ghost btn-sm" onclick="showPlanModal('${u.id}','${u.email}')">Change Plan</button>
-          <button class="btn btn-ghost btn-sm" onclick="resetUserQuota('${u.id}')">Reset Quota</button>
-        </div>
-      </td>
+      <td><strong>${esc(u.name||'Unknown')}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${esc(u.email||'—')}</div></td>
+      <td><span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Professional':u.plan==='unlimited'?'Unlimited':'Free Trial'}</span></td>
+      <td style="font-family:var(--mono)">${u.query_count||0}/${u.plan==='unlimited'?'∞':(u.query_limit||10)}</td>
+      <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'—'}</td>
+      <td><span class="badge badge-${u.blocked?'blocked':'active'}"><span class="badge-dot"></span>${u.blocked?'Blocked':'Active'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openPlanModal(${i})">Change Plan</button></td>
     </tr>`).join('');
 }
 
-function filterSubs(val){
-  const q=(val||document.getElementById('subSearch').value||'').toLowerCase();
-  const plan=document.getElementById('subPlanFilter').value;
-  let list=allSubs;
-  if(q) list=list.filter(u=>(u.first_name+' '+u.last_name+' '+u.email).toLowerCase().includes(q));
-  if(plan) list=list.filter(u=>(u.plan||'free')===plan);
-  renderSubs(list);
+// ══════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════
+function renderAnalytics(){
+  const users=_users;
+  const free=users.filter(u=>(!u.plan||u.plan==='free')).length;
+  const pro=users.filter(u=>u.plan==='pro').length;
+  const unlimited=users.filter(u=>u.plan==='unlimited').length;
+  const paid=pro+unlimited;
+  const mx=Math.max(users.length,1);
+
+  const convEl=document.getElementById('convBars');
+  convEl.innerHTML=`
+    <div class="bar-row"><span class="bar-lbl">Signed up (free)</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--text3)"></div></div><span class="bar-cnt">${users.length}</span></div>
+    <div class="bar-row"><span class="bar-lbl">Professional</span><div class="bar-track"><div class="bar-fill" style="width:${pro/mx*100}%"></div></div><span class="bar-cnt">${pro}</span></div>
+    <div class="bar-row"><span class="bar-lbl">Unlimited</span><div class="bar-track"><div class="bar-fill" style="width:${unlimited/mx*100}%;background:var(--accent2)"></div></div><span class="bar-cnt">${unlimited}</span></div>`;
+
+  // KB categories
+  apiFetch('/kb/stats','GET',null,true).then(stats=>{
+    const cats=Object.entries(stats.by_category||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const mxc=cats[0]?.[1]||1;
+    const catEl=document.getElementById('catBars');
+    catEl.innerHTML=cats.length?cats.map(([c,n])=>`
+      <div class="bar-row"><span class="bar-lbl">${esc(c)}</span><div class="bar-track"><div class="bar-fill" style="width:${n/mxc*100}%"></div></div><span class="bar-cnt">${n}</span></div>`).join('')
+      :'<div class="empty"><p>No KB data</p></div>';
+  }).catch(()=>{});
 }
 
-async function resetUserQuota(id){
-  confirmAct('Reset this user\'s monthly query quota to 0?', async()=>{
-    try{
-      await apiFetch('/admin/users/'+id+'/reset-quota','POST',null,true);
-      toast('Quota reset','success');
-      loadSubscriptions();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
+// ══════════════════════════════════════════════
+// PROMPTS
+// ══════════════════════════════════════════════
+let _defaultPrompts={};
 
-/* ══════════════════════════════════════════
-   ANALYTICS
-══════════════════════════════════════════ */
-async function loadAnalytics(){
-  try{
-    const [stats, logs] = await Promise.all([
-      apiFetch('/admin/analytics','GET',null,true).catch(()=>({})),
-      apiFetch('/admin/query-logs?limit=50','GET',null,true).catch(()=>({logs:[]}))
-    ]);
-
-    document.getElementById('a-total').textContent = stats.total_queries??'—';
-    document.getElementById('a-today').textContent = stats.queries_today??'—';
-    document.getElementById('a-avg').textContent   = stats.avg_per_day??'—';
-    document.getElementById('a-active').textContent = stats.active_users_week??'—';
-
-    /* top users */
-    const topU=stats.top_users||[];
-    const maxU=topU[0]?.count||1;
-    document.getElementById('topUsersBars').innerHTML=topU.length
-      ? topU.map(u=>`<div class="bar-row"><span class="bar-lbl">${u.name||u.email}</span><div class="bar-track"><div class="bar-fill" style="width:${u.count/maxU*100}%"></div></div><span class="bar-cnt">${u.count}</span></div>`).join('')
-      : '<div class="empty"><p>No data</p></div>';
-
-    /* top topics */
-    const topT=stats.top_topics||[];
-    const maxT=topT[0]?.count||1;
-    document.getElementById('topTopicsBars').innerHTML=topT.length
-      ? topT.map(t=>`<div class="bar-row"><span class="bar-lbl">${t.topic}</span><div class="bar-track"><div class="bar-fill" style="width:${t.count/maxT*100}%;background:var(--blue)"></div></div><span class="bar-cnt">${t.count}</span></div>`).join('')
-      : '<div class="empty"><p>No data</p></div>';
-
-    /* query log */
-    const ls=logs.logs||[];
-    document.getElementById('queryLogTbody').innerHTML=ls.length
-      ? ls.map(l=>`<tr>
-          <td style="font-size:11px;font-family:var(--mono)">${fmtDatetime(l.created_at)}</td>
-          <td style="font-size:11px">${l.user_email||'—'}</td>
-          <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.query||'—'}</td>
-          <td><span class="badge badge-${l.status==='success'?'indexed':l.status==='error'?'failed':'pending'}">${l.status||'—'}</span></td>
-          <td style="font-family:var(--mono);font-size:11px">${l.duration_ms!=null?l.duration_ms+'ms':'—'}</td>
-        </tr>`).join('')
-      : `<tr><td colspan="5"><div class="empty"><p>No queries logged yet</p></div></td></tr>`;
-
-  }catch(e){ console.error('Analytics error:',e); }
-}
-
-/* ══════════════════════════════════════════
-   PROMPTS
-══════════════════════════════════════════ */
 async function loadPrompts(){
+  const container=document.getElementById('promptsContainer');
+  container.innerHTML='<div class="empty"><p>Loading...</p></div>';
   try{
-    const d=await apiFetch('/admin/prompts','GET',null,true);
-    document.getElementById('pt-system').value   = d.system_prompt||'';
-    document.getElementById('pt-rag').value      = d.rag_prompt||'';
-    document.getElementById('pt-fallback').value = d.fallback_prompt||'';
-  }catch(e){ toast('Error loading prompts: '+e.message,'error'); }
+    const [settings,defaults]=await Promise.all([
+      apiFetch('/settings','GET',null,true),
+      apiFetch('/settings/defaults','GET',null,true)
+    ]);
+    _defaultPrompts=defaults||{};
+    const map={};
+    (Array.isArray(settings)?settings:[]).forEach(s=>map[s.key]=s);
+
+    const prompts=[
+      {key:'main_prompt',title:'Main Query Prompt',sub:'Controls how GSTMind answers GST queries. Changes apply immediately.'},
+      {key:'amendment_instruction',title:'Amendment Handling',sub:'How to handle Finance Act amendments and superseded circulars.'},
+      {key:'draft_prompt',title:'Notice Draft Prompt',sub:'Used when drafting replies to GST notices.'}
+    ];
+
+    container.innerHTML = prompts.map(p=>{
+      const val=map[p.key]?.value||_defaultPrompts[p.key]||'';
+      const updated=map[p.key]?.updated_at?new Date(map[p.key].updated_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Using default';
+      return `<div class="prompt-wrap">
+        <div class="prompt-hdr">
+          <div>
+            <div class="prompt-title">${esc(p.title)}</div>
+            <div class="prompt-sub">${esc(p.sub)}</div>
+          </div>
+          <div class="prompt-saved" id="psaved-${p.key}">✓ ${updated}</div>
+        </div>
+        <div class="prompt-body"><textarea id="prompt-${p.key}" rows="10">${esc(val)}</textarea></div>
+        <div class="prompt-footer">
+          <button class="btn btn-ghost btn-sm" onclick="resetPrompt('${p.key}')">↺ Reset to Default</button>
+          <button class="btn btn-primary btn-sm" onclick="savePrompt('${p.key}')">Save</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // After rendering, unescape textarea values
+    prompts.forEach(p=>{
+      const el=document.getElementById('prompt-'+p.key);
+      if(el) el.value=map[p.key]?.value||_defaultPrompts[p.key]||'';
+    });
+
+  }catch(e){ container.innerHTML='<div class="empty"><p>Error loading prompts: '+esc(e.message)+'</p></div>'; }
 }
 
-async function savePrompt(type){
-  const map={system:'system_prompt',rag:'rag_prompt',fallback:'fallback_prompt'};
-  const val=document.getElementById('pt-'+type).value;
+async function savePrompt(key){
+  const el=document.getElementById('prompt-'+key); if(!el)return;
+  const value=el.value.trim(); if(!value){ toast('Prompt cannot be empty','error'); return; }
   try{
-    await apiFetch('/admin/prompts','PUT',{[map[type]]:val},true);
-    const el=document.getElementById('ps-'+type);
-    el.style.display='block';
-    setTimeout(()=>el.style.display='none',2000);
-    toast('Prompt saved','success');
+    await apiFetch('/settings/'+key,'PUT',{value},true);
+    const lbl=document.getElementById('psaved-'+key);
+    if(lbl) lbl.textContent='✓ Saved '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    el.style.outline='2px solid var(--green)';
+    setTimeout(()=>el.style.outline='',2000);
+    toast('✓ Prompt saved — takes effect immediately','success');
   }catch(e){ toast('Error: '+e.message,'error'); }
 }
 
-/* ══════════════════════════════════════════
-   SETTINGS
-══════════════════════════════════════════ */
-async function loadSettings(){
-  try{
-    const d=await apiFetch('/admin/config','GET',null,true);
-    document.getElementById('cfg-free-limit').value    = d.free_monthly_limit??10;
-    document.getElementById('cfg-pro-limit').value     = d.pro_monthly_limit??200;
-    document.getElementById('cfg-unlimited-limit').value = d.unlimited_monthly_limit??99999;
-    document.getElementById('cfg-trial-days').value    = d.trial_days??14;
-  }catch(e){ console.warn('Config load error:',e); }
-
-  try{
-    const d=await apiFetch('/admin/admins','GET',null,true);
-    const admins=d.admins||[];
-    document.getElementById('adminTbody').innerHTML=admins.length
-      ? admins.map(a=>`<tr>
-          <td><strong>${a.first_name||''} ${a.last_name||''}</strong></td>
-          <td style="font-family:var(--mono);font-size:11px">${a.email}</td>
-          <td style="font-size:11px">${fmtDate(a.created_at)}</td>
-          <td><button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}')">Remove</button></td>
-        </tr>`).join('')
-      : `<tr><td colspan="4"><div class="empty"><p>No admins found</p></div></td></tr>`;
-  }catch{}
+async function resetPrompt(key){
+  const def=_defaultPrompts[key]; if(!def){ toast('Default not loaded','error'); return; }
+  const el=document.getElementById('prompt-'+key); if(!el)return;
+  el.value=def;
+  await savePrompt(key);
+  toast('Reset to default','success');
 }
 
-async function savePlanConfig(){
-  const body={
-    free_monthly_limit: parseInt(document.getElementById('cfg-free-limit').value)||10,
-    pro_monthly_limit: parseInt(document.getElementById('cfg-pro-limit').value)||200,
-    unlimited_monthly_limit: parseInt(document.getElementById('cfg-unlimited-limit').value)||99999,
-    trial_days: parseInt(document.getElementById('cfg-trial-days').value)||14
-  };
-  try{
-    await apiFetch('/admin/config','PUT',body,true);
-    toast('Settings saved','success');
-  }catch(e){ toast('Error: '+e.message,'error'); }
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+async function changePass(){
+  toast('Password change not yet wired to API endpoint','error');
 }
 
-async function deleteAdmin(id){
-  confirmAct('Remove this admin account?', async()=>{
-    try{
-      await apiFetch('/admin/admins/'+id,'DELETE',null,true);
-      toast('Admin removed','success');
-      loadSettings();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
+async function resetQueryCounts(){
+  toast('Reset query counts not yet implemented','error');
 }
 
-async function resetAllQuotas(){
-  confirmAct('Reset ALL users monthly query quotas to 0? This affects every user.', async()=>{
-    try{
-      const r=await apiFetch('/admin/reset-all-quotas','POST',null,true);
-      toast('✓ '+r.message,'success');
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+async function apiFetch(path, method='GET', body=null, auth=true){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(auth && TOKEN) opts.headers['Authorization']='Bearer '+TOKEN;
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(API+path,opts);
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.detail||('HTTP '+r.status));
+  return data;
 }
 
-async function purgeQueryLogs(){
-  confirmAct('Permanently delete all query logs? This cannot be undone.', async()=>{
-    try{
-      const r=await apiFetch('/admin/purge-logs','DELETE',null,true);
-      toast('✓ '+r.message,'success');
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* ══════════════════════════════════════════
-   MODAL & TOAST HELPERS
-══════════════════════════════════════════ */
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-
-let _confirmCb=null;
-function confirmAct(msg, cb){
-  document.getElementById('confirmMsg').textContent=msg;
-  _confirmCb=cb;
-  document.getElementById('confirmModal').classList.add('show');
-}
-document.getElementById('confirmOkBtn').onclick=async()=>{
-  closeModal('confirmModal');
-  if(_confirmCb) await _confirmCb();
-  _confirmCb=null;
-};
-
-let _toastTimer=null;
 function toast(msg,type=''){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast'+(type?' '+type:'');
-  void t.offsetWidth; t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-/* ══════════════════════════════════════════
-   DATE HELPERS
-══════════════════════════════════════════ */
-function fmtDate(s){
-  if(!s) return '—';
-  try{ return new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
-  catch{ return s; }
-}
-function fmtDatetime(s){
-  if(!s) return '—';
-  try{ return new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
-  catch{ return s; }
-}
-
-/* ══════════════════════════════════════════
-   SYNC LOGS TABLE HELPER  (for inline HTML)
-══════════════════════════════════════════ */
-function fmtSyncRow(l){
-  return `<tr>
-    <td style="font-size:11px;font-family:var(--mono)">${fmtDatetime(l.created_at)}</td>
-    <td><span class="badge badge-${l.status==='success'?'indexed':l.status==='error'?'failed':'pending'}">${l.status}</span></td>
-    <td>${l.message||'—'}</td>
-    <td style="font-family:var(--mono);font-size:11px">${l.files_found??'—'}</td>
-    <td style="font-family:var(--mono);font-size:11px">${l.files_indexed??'—'}</td>
-    <td style="font-family:var(--mono);font-size:11px">${l.files_failed??'—'}</td>
-  </tr>`;
-}
-
-/* ══════════════════════════════════════════
-   BOOTSTRAP
-══════════════════════════════════════════ */
-checkAuth();
-
-/* Close modals on backdrop click */
-document.querySelectorAll('.modal-bg').forEach(bg=>{
-  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('show'); });
-});
-
-/* Error helpers */
 function showErr(id,msg){ const e=document.getElementById(id); if(e){e.textContent=msg;e.classList.add('show');} }
 function hideErr(id){ const e=document.getElementById(id); if(e)e.classList.remove('show'); }
+
+function confirmAct(msg,cb){
+  document.getElementById('confirmMsg').textContent=msg;
+  const btn=document.getElementById('confirmOK');
+  btn.onclick=async()=>{ document.getElementById('confirmModal').classList.remove('show'); await cb(); };
+  document.getElementById('confirmModal').classList.add('show');
+}
 </script>
 </body>
 </html>
