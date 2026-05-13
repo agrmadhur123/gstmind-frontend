@@ -497,6 +497,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
             <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All</button>
+            <button class="btn btn-ghost btn-sm" onclick="cleanupStorage()" title="Delete orphaned files from Gemini store to free up the 10 GB quota">🧹 Clean Up Storage</button>
           </div>
         </div>
 
@@ -1268,6 +1269,17 @@ async function deleteSelectedDocs(){
     _selDocs.clear();
     await loadKBDocs();
     await loadKBStats();
+  });
+}
+
+async function cleanupStorage(){
+  confirmAct('Scan Gemini File Search store for orphaned files (uploaded but not referenced by any active DB row) and delete them? Your indexed documents are untouched. This frees up the 10 GB Gemini quota.', async()=>{
+    toast('Scanning Gemini store for orphans... this may take a minute', '');
+    try{
+      const r = await apiFetch('/kb/cleanup-storage','POST',null,true);
+      toast('✓ '+(r.message||`Deleted ${r.orphans_deleted||0} orphans`), 'success');
+      await loadKBStats();
+    }catch(e){ toast('Error: '+e.message,'error'); }
   });
 }
 
