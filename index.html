@@ -31,20 +31,20 @@
   --amber-bg: rgba(176,136,56,.08);
   --user-bubble: #2a1f14;
   --user-text: #fefcf8;
-  --bot-bubble: #f5f0e6;
-  --shadow: 0 2px 12px rgba(42,31,20,.06);
+  --bot-bubble: #ffffff;
+  --shadow: 0 2px 12px rgba(42,31,20,.08);
   --shadow-lg: 0 8px 32px rgba(42,31,20,.1);
 }
 
 body.dark-mode {
   --bg: #0c0e13;
   --surface: #13151c;
-  --sidebar-bg: #161821;
+  --sidebar-bg: #14161f;
   --text: #e4e0d8;
   --text2: #b5ad9e;
   --text3: #8a8478;
   --light: #6a6358;
-  --border: #2a2c36;
+  --border: #2e3140;
   --border2: #3a3d4a;
   --accent: #c9a96e;
   --accent2: #e8c98a;
@@ -58,7 +58,7 @@ body.dark-mode {
   --amber-bg: rgba(212,178,100,.1);
   --user-bubble: #c9a96e;
   --user-text: #0c0e13;
-  --bot-bubble: #1c1f28;
+  --bot-bubble: #1e2130;
   --shadow: 0 2px 12px rgba(0,0,0,.3);
   --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
 }
@@ -214,7 +214,7 @@ section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
 .av { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; flex-shrink: 0; text-transform: uppercase; }
 .msg-row.user .av { background: var(--text); }
 .msg-body { flex: 1; min-width: 0; }
-.bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; }
+.bubble { background: var(--bot-bubble); border: 1px solid var(--border2); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; }
 .msg-row.user .bubble { background: var(--user-bubble); color: var(--user-text); border-color: var(--user-bubble); }
 .notice-img { max-width: 280px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
 .notice-file-chip { display: inline-block; padding: 8px 14px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 10px; font-size: 13px; color: var(--accent); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
@@ -228,7 +228,7 @@ section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
 .cite-link{color:var(--accent);text-decoration:none;cursor:pointer}
 .cite-link:hover{text-decoration:underline}
 .cite-sep{color:var(--text3);font-size:11px;vertical-align:super;margin:0 1px}
-.ref-n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:'DM Mono',monospace}
+.ref-n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:'DM Mono',monospace}
 .ref-txt{color:var(--text2);font-family:'DM Mono',monospace;line-height:1.5}
 .msg-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .act-btn { padding: 5px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 14px; font-size: 11.5px; color: var(--text3); cursor: pointer; font-family: inherit; transition: all .15s; }
@@ -239,8 +239,10 @@ section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
 .think-dots span:nth-child(2) { animation-delay: .15s; }
 .think-dots span:nth-child(3) { animation-delay: .3s; }
 @keyframes think { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
-.stream-bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; min-height: 30px; }
+.stream-bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; min-height: 48px; }
 .stream-raw { white-space: pre-wrap; }
+.stream-cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; border-radius: 1px; animation: blink .9s ease-in-out infinite; margin-left: 1px; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 .fh1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin: 14px 0 6px; color: var(--text); }
 .fh2 { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; margin: 12px 0 4px; color: var(--text); }
 .fh3 { font-size: 14px; font-weight: 600; margin: 10px 0 4px; color: var(--text); }
@@ -874,31 +876,39 @@ async function send(){
       addErrMsg(detail);
       busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
-    delEl(tid);
+    // Keep thinking row until first text arrives — don't delete yet
     const msgId = 'm'+Date.now();
     const streamDiv = document.createElement('div');
     streamDiv.className = 'msg-row bot';
     streamDiv.id = msgId;
-    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body" id="mb_${msgId}"><div class="stream-bubble" id="sb_${msgId}"></div></div></div>`;
+    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body" id="mb_${msgId}"><div class="stream-bubble" id="sb_${msgId}"><span class="stream-cursor"></span></div></div></div>`;
+    streamDiv.style.display = 'none'; // hidden until first token
     msgsEl().appendChild(streamDiv);
-    scrollBot();
     const streamEl = document.getElementById('sb_'+msgId);
     let fullText = '';
     let queryCountFromServer = null;
+    let firstToken = true;
     const streamTextNode = document.createTextNode('');
     const streamPre = document.createElement('div');
     streamPre.className = 'stream-raw';
     streamPre.appendChild(streamTextNode);
-    streamEl.appendChild(streamPre);
+    streamEl.insertBefore(streamPre, streamEl.querySelector('.stream-cursor'));
     const tokenQueue = [];
     let rafId = null;
     let streamDone = false;
     let lastScrollTime = 0;
-    const CHARS_PER_FRAME = 8;
+    const CHARS_PER_FRAME = 60;
     function drainQueue(){
       if(tokenQueue.length === 0){
         if(streamDone){finalizeStream();return;}
         rafId = null;return;
+      }
+      // On first token: swap thinking row for stream bubble
+      if(firstToken && tokenQueue.length > 0){
+        firstToken = false;
+        delEl(tid);
+        streamDiv.style.display = '';
+        scrollBot();
       }
       let charsThisFrame = 0;
       while(tokenQueue.length > 0 && charsThisFrame < CHARS_PER_FRAME){
@@ -911,6 +921,8 @@ async function send(){
       rafId = requestAnimationFrame(drainQueue);
     }
     function finalizeStream(){
+      const cur = streamEl && streamEl.querySelector('.stream-cursor');
+      if(cur) cur.remove();
       streamDiv.style.transition = 'opacity 0.15s';
       streamDiv.style.opacity = '0';
       setTimeout(()=>{
@@ -946,7 +958,7 @@ async function send(){
           } else if(event.type === 'text'){if(event.text){tokenQueue.push(event.text);if(!rafId) rafId = requestAnimationFrame(drainQueue);}}
           else if(event.type === 'done'){break;}
           else if(event.type === 'waiting'){if(streamEl) streamEl.textContent = '⏱ High traffic — retrying in ' + event.seconds + 's...';}
-          else if(event.type === 'error'){streamDiv.remove();if(event.message === 'rate_limit'){addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');} else {addErrMsg('Error: ' + (event.message||'Please try again.'));}}
+          else if(event.type === 'error'){streamDiv.remove();delEl(tid);if(event.message === 'rate_limit'){addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');} else {addErrMsg('Error: ' + (event.message||'Please try again.'));}}
         } catch(e){}
       }
     }
@@ -956,7 +968,7 @@ async function send(){
     saveUser(user); updateQueryMeter(user);
     if(user.plan==='free'&&user.queryCount>=FREE_LIMIT) setTimeout(showUpgrade,1200);
     else if(user.plan==='free'&&user.queryCount>=FREE_LIMIT-3) showToast(`${FREE_LIMIT-user.queryCount} free quer${FREE_LIMIT-user.queryCount===1?'y':'ies'} remaining`);
-  }catch(e){delEl(tid);console.error('Query error:', e.message);addErrMsg('Connection error — '+e.message+'. Please try again.');}
+  }catch(e){delEl(tid);streamDiv&&streamDiv.remove&&streamDiv.remove();console.error('Query error:', e.message);addErrMsg('Connection error — '+e.message+'. Please try again.');}
   busy=false;document.getElementById('sendBtn').disabled=false;
 }
 
@@ -1069,7 +1081,7 @@ function addThinkRow(){
   const id='tk'+Date.now();
   const d=document.createElement('div');d.className='msg-row bot';d.id=id;
   d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="think-bub"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-txt" id="thinkTxt">Searching knowledge base…</span></div></div></div>`;
-  const thinkMsgs = ['Searching knowledge base…','Analyzing GST provisions…','Checking relevant circulars…','Cross-referencing sections…','Reviewing applicable rules…','Drafting legal analysis…'];
+  const thinkMsgs = ['Searching 1,071 CBIC documents…','Reading relevant provisions…','Checking notifications & circulars…','Cross-referencing GST sections…','Reviewing applicable rules…','Building cited answer…','Verifying legal positions…'];
   let thinkIdx = 0;
   const thinkInterval = setInterval(()=>{thinkIdx = (thinkIdx+1) % thinkMsgs.length;const el = document.getElementById('thinkTxt');if(el) el.textContent = thinkMsgs[thinkIdx];else clearInterval(thinkInterval);}, 1800);
   d._thinkInterval = thinkInterval;
