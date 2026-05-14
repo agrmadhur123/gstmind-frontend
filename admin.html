@@ -2,1543 +2,1298 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GSTMind — Admin</title>
-<meta name="robots" content="noindex,nofollow"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>GSTMind — AI-powered GST research for Indian Chartered Accountants &amp; Tax Consultants</title>
+<meta name="description" content="GSTMind is an AI legal research assistant for Indian GST. Ask any GST query. Upload a notice. Get a cited, professional answer or formal reply draft — instantly."/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c9a96e'/%3E%3Ctext x='16' y='22' font-family='Cormorant Garamond,serif' font-size='18' font-weight='700' text-anchor='middle' fill='%230c0e13'%3EG%3C/text%3E%3C/svg%3E"/>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0c0e13;
-  --s1:#13151c;
-  --s2:#191c26;
-  --border:#242836;
-  --border2:#2e3347;
-  --accent:#c9a96e;
-  --accent2:#e8c98a;
-  --accent-bg:rgba(201,169,110,.08);
-  --accent-border:rgba(201,169,110,.22);
-  --green:#34d399;
-  --green-bg:rgba(52,211,153,.08);
-  --green-border:rgba(52,211,153,.18);
-  --red:#f87171;
-  --red-bg:rgba(248,113,113,.08);
-  --red-border:rgba(248,113,113,.2);
-  --blue:#60a5fa;
-  --blue-bg:rgba(96,165,250,.08);
-  --blue-border:rgba(96,165,250,.2);
-  --amber:#fbbf24;
-  --amber-bg:rgba(251,191,36,.08);
-  --amber-border:rgba(251,191,36,.2);
-  --text:#e4e0d8;
-  --text2:#8a8478;
-  --text3:#4a4840;
-  --r:10px;
-  --font:'DM Sans',sans-serif;
-  --mono:'DM Mono',monospace;
-  --serif:'Cormorant Garamond',serif;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fefcf8;
+  --surface: #ffffff;
+  --sidebar-bg: #f5f0e6;
+  --text: #2a1f14;
+  --text2: #5a4a38;
+  --text3: #8a7a68;
+  --light: #b8a890;
+  --border: #e6dcc8;
+  --border2: #d6c8a8;
+  --accent: #8b6f3c;
+  --accent2: #7a5f2c;
+  --accent-light: rgba(139,111,60,.08);
+  --accent-border: rgba(139,111,60,.25);
+  --green: #4a7c4a;
+  --green-bg: rgba(74,124,74,.1);
+  --red: #b04848;
+  --red-bg: rgba(176,72,72,.08);
+  --amber: #b08838;
+  --amber-bg: rgba(176,136,56,.08);
+  --user-bubble: #2a1f14;
+  --user-text: #fefcf8;
+  --bot-bubble: #f5f0e6;
+  --shadow: 0 2px 12px rgba(42,31,20,.06);
+  --shadow-lg: 0 8px 32px rgba(42,31,20,.1);
 }
-html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+body.dark-mode {
+  --bg: #0c0e13;
+  --surface: #13151c;
+  --sidebar-bg: #161821;
+  --text: #e4e0d8;
+  --text2: #b5ad9e;
+  --text3: #8a8478;
+  --light: #6a6358;
+  --border: #2a2c36;
+  --border2: #3a3d4a;
+  --accent: #c9a96e;
+  --accent2: #e8c98a;
+  --accent-light: rgba(201,169,110,.08);
+  --accent-border: rgba(201,169,110,.22);
+  --green: #6db86d;
+  --green-bg: rgba(109,184,109,.12);
+  --red: #e87a7a;
+  --red-bg: rgba(232,122,122,.1);
+  --amber: #d4b264;
+  --amber-bg: rgba(212,178,100,.1);
+  --user-bubble: #c9a96e;
+  --user-text: #0c0e13;
+  --bot-bubble: #1c1f28;
+  --shadow: 0 2px 12px rgba(0,0,0,.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+}
 
-/* ── LOGIN ── */
-.login-wrap{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.login-card{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:40px;width:380px;box-shadow:0 32px 80px rgba(0,0,0,.5)}
-.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-.login-logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:18px;font-weight:700;color:#0c0e13}
-.login-title{font-size:22px;font-weight:600;margin-bottom:5px}
-.login-sub{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.5}
-.lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:5px;display:block}
-.inp{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none;transition:border-color .2s;margin-bottom:13px}
-.inp:focus{border-color:var(--accent-border)}
-.inp::placeholder{color:var(--text3)}
-.otp-row{display:flex;gap:8px;margin:14px 0}
-.otp-row .inp{text-align:center;font-size:20px;padding:10px 6px;flex:1;margin-bottom:0}
-.login-btn{width:100%;padding:12px;background:var(--accent);color:#0c0e13;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .2s}
-.login-btn:hover{background:var(--accent2)}
-.login-btn:disabled{opacity:.55;cursor:not-allowed}
-.login-err{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:13px;display:none}
-.login-err.show{display:block}
-.login-link{font-size:12px;color:var(--accent);cursor:pointer;text-align:center;margin-top:12px;display:block}
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14.5px; line-height: 1.5; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--light); }
+.page { display: none; min-height: 100vh; }
+.page.active { display: flex; flex-direction: column; }
+.fullpage { display: none; }
+.fullpage.active { display: block; min-height: 100vh; }
 
-/* ── SHELL ── */
-.shell{display:flex;height:100vh;overflow:hidden}
-
-/* ── SIDEBAR ── */
-.sidebar{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.brand{padding:16px 14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
-.brand-icon{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:15px;font-weight:700;color:#0c0e13;flex-shrink:0}
-.brand-name{font-family:var(--serif);font-size:16px;font-weight:600}
-.brand-tag{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
-.brand-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:8px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);font-family:var(--mono)}
-
-.nav{padding:8px 8px 4px;flex:1;overflow-y:auto}
-.nav-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:600;padding:8px 8px 4px}
-.nav-btn{width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:var(--font);font-size:12.5px;transition:all .15s;text-align:left;margin-bottom:1px}
-.nav-btn:hover{background:var(--s2);color:var(--text)}
-.nav-btn.active{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
-.nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
-.nav-count{margin-left:auto;font-size:10px;font-family:var(--mono);background:var(--s2);color:var(--text3);padding:1px 6px;border-radius:6px}
-.nav-btn.active .nav-count{background:var(--accent-bg);color:var(--accent)}
-
-.sidebar-bottom{border-top:1px solid var(--border);padding:10px 8px}
-.admin-row{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px}
-.admin-av{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0c0e13;flex-shrink:0}
-.admin-name{font-size:12px;font-weight:500}
-.admin-role{font-size:10px;color:var(--text3);font-family:var(--mono)}
-.logout-btn{width:100%;padding:7px 10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .15s;text-align:left;display:flex;align-items:center;gap:7px}
-.logout-btn:hover{border-color:var(--red-border);color:var(--red)}
-
-/* ── MAIN ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.topbar{height:52px;flex-shrink:0;background:var(--s1);border-bottom:1px solid var(--border);padding:0 22px;display:flex;align-items:center;gap:12px}
-.topbar-title{font-size:15px;font-weight:600}
-.topbar-sub{font-size:11px;color:var(--text3)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.status-pill{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-family:var(--mono)}
-.pill-green{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
-.pill-red{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
-.pill-amber{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
-.s-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.s-dot.pulse{animation:sdot 1.4s ease-in-out infinite}
-@keyframes sdot{0%,100%{opacity:1}50%{opacity:.3}}
-
-.content{flex:1;overflow-y:auto;padding:22px}
-.panel{display:none}
-.panel.active{display:block}
-
-/* ── BUTTONS ── */
-.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-family:var(--font);cursor:pointer;font-weight:500;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.btn-primary{background:var(--accent);color:#0c0e13}
-.btn-primary:hover{background:var(--accent2)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
-.btn-ghost:hover{border-color:var(--accent-border);color:var(--accent)}
-.btn-ghost:disabled{opacity:.5;cursor:not-allowed}
-.btn-danger{background:transparent;border:1px solid var(--red-border);color:var(--red)}
-.btn-danger:hover{background:var(--red-bg)}
-.btn-sm{padding:5px 10px;font-size:11px}
-
-/* ── STATS GRID ── */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.stat-card.gold::before{background:var(--accent)}
-.stat-card.green::before{background:var(--green)}
-.stat-card.blue::before{background:var(--blue)}
-.stat-card.amber::before{background:var(--amber)}
-.stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:7px}
-.stat-val{font-size:28px;font-weight:600;font-family:var(--serif);line-height:1}
-.stat-sub{font-size:11px;color:var(--text3);margin-top:5px;font-family:var(--mono)}
-
-/* ── CARDS ── */
-.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
-.card-title{font-size:13px;font-weight:600;margin-bottom:3px}
-.card-sub{font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5}
-
-/* ── SECTION HEADER ── */
-.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.sec-title{font-size:14px;font-weight:600}
-.sec-sub{font-size:11px;color:var(--text3)}
-.sec-right{margin-left:auto;display:flex;gap:7px;align-items:center}
-
-/* ── TABLE ── */
-.table-wrap{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);background:var(--s2)}
-.tbl td{padding:11px 14px;font-size:12.5px;color:var(--text2);border-bottom:1px solid var(--border);vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--s2)}
-.tbl td strong{color:var(--text);font-weight:500}
-
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);white-space:nowrap}
-.badge-free{background:var(--s2);border:1px solid var(--border2);color:var(--text3)}
-.badge-pro{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
-.badge-unlimited{background:rgba(201,169,110,.12);border:1px solid var(--accent-border);color:var(--accent2)}
-.badge-active{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
-.badge-blocked{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
-.badge-indexed{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
-.badge-pending{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
-.badge-failed{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
-.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-
-/* ── SEARCH / FILTER ── */
-.filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
-.search-inp{background:var(--s1);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;padding:7px 11px;outline:none;transition:border-color .2s;width:220px}
-.search-inp:focus{border-color:var(--accent-border)}
-.search-inp::placeholder{color:var(--text3)}
-.filter-sel{background:var(--s1);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:var(--font);font-size:12px;padding:7px 11px;outline:none;cursor:pointer}
-
-/* ── GRID 2 ── */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-
-/* ── PROGRESS BAR ── */
-.prog-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:6px 0}
-.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease}
-.prog-fill.green{background:var(--green)}
-.prog-fill.red{background:var(--red)}
-.prog-fill.amber{background:var(--amber)}
-
-/* ── BAR CHART ── */
-.bar-chart{display:flex;flex-direction:column;gap:8px}
-.bar-row{display:flex;align-items:center;gap:10px}
-.bar-lbl{font-size:11.5px;color:var(--text2);width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
-.bar-track{flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden}
-.bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .5s ease}
-.bar-cnt{font-size:11px;color:var(--text3);font-family:var(--mono);width:32px;text-align:right;flex-shrink:0}
-
-/* ── KB DOCUMENT ROW ── */
-.doc-row{display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid var(--border);transition:background .15s}
-.doc-row:last-child{border-bottom:none}
-.doc-row:hover{background:var(--s2)}
-.doc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:var(--accent-bg);border:1px solid var(--accent-border)}
-.doc-info{flex:1;min-width:0}
-.doc-name{font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.doc-meta{font-size:10.5px;color:var(--text3);font-family:var(--mono);margin-top:2px}
-.doc-actions{display:flex;gap:5px;flex-shrink:0}
-
-/* ── SYNC STATUS BOX ── */
-.sync-box{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.sync-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:7px}
-.sync-row:last-child{margin-bottom:0}
-.sync-lbl{color:var(--text3)}
-.sync-val{font-family:var(--mono);color:var(--text2)}
-
-/* ── MODAL ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
-.modal-bg.show{display:flex}
-.modal{background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:26px;width:420px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.5)}
-.modal-title{font-size:17px;font-weight:600;margin-bottom:5px}
-.modal-sub{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.5}
-.modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
-
-/* ── FORM ── */
-.fg{margin-bottom:13px}
-.fg label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-weight:600;display:block;margin-bottom:4px}
-.fg input,.fg select,.fg textarea{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12.5px;padding:8px 11px;outline:none;transition:border-color .2s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-border)}
-.fg textarea{resize:vertical;min-height:90px;font-family:var(--mono);font-size:11px;line-height:1.6}
-.form2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:22px;right:22px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:9px 15px;font-size:12px;color:var(--text);opacity:0;transition:all .25s;pointer-events:none;z-index:999;font-family:var(--mono);box-shadow:0 4px 20px rgba(0,0,0,.4)}
-.toast.show{opacity:1}
-.toast.success{border-color:var(--green-border);color:var(--green)}
-.toast.error{border-color:var(--red-border);color:var(--red)}
-
-/* ── EMPTY STATE ── */
-.empty{text-align:center;padding:40px 20px;color:var(--text3)}
-.empty p{font-size:12px;margin-top:6px}
-
-/* ── LOG ENTRIES ── */
-.log-entry{padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono);display:flex;gap:10px;align-items:center}
-.log-entry:last-child{border-bottom:none}
-.log-time{color:var(--text3);flex-shrink:0;width:90px}
-.log-status{flex-shrink:0;width:50px}
-.log-msg{color:var(--text2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* ── PROMPT TEXTAREA ── */
-.prompt-wrap{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.prompt-hdr{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--s2);display:flex;align-items:center;gap:10px}
-.prompt-title{font-size:13px;font-weight:600}
-.prompt-sub{font-size:11px;color:var(--text3)}
-.prompt-saved{font-size:10px;color:var(--green);font-family:var(--mono);margin-left:auto}
-.prompt-body{padding:0}
-.prompt-body textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:11.5px;padding:14px 16px;outline:none;resize:vertical;min-height:200px;line-height:1.65;display:block}
-.prompt-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--s2)}
-
-/* ── STORE INFO BAR ── */
-.store-bar{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.store-item{text-align:center}
-.store-val{font-size:22px;font-weight:600;font-family:var(--serif);line-height:1.1}
-.store-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
-.store-val.green{color:var(--green)}
-.store-val.amber{color:var(--amber)}
-.store-val.red{color:var(--red)}
-.store-val.blue{color:var(--blue)}
+.land-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 7vw; max-width: 1400px; margin: 0 auto; position: sticky; top: 0; z-index: 50; background: rgba(254,252,248,.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); gap: 16px; }
+body.dark-mode .land-nav { background: rgba(12,14,19,.92); }
+.land-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.land-logo-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: #fefcf8; }
+.land-logo-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.land-nav-links { display: flex; gap: 24px; align-items: center; flex: 1; justify-content: center; }
+.land-nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color .2s; }
+.land-nav-links a:hover { color: var(--accent); }
+.land-nav-btn { padding: 8px 16px; border-radius: 24px; font-size: 13.5px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+.land-btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+.land-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.land-btn-solid { background: var(--text); color: var(--bg); }
+.land-btn-solid:hover { background: var(--accent); }
+.hero { text-align: center; padding: 80px 7vw 100px; max-width: 980px; margin: 0 auto; }
+.hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-light); border: 1px solid var(--accent-border); padding: 6px 14px; border-radius: 20px; font-size: 12px; color: var(--accent); margin-bottom: 28px; font-family: 'DM Mono', monospace; }
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+.hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(38px, 5.5vw, 64px); font-weight: 500; line-height: 1.05; letter-spacing: -.015em; margin-bottom: 24px; color: var(--text); }
+.hero-sub { font-size: clamp(15px, 1.4vw, 18px); color: var(--text2); max-width: 680px; margin: 0 auto 40px; line-height: 1.55; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.hero-btn-primary { padding: 14px 28px; border-radius: 30px; background: var(--text); color: var(--bg); font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; box-shadow: var(--shadow-lg); }
+.hero-btn-primary:hover { transform: translateY(-1px); background: var(--accent); }
+.hero-btn-secondary { padding: 14px 28px; border-radius: 30px; background: transparent; color: var(--text); border: 1px solid var(--border2); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all .2s; }
+.hero-btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.hero-trust { margin-top: 36px; font-size: 12.5px; color: var(--light); font-family: 'DM Mono', monospace; letter-spacing: .03em; }
+section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
+.section-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .15em; color: var(--accent); font-family: 'DM Mono', monospace; margin-bottom: 14px; font-weight: 600; }
+.section-title { text-align: center; font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 3.5vw, 44px); font-weight: 500; line-height: 1.15; letter-spacing: -.01em; margin-bottom: 60px; color: var(--text); }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.feat-card { padding: 32px 28px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); transition: all .25s; }
+.feat-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.feat-icon { font-size: 28px; margin-bottom: 16px; color: var(--accent); }
+.feat-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.feat-desc { font-size: 14.5px; color: var(--text2); line-height: 1.55; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+.step { text-align: center; padding: 28px 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin: 0 auto 16px; }
+.step-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.step-desc { font-size: 13.5px; color: var(--text2); line-height: 1.55; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.price-card { padding: 36px 28px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); transition: all .25s; position: relative; }
+.price-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.price-card.popular { border: 2px solid var(--accent); background: var(--accent-light); }
+.popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fefcf8; padding: 4px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
+.price-plan { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.price-amount { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+.price-period { font-size: 16px; font-weight: 400; color: var(--text3); }
+.price-desc { font-size: 13px; color: var(--text2); margin-bottom: 20px; min-height: 38px; }
+.price-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.price-feat { font-size: 13.5px; color: var(--text2); display: flex; align-items: flex-start; gap: 8px; }
+.price-check { color: var(--green); font-weight: 600; flex-shrink: 0; }
+.price-cta { width: 100%; padding: 12px; border-radius: 24px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+.price-cta-solid { background: var(--text); color: var(--bg); }
+.price-cta-solid:hover { background: var(--accent); }
+.price-cta-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+.price-cta-outline:hover { border-color: var(--accent); color: var(--accent); }
+.land-footer { border-top: 1px solid var(--border); padding: 40px 7vw; text-align: center; font-size: 12.5px; color: var(--text3); font-family: 'DM Mono', monospace; line-height: 1.8; letter-spacing: .03em; }
+.auth-page { min-height: 100vh; display: flex; flex-direction: column; }
+.auth-nav { padding: 20px 7vw; border-bottom: 1px solid var(--border); }
+.auth-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 44px 40px; width: 100%; max-width: 440px; box-shadow: var(--shadow); }
+.auth-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.auth-sub { font-size: 13.5px; color: var(--text2); margin-bottom: 28px; line-height: 1.55; }
+.auth-error { display: none; background: var(--red-bg); border: 1px solid rgba(176,72,72,.25); color: var(--red); padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+.auth-error.show { display: block; }
+.form-group { margin-bottom: 16px; }
+.form-row { display: flex; gap: 12px; }
+.form-row > .form-group { flex: 1; }
+.form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border2); border-radius: 10px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 14.5px; transition: all .2s; }
+.form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.auth-btn { width: 100%; padding: 13px; border-radius: 24px; background: var(--text); color: var(--bg); font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; margin-top: 8px; transition: all .2s; }
+.auth-btn:hover { background: var(--accent); }
+.auth-btn:disabled { background: var(--light); cursor: not-allowed; }
+.auth-switch { margin-top: 20px; text-align: center; font-size: 13px; color: var(--text2); }
+.auth-link { color: var(--accent); cursor: pointer; font-weight: 500; }
+.auth-link:hover { text-decoration: underline; }
+.otp-boxes { display: flex; gap: 8px; justify-content: center; }
+.otp-box { width: 46px; height: 52px; border: 1px solid var(--border2); border-radius: 10px; background: var(--bg); color: var(--text); text-align: center; font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; transition: all .2s; }
+.otp-box:focus, .otp-box.filled { outline: none; border-color: var(--accent); background: var(--surface); }
+.otp-timer { font-size: 12px; color: var(--text3); margin-top: 12px; }
+.app-shell { display: flex; height: 100vh; background: var(--bg); }
+.app-sidebar { width: 240px; flex-shrink: 0; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width .25s ease; }
+.app-sidebar.collapsed { width: 0; overflow: hidden; }
+.app-brand { padding: 16px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.app-brand-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: #fefcf8; }
+.app-brand-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; line-height: 1; }
+.app-brand-tag { font-size: 9.5px; color: var(--light); font-family: 'DM Mono', monospace; letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
+.user-card { margin: 14px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.user-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; text-transform: uppercase; }
+.user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.user-plan { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+.user-plan.unlimited { color: var(--accent); }
+.user-plan.free { color: var(--amber); }
+.query-meter { font-size: 11px; }
+.query-meter-top { display: flex; justify-content: space-between; color: var(--text3); margin-bottom: 4px; }
+.query-meter-bar { width: 100%; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.query-meter-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s ease; }
+.new-chat { margin: 0 14px 12px; padding: 10px 12px; background: transparent; border: 1px dashed var(--border2); color: var(--text2); border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 8px; }
+.new-chat:hover { border-color: var(--accent); border-style: solid; color: var(--accent); }
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: 0 14px 14px; }
+.sb-label { font-size: 10px; color: var(--light); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; padding: 12px 4px 8px; }
+.hist-item { padding: 10px 12px; margin-bottom: 2px; font-size: 12.5px; color: var(--text2); cursor: pointer; border-radius: 8px; transition: all .15s; }
+.hist-item:hover { background: var(--accent-light); color: var(--text); }
+.hist-q { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; margin-bottom: 2px; }
+.hist-m { font-size: 10.5px; color: var(--light); font-family: 'DM Mono', monospace; }
+.sidebar-bottom { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.sb-bottom-btn { padding: 9px 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 10px; transition: all .15s; }
+.sb-bottom-btn:hover { background: var(--accent-light); color: var(--accent); }
+.sb-bottom-btn > span:first-child { font-size: 14px; }
+.app-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.app-topbar { height: 54px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 14px; }
+.sidebar-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--text3); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.mode-pills { display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 22px; border: 1px solid var(--border); }
+.mode-pill { padding: 6px 16px; border-radius: 18px; background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 13px; font-weight: 500; font-family: inherit; transition: all .2s; }
+.mode-pill.active { background: var(--text); color: var(--bg); }
+body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
+.topbar-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.notice-banner { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 10px 18px; font-size: 13px; color: var(--text2); display: none; align-items: center; gap: 10px; }
+.notice-banner.show { display: flex; }
+.nb-bar { width: 3px; height: 14px; background: var(--amber); border-radius: 2px; }
+.trial-warning { background: var(--amber-bg); border-bottom: 1px solid var(--amber); padding: 8px 20px; font-size: 12px; display: none; align-items: center; gap: 12px; font-family: 'DM Mono', monospace; }
+.trial-warning .tw-count { color: var(--amber); font-weight: 600; }
+.trial-warning .tw-track { flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; max-width: 200px; }
+.trial-warning .tw-fill { height: 100%; background: var(--amber); transition: width .3s; }
+.trial-warning .tw-upgrade { margin-left: auto; color: var(--accent); cursor: pointer; font-weight: 500; }
+.msgs { flex: 1; overflow-y: auto; padding: 30px 0; scroll-behavior: smooth; }
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; min-height: 60vh; justify-content: center; }
+.empty-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; }
+.empty-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; margin-bottom: 8px; }
+.empty-sub { font-size: 14px; color: var(--text2); max-width: 480px; line-height: 1.55; margin-bottom: 30px; }
+.trending-wrap { width: 100%; max-width: 720px; }
+.trending-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 14px; text-align: center; }
+.chip-grid, .chips-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip { background: var(--surface); border: 1px solid var(--border); padding: 9px 14px; border-radius: 20px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 8px; }
+.chip:hover { border-color: var(--accent); color: var(--text); transform: translateY(-1px); }
+.chip-rank { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fefcf8; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; flex-shrink: 0; }
+.chip-count { font-size: 10px; color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 600; }
+.msg-row { padding: 0 20px; margin-bottom: 20px; animation: fadeUp .3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.msg-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 14px; }
+.av { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; flex-shrink: 0; text-transform: uppercase; }
+.msg-row.user .av { background: var(--text); }
+.msg-body { flex: 1; min-width: 0; }
+.bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; }
+.msg-row.user .bubble { background: var(--user-bubble); color: var(--user-text); border-color: var(--user-bubble); }
+.notice-img { max-width: 280px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+.notice-file-chip { display: inline-block; padding: 8px 14px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 10px; font-size: 13px; color: var(--accent); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
+.notice-type-tag { display: inline-block; padding: 4px 10px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 12px; font-size: 11px; color: var(--accent); font-family: 'DM Mono', monospace; letter-spacing: .03em; margin-bottom: 10px; }
+.conf { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: .05em; margin-bottom: 10px; }
+.conf-H { background: var(--green-bg); color: var(--green); }
+.conf-M { background: var(--amber-bg); color: var(--amber); }
+.conf-L { background: var(--red-bg); color: var(--red); }
+.conf-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.refs-wrap{margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
+.refs-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--light);font-weight:600;margin-bottom:8px;font-family:'DM Mono',monospace}
+.ref-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;border-radius:4px;transition:background-color .25s,outline-color .25s;outline:1.5px solid transparent}
+.ref-item:last-child{border-bottom:none}
+.ref-item.cite-flash{background-color:var(--accent-bg,rgba(201,169,110,.12));outline-color:var(--accent)}
+.cite-link{color:var(--accent);text-decoration:none;cursor:pointer}
+.cite-link:hover{text-decoration:underline}
+.cite-sep{color:var(--text3);font-size:11px;vertical-align:super;margin:0 1px}
+.ref-n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:'DM Mono',monospace}
+.ref-txt{color:var(--text2);font-family:'DM Mono',monospace;line-height:1.5}
+.msg-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.act-btn { padding: 5px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 14px; font-size: 11.5px; color: var(--text3); cursor: pointer; font-family: inherit; transition: all .15s; }
+.act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.think-bub { display: inline-flex; align-items: center; gap: 10px; background: var(--bot-bubble); border: 1px solid var(--border); padding: 12px 18px; border-radius: 14px; font-size: 13px; color: var(--text3); font-style: italic; }
+.think-dots { display: flex; gap: 4px; }
+.think-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: think 1.2s ease-in-out infinite; }
+.think-dots span:nth-child(2) { animation-delay: .15s; }
+.think-dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes think { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
+.stream-bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; min-height: 30px; }
+.stream-raw { white-space: pre-wrap; }
+.fh1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin: 14px 0 6px; color: var(--text); }
+.fh2 { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; margin: 12px 0 4px; color: var(--text); }
+.fh3 { font-size: 14px; font-weight: 600; margin: 10px 0 4px; color: var(--text); }
+.fbul { padding-left: 18px; position: relative; margin: 4px 0; }
+.fbul::before { content: '·'; position: absolute; left: 6px; color: var(--accent); font-weight: 700; }
+.fbul .fnum { color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 600; margin-right: 2px; }
+.fgap { height: 6px; }
+.fline { display: inline; }
+.fn { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent); font-weight: 600; padding: 0 1px; }
+.sbul { padding-left: 16px; position: relative; margin: 2px 0; }
+.sbul::before { content: '·'; position: absolute; left: 4px; color: var(--accent); }
+.sh1 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
+.sh2 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
+.sh3 { font-size: 13px; font-weight: 600; margin: 8px 0 2px; }
+.draft-disclaimer { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 8px 12px; margin-top: 10px; font-size: 12.5px; color: var(--text2); }
+.input-wrap { padding: 14px 20px 18px; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.attach-preview { display: none; max-width: 720px; margin: 0 auto 8px; align-items: center; gap: 8px; flex-wrap: wrap; }
+.attach-preview.show { display: flex; }
+.attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 14px; font-size: 12px; color: var(--accent); }
+.attach-chip-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-chip-del { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+.input-outer { max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; box-shadow: var(--shadow); transition: border-color .2s; }
+.input-outer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.input-inner { padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.attach-btn, .send-btn { width: 36px; height: 36px; border-radius: 10px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.attach-btn { background: transparent; color: var(--text3); }
+.attach-btn:hover { background: var(--accent-light); color: var(--accent); }
+.send-btn { background: var(--accent); color: #fefcf8; }
+.send-btn:hover { background: var(--accent2); }
+.send-btn:disabled { background: var(--light); cursor: not-allowed; }
+.send-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#qi { flex: 1; background: transparent; border: none; font-family: inherit; font-size: 14.5px; color: var(--text); resize: none; outline: none; line-height: 1.5; max-height: 120px; padding: 6px 0; }
+#qi::placeholder { color: var(--text3); }
+.inp-hint { max-width: 720px; margin: 6px auto 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.disclaimer { max-width: 720px; margin: 6px auto 0; font-size: 10.5px; color: var(--light); text-align: center; line-height: 1.5; font-family: 'DM Mono', monospace; }
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+.modal-bg.show { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+.modal-sub { font-size: 13.5px; color: var(--text2); margin-bottom: 24px; line-height: 1.55; }
+.modal-close { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--border2); border-radius: 22px; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; margin-top: 14px; }
+.modal-close:hover { border-color: var(--accent); color: var(--accent); }
+.plan-card { padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all .2s; }
+.plan-card:hover { border-color: var(--accent); background: var(--accent-light); }
+.plan-card.rec { border-color: var(--accent); background: var(--accent-light); }
+.plan-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; }
+.plan-price { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--accent); margin: 4px 0; }
+.plan-feat { font-size: 12px; color: var(--text2); }
+.settings-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; }
+.settings-modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
+.settings-section { padding: 18px 0; border-top: 1px solid var(--border); }
+.settings-section:first-of-type { border-top: none; }
+.settings-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 10px; }
+.settings-value { font-size: 13.5px; color: var(--text); }
+.settings-btn { padding: 9px 18px; border-radius: 22px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid transparent; transition: all .15s; }
+.settings-btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.settings-btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+.settings-btn-ghost { background: transparent; color: var(--text2); border-color: var(--border2); }
+.settings-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.settings-btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+.settings-btn-danger:hover { background: var(--red); color: white; }
+.theme-toggle { width:34px;height:34px;border-radius:50%; background:none;border:1px solid var(--border); cursor:pointer;display:flex;align-items:center;justify-content:center; font-size:16px;transition:all .2s;color:var(--text3);flex-shrink:0; }
+.theme-toggle:hover{border-color:var(--accent-border);color:var(--accent)}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--sidebar-bg);padding:9px 18px;border-radius:20px;font-size:12.5px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap;font-family:'DM Mono',monospace}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
+#sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 99; backdrop-filter: blur(1px); }
+.input-wrap { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+@media (max-width: 768px) {
+  .app-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); width: 280px !important; box-shadow: 4px 0 24px rgba(0,0,0,.15); }
+  .app-sidebar.mobile-open { transform: translateX(0); }
+  .app-sidebar.collapsed { transform: translateX(-100%); width: 280px !important; }
+  #sidebarOverlay.show { display: block; }
+  .app-main { width: 100%; }
+  .msg-inner { padding: 0 16px; }
+  .empty { padding: 32px 16px; min-height: 50vh; }
+  .empty-title { font-size: 22px; }
+  .chips-grid { gap: 6px; }
+  .chip { font-size: 12px; padding: 8px 12px; }
+  .input-wrap { padding: 10px 12px max(10px, env(safe-area-inset-bottom)); }
+  .inp-hint { display: none; }
+  .app-topbar { padding: 0 12px; }
+  .mode-pill { padding: 5px 12px; font-size: 12px; }
+  .auth-card { padding: 28px 20px; margin: 0 12px; }
+}
+@media (max-width: 480px) {
+  .auth-page { padding: 16px 0; align-items: flex-start; min-height: 100dvh; }
+  .auth-card { width: 100%; margin: 0; border-radius: 0; border-left: none; border-right: none; padding: 24px 20px; min-height: 100dvh; }
+  .auth-title { font-size: 22px; }
+  .form-row { flex-direction: column; gap: 0; }
+  .app-sidebar { width: 100% !important; }
+  .app-topbar { height: 48px; gap: 6px; padding: 0 10px; }
+  .mode-pills { gap: 2px; }
+  .mode-pill { padding: 5px 10px; font-size: 11.5px; }
+  .topbar-right { gap: 4px; }
+  .msg-inner { padding: 0 12px; max-width: 100%; }
+  .bubble { font-size: 14px; line-height: 1.8; }
+  .msgs { padding: 16px 0; }
+  .input-wrap { padding: 8px 10px max(8px, env(safe-area-inset-bottom)); }
+  .input-outer { border-radius: 14px; margin: 0; }
+  .input-inner { padding: 8px 10px; gap: 8px; }
+  #qi { font-size: 16px !important; }
+  .attach-btn { width: 38px; height: 38px; }
+  .send-btn { width: 38px; height: 38px; border-radius: 10px; }
+  .disclaimer { font-size: 10px; }
+  .empty { padding: 24px 16px; gap: 12px; }
+  .empty-icon { width: 46px; height: 46px; }
+  .empty-title { font-size: 20px; }
+  .empty-sub { font-size: 12.5px; }
+  .chips-grid { max-width: 100%; }
+  .chip { font-size: 11.5px; padding: 7px 11px; }
+  .trial-warning { padding: 6px 12px; font-size: 11px; }
+  .otp-boxes { gap: 6px; }
+  .otp-box { width: 42px; height: 48px; font-size: 18px; }
+}
+@supports (height: 100dvh) { .app-shell { height: 100dvh; } .auth-page { min-height: 100dvh; } }
+.chip, .mode-pill, .sb-bottom-btn, .new-chat, .hist-item, .send-btn, .attach-btn { touch-action: manipulation; }
+.msgs, .sidebar-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.msgs { scroll-behavior: smooth; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:focus:not(:focus-visible) { outline: none; }
+.mode-pill, .chip, .send-btn, .attach-btn, .sb-bottom-btn, .new-chat, .hist-item { user-select: none; }
+.send-btn:disabled { opacity: .5; transform: scale(.95); }
+.sidebar-toggle { transition: transform .25s ease; }
+@media (prefers-reduced-motion: reduce) { .msg-row { animation: none; } .app-sidebar { transition: none; } }
 </style>
 </head>
 <body>
 
-<!-- ════ LOGIN ════ -->
-<div class="login-wrap" id="loginWrap">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-icon">G</div>
-      <div>
-        <div style="font-family:var(--serif);font-size:18px;font-weight:600">GSTMind</div>
-        <div style="font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">Admin Panel</div>
-      </div>
+<div class="page fullpage active" id="page-landing">
+  <nav class="land-nav">
+    <a class="land-logo" href="#"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a>
+    <div class="land-nav-links"><a href="#features" onclick="scrollTo('features')">Features</a><a href="#how" onclick="scrollTo('how')">How it works</a><a href="#pricing" onclick="scrollTo('pricing')">Pricing</a></div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="margin-right:4px">🌙</button>
+    <button class="land-nav-btn land-btn-outline" onclick="showPage('login')">Log in</button>
+    <button class="land-nav-btn land-btn-solid" onclick="showPage('signup')">Start free trial</button>
+  </nav>
+  <section class="hero">
+    <div class="hero-badge"><div class="hero-badge-dot"></div>AI-powered GST research for Indian professionals</div>
+    <h1 class="hero-title">The smartest GST research assistant for CAs &amp; Tax Consultants</h1>
+    <p class="hero-sub">Ask any GST query. Attach a document or notice. Get a cited, professional answer cross-referenced across CBIC documents — in seconds.</p>
+    <div class="hero-btns"><button class="hero-btn-primary" onclick="showPage('signup')">Start free — 10 queries free</button><button class="hero-btn-secondary" onclick="showPage('login')">Already have an account</button></div>
+    <div class="hero-trust">Trusted by practising CAs · Built on Gemini AI · CBIC documents auto-updated</div>
+  </section>
+  <section class="features" id="features">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything a GST professional needs</div>
+    <div class="features-grid">
+      <div class="feat-card"><div class="feat-icon">⚖</div><div class="feat-title">Cited GST Answers</div><div class="feat-desc">Every answer cites the exact Act, Rule, or Circular with footnote-style references. Verify in seconds.</div></div>
+      <div class="feat-card"><div class="feat-icon">📋</div><div class="feat-title">Document Analysis</div><div class="feat-desc">Attach any GST document, circular, or notice. GSTMind reads it and answers your specific question about it.</div></div>
+      <div class="feat-card"><div class="feat-icon">📸</div><div class="feat-title">Photo &amp; PDF Upload</div><div class="feat-desc">Upload a WhatsApp photo of a notice or a PDF from the GSTN portal. GSTMind reads it and drafts the reply.</div></div>
+      <div class="feat-card"><div class="feat-icon">📤</div><div class="feat-title">Share Instantly</div><div class="feat-desc">Download as PDF, share via WhatsApp, or email the reply to your client directly from the app.</div></div>
+      <div class="feat-card"><div class="feat-icon">🔄</div><div class="feat-title">Always Current</div><div class="feat-desc">CBIC circulars and notifications auto-synced within 48 hours of publication. Always up to date.</div></div>
+      <div class="feat-card"><div class="feat-icon">🔒</div><div class="feat-title">Private &amp; Secure</div><div class="feat-desc">Your queries stay private. No query is visible to anyone else. Your history, only yours.</div></div>
     </div>
-
-    <!-- Step 1: Email -->
-    <div id="step1">
-      <div class="login-title">Admin Login</div>
-      <div class="login-sub">Enter your admin email to receive an OTP.</div>
-      <div class="login-err" id="err1"></div>
-      <label class="lbl">Email</label>
-      <input class="inp" type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendOTP()"/>
-      <button class="login-btn" onclick="sendOTP()" id="sendBtn">Send OTP →</button>
-      <span class="login-link" onclick="showSignup()">First time? Create admin account</span>
+  </section>
+  <section class="how" id="how">
+    <div class="section-label">How it works</div>
+    <div class="section-title">Research in 4 simple steps</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-title">Sign up</div><div class="step-desc">Create your account. Get 10 free queries immediately — no credit card needed.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-title">Ask or upload</div><div class="step-desc">Type a GST query, or upload a notice photo/PDF directly from your phone.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-title">Get cited answer</div><div class="step-desc">Receive a professional answer with footnote citations from CBIC documents.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-title">Share or download</div><div class="step-desc">Send via WhatsApp, email your client, or download as PDF. Done.</div></div>
     </div>
-
-    <!-- Step 2: OTP -->
-    <div id="step2" style="display:none">
-      <div class="login-title">Enter OTP</div>
-      <div class="login-sub">6-digit code sent to <strong id="emailShow"></strong></div>
-      <div class="login-err" id="err2"></div>
-      <div class="otp-row">
-        <input class="inp" type="tel" maxlength="1" id="o1" oninput="otpInput(this)"/>
-        <input class="inp" type="tel" maxlength="1" id="o2" oninput="otpInput(this)"/>
-        <input class="inp" type="tel" maxlength="1" id="o3" oninput="otpInput(this)"/>
-        <input class="inp" type="tel" maxlength="1" id="o4" oninput="otpInput(this)"/>
-        <input class="inp" type="tel" maxlength="1" id="o5" oninput="otpInput(this)"/>
-        <input class="inp" type="tel" maxlength="1" id="o6" oninput="otpInput(this)"/>
-      </div>
-      <button class="login-btn" onclick="verifyOTP()" id="verifyBtn">Verify & Login</button>
-      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:12px">
-        <span class="login-link" style="display:inline" onclick="showStep1()">← Back</span>
-        <span class="login-link" style="display:inline" onclick="sendOTP()">Resend OTP</span>
-      </div>
+  </section>
+  <section class="pricing" id="pricing">
+    <div class="section-label">Pricing</div>
+    <div class="section-title">Simple, transparent pricing</div>
+    <div class="pricing-grid">
+      <div class="price-card"><div class="price-plan">Free Trial</div><div class="price-amount">₹0</div><div class="price-desc">Start immediately. No card required.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> 10 queries lifetime</div><div class="price-feat"><span class="price-check">✓</span> All features included</div><div class="price-feat"><span class="price-check">✓</span> Photo &amp; PDF upload</div></div><button class="price-cta price-cta-outline" onclick="showPage('signup')">Start free trial</button></div>
+      <div class="price-card popular"><div class="popular-badge">Most Popular</div><div class="price-plan">Professional</div><div class="price-amount">₹999 <span class="price-period">/mo</span></div><div class="price-desc">For active practitioners handling regular notices.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> 100 queries per month</div><div class="price-feat"><span class="price-check">✓</span> All features</div><div class="price-feat"><span class="price-check">✓</span> PDF download</div><div class="price-feat"><span class="price-check">✓</span> WhatsApp &amp; email share</div></div><button class="price-cta price-cta-solid" onclick="showPage('signup')">Get started</button></div>
+      <div class="price-card"><div class="price-plan">Unlimited</div><div class="price-amount">₹1,999 <span class="price-period" style="font-size:14px;font-weight:400">/mo</span></div><div class="price-desc">For high-volume practitioners and firms.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> Unlimited queries</div><div class="price-feat"><span class="price-check">✓</span> All features</div><div class="price-feat"><span class="price-check">✓</span> Priority support</div><div class="price-feat"><span class="price-check">✓</span> Early access to new features</div></div><button class="price-cta price-cta-outline" onclick="showPage('signup')">Get started</button></div>
     </div>
+  </section>
+  <footer class="land-footer"><div>© 2026 GSTMind. All rights reserved.</div><div>Built for Indian CA &amp; Tax Professionals · Powered by Gemini AI</div><div>Disclaimer: For research purposes only. Not legal advice.</div></footer>
+</div>
 
-    <!-- Signup -->
-    <div id="stepSignup" style="display:none">
-      <div class="login-title">Create Admin Account</div>
-      <div class="login-sub">One-time setup. Requires invite code.</div>
-      <div class="login-err" id="errSignup"></div>
-      <div class="form2">
-        <div><label class="lbl">First Name</label><input class="inp" type="text" id="sfname" placeholder="Rajesh" style="margin-bottom:0"/></div>
-        <div><label class="lbl">Last Name</label><input class="inp" type="text" id="slname" placeholder="Shah" style="margin-bottom:0"/></div>
+<div class="page" id="page-login">
+  <div class="auth-page">
+    <div class="auth-nav"><a class="land-logo" href="#" onclick="showPage('landing')"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a></div>
+    <div class="auth-body">
+      <div class="auth-card">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Log in to your GSTMind account to continue your research.</div>
+        <div class="auth-error" id="login-error">Invalid email or password. Please try again.</div>
+        <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="login-email" placeholder="yourname@example.com"/></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="auth-btn" onclick="doLogin()">Log in to GSTMind</button>
+        <div class="auth-switch" style="margin-top:12px;font-size:12px"><span class="auth-link" onclick="showForgotModal()">Forgot password?</span>&nbsp;·&nbsp;<span class="auth-link" onclick="showLoginOTP()">Login with OTP instead</span></div>
+        <div id="login-otp-section" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:14px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">We'll send a one-time password to your email</div>
+          <div id="login-otp-step1-wrap"><button class="auth-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="sendLoginEmailOTP()">Send OTP to Email</button></div>
+          <div id="login-otp-step2-wrap" style="display:none">
+            <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:10px" id="login-otp-sent-msg"></div>
+            <div class="otp-boxes" id="login-otp-boxes" style="display:flex;gap:8px;margin-bottom:12px">
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+            </div>
+            <button class="auth-btn" onclick="verifyLoginEmailOTP()">Verify &amp; Login</button>
+            <div style="margin-top:8px;font-size:11px" id="loginotp-timer-wrap"></div>
+          </div>
+        </div>
+        <div class="auth-switch">Don't have an account? <span class="auth-link" onclick="showPage('signup')">Sign up free</span></div>
+        <div class="auth-switch" style="margin-top:8px"><span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span></div>
+        <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)"><div style="font-size:10px;color:var(--light);text-align:center;margin-bottom:8px;letter-spacing:.05em">TESTING ACCESS</div><div style="display:flex;gap:8px"><input class="form-input" type="password" id="test-pass-input" placeholder="Test password" style="font-size:12px;padding:7px 10px"/><button onclick="doTestLogin()" style="padding:7px 14px;background:var(--text);color:var(--surface);border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap">Test →</button></div></div>
       </div>
-      <label class="lbl" style="margin-top:10px">Email</label>
-      <input class="inp" type="email" id="semail" placeholder="your@email.com"/>
-      <label class="lbl">Invite Code</label>
-      <input class="inp" type="text" id="sinvite" placeholder="Get from GSTMind support"/>
-      <button class="login-btn" onclick="doSignup()" id="signupBtn">Create Account & Send OTP</button>
-      <span class="login-link" onclick="showStep1()">← Back to login</span>
     </div>
   </div>
 </div>
 
-<!-- ════ SHELL ════ -->
-<div class="shell" id="shell" style="display:none">
-
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">G</div>
-      <div>
-        <div class="brand-name">GSTMind</div>
-        <div class="brand-tag">Admin</div>
+<div class="page" id="page-signup">
+  <div class="auth-page">
+    <div class="auth-nav"><a class="land-logo" href="#" onclick="showPage('landing')"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a></div>
+    <div class="auth-body">
+      <div class="auth-card">
+        <div class="auth-title">Create your account</div>
+        <div class="auth-sub">Start with 10 free queries. No credit card required.</div>
+        <div class="auth-error" id="signup-error">Please fill all fields correctly.</div>
+        <div class="form-row"><div class="form-group"><label class="form-label">First name</label><input class="form-input" type="text" id="signup-fname" placeholder="Rajesh"/></div><div class="form-group"><label class="form-label">Last name</label><input class="form-input" type="text" id="signup-lname" placeholder="Kumar"/></div></div>
+        <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="signup-email" placeholder="yourname@example.com"/></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="signup-pass" placeholder="Min. 8 characters"/></div>
+        <div class="form-group"><label class="form-label">Profession</label><select class="form-input" id="signup-prof" style="cursor:pointer"><option value="">Select your profession</option><option>Chartered Accountant</option><option>Tax Consultant</option><option>Advocate / Tax Lawyer</option><option>Company Secretary</option><option>Other</option></select></div>
+        <div id="signup-step1"><button class="auth-btn" onclick="initiateSignup()">Continue — Verify Email</button></div>
+        <div id="signup-step2" style="display:none">
+          <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px">OTP sent to <strong id="signup-email-show"></strong></div>
+          <label class="form-label">Enter 6-digit OTP</label>
+          <div class="otp-boxes" id="signup-otp-boxes" style="display:flex;gap:8px;margin:8px 0 16px"><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/></div>
+          <button class="auth-btn" onclick="doSignup()">Verify &amp; Create Account</button>
+          <div style="margin-top:8px;font-size:11px;color:var(--light)" id="signup-timer-wrap"></div>
+        </div>
+        <div class="auth-switch">Already have an account? <span class="auth-link" onclick="showPage('login')">Log in</span></div>
+        <div class="auth-switch" style="margin-top:8px"><span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span></div>
       </div>
-      <div class="brand-badge">v6</div>
-    </div>
-
-    <div class="nav">
-      <div class="nav-lbl">Overview</div>
-      <button class="nav-btn active" onclick="nav('dashboard',this)"><span class="nav-icon">◼</span>Dashboard</button>
-
-      <div class="nav-lbl">Management</div>
-      <button class="nav-btn" onclick="nav('users',this)"><span class="nav-icon">◻</span>Users<span class="nav-count" id="nc-users">0</span></button>
-      <button class="nav-btn" onclick="nav('kb',this)"><span class="nav-icon">◻</span>Knowledge Base<span class="nav-count" id="nc-kb">—</span></button>
-      <button class="nav-btn" onclick="nav('sync',this)"><span class="nav-icon">◻</span>Drive Sync</button>
-      <button class="nav-btn" onclick="nav('subscriptions',this)"><span class="nav-icon">◻</span>Subscriptions</button>
-      <button class="nav-btn" onclick="nav('analytics',this)"><span class="nav-icon">◻</span>Analytics</button>
-
-      <div class="nav-lbl">System</div>
-      <button class="nav-btn" onclick="nav('prompts',this)"><span class="nav-icon">◻</span>Prompts & AI</button>
-      <button class="nav-btn" onclick="nav('settings',this)"><span class="nav-icon">◻</span>Settings</button>
-    </div>
-
-    <div class="sidebar-bottom">
-      <div class="admin-row">
-        <div class="admin-av" id="adminAv">A</div>
-        <div>
-          <div class="admin-name" id="adminName">Admin</div>
-          <div class="admin-role">Super Admin</div>
-        </div>
-      </div>
-      <button class="logout-btn" onclick="logout()">↩ Log out</button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <div>
-        <div class="topbar-title" id="topTitle">Dashboard</div>
-        <div class="topbar-sub" id="topSub">GSTMind platform overview</div>
-      </div>
-      <div class="topbar-right">
-        <div class="status-pill pill-green" id="apiStatus">
-          <div class="s-dot"></div><span id="apiStatusTxt">API Online</span>
-        </div>
-        <div class="status-pill pill-amber" id="syncStatus" style="cursor:pointer" onclick="nav('sync',document.querySelector('.nav-btn:nth-child(6)'))">
-          <div class="s-dot" id="syncDot"></div><span id="syncStatusTxt">Sync: Checking...</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↺ Refresh</button>
-      </div>
-    </div>
-
-    <div class="content">
-
-      <!-- ── DASHBOARD ── -->
-      <div class="panel active" id="panel-dashboard">
-        <div class="stats-grid">
-          <div class="stat-card gold">
-            <div class="stat-lbl">Total Users</div>
-            <div class="stat-val" id="s-users">0</div>
-            <div class="stat-sub" id="s-users-sub">All registered</div>
-          </div>
-          <div class="stat-card green">
-            <div class="stat-lbl">Paid Subscribers</div>
-            <div class="stat-val" id="s-paid">0</div>
-            <div class="stat-sub">Pro + Unlimited plans</div>
-          </div>
-          <div class="stat-card blue">
-            <div class="stat-lbl">Docs in Gemini Store</div>
-            <div class="stat-val" id="s-docs">—</div>
-            <div class="stat-sub" id="s-docs-sub">File Search index</div>
-          </div>
-          <div class="stat-card amber">
-            <div class="stat-lbl">Est. Monthly Revenue</div>
-            <div class="stat-val" id="s-rev">₹0</div>
-            <div class="stat-sub">Based on active plans</div>
-          </div>
-        </div>
-
-        <div class="grid2">
-          <div class="card">
-            <div class="card-title">Recent Signups</div>
-            <div class="card-sub">Last 5 users who joined</div>
-            <div id="recentSignups"><div class="empty"><p>No users yet</p></div></div>
-          </div>
-          <div class="card">
-            <div class="card-title">KB Store Status</div>
-            <div class="card-sub">Gemini File Search document breakdown</div>
-            <div id="kbStoreDash"><div class="empty"><p>Loading...</p></div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Plan Distribution</div>
-          <div class="card-sub">Users by subscription plan</div>
-          <div class="bar-chart" id="planBars" style="margin-top:10px">
-            <div class="bar-row"><span class="bar-lbl">Free Trial</span><div class="bar-track"><div class="bar-fill" id="b-free" style="width:0%;background:var(--text3)"></div></div><span class="bar-cnt" id="bc-free">0</span></div>
-            <div class="bar-row"><span class="bar-lbl">Professional (₹999/mo)</span><div class="bar-track"><div class="bar-fill" id="b-pro" style="width:0%"></div></div><span class="bar-cnt" id="bc-pro">0</span></div>
-            <div class="bar-row"><span class="bar-lbl">Unlimited (₹1,999/mo)</span><div class="bar-track"><div class="bar-fill" id="b-unlimited" style="width:0%;background:var(--accent2)"></div></div><span class="bar-cnt" id="bc-unlimited">0</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── USERS ── -->
-      <div class="panel" id="panel-users">
-        <div class="filter-bar">
-          <input class="search-inp" type="text" placeholder="Search name, email..." oninput="filterUsers(this.value)" id="userSearch"/>
-          <select class="filter-sel" onchange="filterUsers()" id="planFilter">
-            <option value="">All Plans</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="unlimited">Unlimited</option>
-          </select>
-          <select class="filter-sel" onchange="filterUsers()" id="statusFilter">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-          </select>
-          <div class="sec-right" style="margin-left:auto">
-            <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ Export CSV</button>
-            <button class="btn btn-primary btn-sm" onclick="showAddUser()">+ Add User</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="tbl">
-            <thead><tr>
-              <th>User</th><th>Contact</th><th>Plan</th><th>Queries</th><th>Joined</th><th>Status</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="userTbody">
-              <tr><td colspan="7"><div class="empty"><p>Loading users...</p></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ── KNOWLEDGE BASE ── -->
-      <div class="panel" id="panel-kb">
-
-        <!-- Store overview -->
-        <div class="store-bar" id="storeBar">
-          <div class="store-item"><div class="store-val green" id="kb-indexed">—</div><div class="store-lbl">Indexed</div></div>
-          <div class="store-item"><div class="store-val amber" id="kb-pending">—</div><div class="store-lbl">Pending</div></div>
-          <div class="store-item"><div class="store-val red" id="kb-failed">—</div><div class="store-lbl">Failed</div></div>
-          <div class="store-item"><div class="store-val blue" id="kb-total">—</div><div class="store-lbl">Total Docs</div></div>
-          <div class="store-item"><div class="store-val" id="kb-size">—</div><div class="store-lbl">Total Size</div></div>
-        </div>
-
-        <!-- Filter bar -->
-        <div class="filter-bar">
-          <input class="search-inp" type="text" placeholder="Search documents..." oninput="filterDocs(this.value)" id="docSearch"/>
-          <select class="filter-sel" onchange="filterDocs()" id="docStatusFilter">
-            <option value="">All Status</option>
-            <option value="indexed">Indexed</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
-          <select class="filter-sel" onchange="filterDocs()" id="docCatFilter">
-            <option value="">All Categories</option>
-          </select>
-          <div class="sec-right" style="margin-left:auto">
-            <span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="docCountLabel">Loading...</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
-            <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All</button>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <div class="select-all-row" style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)">
-            <input type="checkbox" id="selectAllDocs" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--accent);cursor:pointer"/>
-            <span>Select all</span>
-          </div>
-          <div id="docList"><div class="empty"><p>Loading documents...</p></div></div>
-        </div>
-      </div>
-
-      <!-- ── DRIVE SYNC ── -->
-      <div class="panel" id="panel-sync">
-        <div class="grid2">
-          <!-- Controls -->
-          <div class="card">
-            <div class="card-title">Sync Controls</div>
-            <div class="card-sub">Manually trigger Drive → Gemini File Search sync</div>
-
-            <div class="sync-box" id="syncStatusBox">
-              <div class="sync-row"><span class="sync-lbl">Status</span><span class="sync-val" id="syncStat">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Triggered by</span><span class="sync-val" id="syncTrigger">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Started</span><span class="sync-val" id="syncStarted">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Last result</span><span class="sync-val" id="syncLastResult">—</span></div>
-            </div>
-
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-primary" id="syncRunBtn" onclick="triggerSync()" style="flex:1">▶ Trigger Sync</button>
-              <button class="btn btn-danger" id="syncStopBtn" onclick="stopSync()" style="display:none">⏹ Stop</button>
-              <button class="btn btn-ghost btn-sm" onclick="loadSyncStatus()">↺ Status</button>
-            </div>
-
-            <div style="margin-top:12px" id="syncLiveProgress" style="display:none">
-              <div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-family:var(--mono)" id="syncProgressTxt">—</div>
-              <div class="prog-track"><div class="prog-fill green" id="syncProgBar" style="width:0%"></div></div>
-            </div>
-          </div>
-
-          <!-- Latest run stats -->
-          <div class="card">
-            <div class="card-title">Latest Run</div>
-            <div class="card-sub">Statistics from the most recent sync</div>
-            <div class="sync-box">
-              <div class="sync-row"><span class="sync-lbl">Drive scanned</span><span class="sync-val" id="lr-scanned">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Files added</span><span class="sync-val" style="color:var(--green)" id="lr-added">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Files deleted</span><span class="sync-val" style="color:var(--red)" id="lr-deleted">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Files failed</span><span class="sync-val" style="color:var(--amber)" id="lr-failed">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Duration</span><span class="sync-val" id="lr-duration">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Completed</span><span class="sync-val" id="lr-completed">—</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sync history -->
-        <div class="sec-hdr">
-          <div class="sec-title">Sync History</div>
-          <div class="sec-right"><button class="btn btn-ghost btn-sm" onclick="loadSyncHistory()">↺ Refresh</button></div>
-        </div>
-        <div class="table-wrap">
-          <table class="tbl">
-            <thead><tr><th>Started</th><th>Triggered By</th><th>Scanned</th><th>Added</th><th>Failed</th><th>Duration</th><th>Status</th></tr></thead>
-            <tbody id="syncHistoryTbody"><tr><td colspan="7"><div class="empty"><p>Loading history...</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ── SUBSCRIPTIONS ── -->
-      <div class="panel" id="panel-subscriptions">
-        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-          <div class="stat-card gold"><div class="stat-lbl">Monthly Revenue</div><div class="stat-val" id="sub-mrr">₹0</div><div class="stat-sub">Pro + Unlimited</div></div>
-          <div class="stat-card green"><div class="stat-lbl">Paid Subscribers</div><div class="stat-val" id="sub-paid">0</div><div class="stat-sub">Active billing</div></div>
-          <div class="stat-card blue"><div class="stat-lbl">Free Trial Users</div><div class="stat-val" id="sub-trial">0</div><div class="stat-sub">Potential conversions</div></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Plan Limits</div>
-          <div class="card-sub">Query limits per plan per month</div>
-          <table class="tbl" style="margin-top:0">
-            <thead><tr><th>Plan</th><th>Price</th><th>Query Limit</th><th>Users</th></tr></thead>
-            <tbody>
-              <tr><td><strong>Free Trial</strong></td><td>₹0</td><td style="font-family:var(--mono)"><span id="limit-free">10</span> queries</td><td id="pc-free" style="font-family:var(--mono)">0</td></tr>
-              <tr><td><strong>Professional</strong></td><td>₹999/mo</td><td style="font-family:var(--mono)"><span id="limit-pro">100</span> queries</td><td id="pc-pro" style="font-family:var(--mono)">0</td></tr>
-              <tr><td><strong>Unlimited</strong></td><td>₹1,999/mo</td><td style="color:var(--green);font-family:var(--mono)">∞ Unlimited</td><td id="pc-unlimited" style="font-family:var(--mono)">0</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="sec-hdr"><div class="sec-title">All Subscriptions</div></div>
-        <div class="table-wrap">
-          <table class="tbl">
-            <thead><tr><th>User</th><th>Plan</th><th>Queries Used</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="subTbody"><tr><td colspan="6"><div class="empty"><p>Loading...</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ── ANALYTICS ── -->
-      <div class="panel" id="panel-analytics">
-        <div class="grid2">
-          <div class="card">
-            <div class="card-title">Plan Conversion</div>
-            <div class="card-sub">Free → paid conversion funnel</div>
-            <div class="bar-chart" style="margin-top:10px" id="convBars">
-              <div class="empty"><p>Loading...</p></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">KB by Category</div>
-            <div class="card-sub">Documents indexed per category</div>
-            <div class="bar-chart" style="margin-top:10px" id="catBars">
-              <div class="empty"><p>Loading...</p></div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Top Queries</div>
-          <div class="card-sub">Most asked questions across all users</div>
-          <div class="bar-chart" style="margin-top:10px" id="queryBars">
-            <div class="empty"><p>No query data yet.</p></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PROMPTS & AI ── -->
-      <div class="panel" id="panel-prompts">
-        <div id="promptsContainer">
-          <div class="empty"><p>Loading prompts...</p></div>
-        </div>
-      </div>
-
-      <!-- ── SETTINGS ── -->
-      <div class="panel" id="panel-settings">
-        <div class="grid2">
-          <div class="card">
-            <div class="card-title">Change Password</div>
-            <div class="card-sub">Update your admin login password</div>
-            <div class="fg"><label>Current Password</label><input type="password" id="currPass" placeholder="Current password"/></div>
-            <div class="fg"><label>New Password</label><input type="password" id="newPass" placeholder="New password (min 8 chars)"/></div>
-            <div class="fg"><label>Confirm New Password</label><input type="password" id="confPass" placeholder="Confirm new password"/></div>
-            <button class="btn btn-primary" onclick="changePass()">Update Password</button>
-          </div>
-
-          <div class="card">
-            <div class="card-title">System Info</div>
-            <div class="card-sub">Current configuration</div>
-            <div class="sync-box">
-              <div class="sync-row"><span class="sync-lbl">API URL</span><span class="sync-val" style="font-size:10px">web-production-399b0.up.railway.app</span></div>
-              <div class="sync-row"><span class="sync-lbl">Gemini Store</span><span class="sync-val" style="font-size:10px">gstmindcbic-8iqlexnxmrph</span></div>
-              <div class="sync-row"><span class="sync-lbl">Drive Root</span><span class="sync-val" style="font-size:10px" id="si-drive">—</span></div>
-              <div class="sync-row"><span class="sync-lbl">Supabase</span><span class="sync-val">neokzihiohjd... (Seoul)</span></div>
-              <div class="sync-row"><span class="sync-lbl">Admin Panel</span><span class="sync-val">v6.0</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="border-color:var(--red-border)">
-          <div class="card-title" style="color:var(--red)">Danger Zone</div>
-          <div class="card-sub">Irreversible actions. Use with extreme caution.</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-danger" onclick="confirmAct('Reset ALL user query counts to zero?',resetQueryCounts)">Reset Query Counts</button>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /shell -->
-
-<!-- CHANGE PLAN MODAL -->
-<div class="modal-bg" id="planModal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="modal">
-    <div class="modal-title">Change User Plan</div>
-    <div class="modal-sub" id="planModalUser">User: —</div>
-    <div class="fg"><label>Plan</label>
-      <select id="planModalSel">
-        <option value="free">Free Trial</option>
-        <option value="pro">Professional (₹999/mo)</option>
-        <option value="unlimited">Unlimited (₹1,999/mo)</option>
-      </select>
-    </div>
-    <div class="fg"><label>Query Limit Override (optional)</label><input type="number" id="planModalLimit" placeholder="Leave blank for plan default"/></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('planModal').classList.remove('show')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePlan()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- ADD USER MODAL -->
-<div class="modal-bg" id="addUserModal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="modal">
-    <div class="modal-title">Add New User</div>
-    <div class="modal-sub">Manually create a user account.</div>
-    <div class="form2">
-      <div class="fg"><label>First Name</label><input type="text" id="au-fname" placeholder="Rajesh"/></div>
-      <div class="fg"><label>Last Name</label><input type="text" id="au-lname" placeholder="Kumar"/></div>
+<div class="page" id="page-app">
+  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="app-shell">
+    <div class="app-sidebar" id="appSidebar">
+      <div class="app-brand"><div class="app-brand-icon"><span>G</span></div><div><div class="app-brand-name">GSTMind</div><div class="app-brand-tag">GST AI Research</div></div></div>
+      <div class="user-card">
+        <div class="user-card-top"><div class="user-avatar" id="userAvatar">?</div><div><div class="user-name" id="userName">User</div><div class="user-plan" id="userPlanBadge">Free Trial</div></div></div>
+        <div class="query-meter" id="queryMeter"><div class="query-meter-top"><span id="queryMeterLabel">Queries used</span><span id="queryMeterCount" style="font-family:'DM Mono',monospace">0/10</span></div><div class="query-meter-bar"><div class="query-meter-fill" id="queryMeterFill" style="width:0%"></div></div></div>
+      </div>
+      <button class="new-chat" onclick="newChat()"><span style="font-size:16px;color:var(--text3)">+</span> New Chat</button>
+      <div class="sidebar-scroll"><div class="sb-label">Recent Chats</div><div id="histList"><div style="font-size:11.5px;color:var(--light);padding:4px">No queries yet.</div></div></div>
+      <div class="sidebar-bottom">
+        <button class="sb-bottom-btn" onclick="showSettings()"><span>⚙</span> Account Settings</button>
+        <button class="sb-bottom-btn" onclick="doLogout()"><span>↩</span> Log out</button>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+      </div>
     </div>
-    <div class="fg"><label>Email</label><input type="email" id="au-email" placeholder="rajesh@example.com"/></div>
-    <div class="fg"><label>Mobile (optional)</label><input type="tel" id="au-phone" placeholder="9876543210"/></div>
-    <div class="form2">
-      <div class="fg"><label>Plan</label><select id="au-plan"><option value="free">Free Trial</option><option value="pro">Professional</option><option value="unlimited">Unlimited</option></select></div>
-      <div class="fg"><label>Profession</label><select id="au-prof"><option>Chartered Accountant</option><option>Tax Consultant</option><option>Advocate</option><option>Company Secretary</option><option>Others</option></select></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('addUserModal').classList.remove('show')">Cancel</button>
-      <button class="btn btn-primary" onclick="addUser()">Create User</button>
+    <div class="app-main">
+      <div class="app-topbar">
+        <button onclick="toggleSidebarMobile()" class="sidebar-toggle" id="mobileMenuBtn" style="display:none;width:36px;height:36px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;color:var(--text2)" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg></button>
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">⟨</button>
+        <div class="topbar-right"><button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="topbarTheme">🌙</button></div>
+      </div>
+      <div class="trial-warning" id="trialWarning"><span style="color:var(--text3)">Free trial</span><span class="tw-count" id="twCount">0 / 10</span><div class="tw-track"><div class="tw-fill" id="twFill" style="width:0%"></div></div><span class="tw-upgrade" onclick="showUpgrade()">Upgrade to Pro →</span></div>
+      <div class="msgs" id="msgs">
+        <div class="empty" id="emptyState">
+          <div class="empty-icon"><span>G</span></div>
+          <div class="empty-title" id="emptyGreet">How can I help you today?</div>
+          <div class="empty-sub">Ask any GST research question. Attach a document, notice, or photo using the 📎 button below.</div>
+          <div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div>
+        </div>
+      </div>
+      <div class="input-wrap">
+        <div style="max-width:720px;margin:0 auto"><div class="attach-preview" id="attachPreview"><span style="font-size:11px;color:var(--accent);font-style:italic">Attached:</span><div id="attachChips"></div></div></div>
+        <div class="input-outer" style="max-width:720px">
+          <div class="input-inner">
+            <button class="attach-btn" onclick="document.getElementById('noticeUpload').click()" title="Upload notice photo or PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
+            <input type="file" id="noticeUpload" accept="image/*,.pdf" style="display:none" onchange="onNoticeUpload(event)"/>
+            <textarea id="qi" rows="1" placeholder="Ask a GST query..." onkeydown="onKey(event)" oninput="autoR(this)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="send()"><svg class="send-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </div>
+        </div>
+        <div class="inp-hint" style="max-width:720px"><span>📎 Attach document or notice · Enter to send · Shift+Enter for new line</span><span id="docHint">Loading KB...</span></div>
+        <div class="disclaimer">GSTMind is for research purposes only. Not legal advice. Always verify with primary legislation.</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- CONFIRM MODAL -->
-<div class="modal-bg" id="confirmModal" onclick="if(event.target===this)this.classList.remove('show')">
+<div class="modal-bg" id="forgotModal" onclick="if(event.target===this)document.getElementById('forgotModal').classList.remove('show')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Reset Password</div>
+    <div class="modal-sub" id="forgotModalSub">Enter your registered email address and we will send you a reset link.</div>
+    <div id="forgotStep1"><div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="forgot-email" placeholder="yourname@example.com"/></div><button class="auth-btn" onclick="sendForgotOTP()">Send Reset OTP</button></div>
+    <div id="forgotStep2" style="display:none"><div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:14px" id="forgot-phone-show"></div><div class="form-group"><label class="form-label">Enter OTP</label><div class="otp-boxes" id="forgot-otp-boxes"><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/></div><div class="otp-timer" id="forgot-otp-timer">Resend in <span id="forgot-timer-count">30</span>s</div></div></div>
+    <div id="forgotStep3" style="display:none"><div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="forgot-new-pass" placeholder="Min. 8 characters"/></div><div class="form-group"><label class="form-label">Confirm Password</label><input class="form-input" type="password" id="forgot-conf-pass" placeholder="Confirm new password"/></div><button class="auth-btn" onclick="resetPassword()">Set New Password</button></div>
+    <button class="modal-close" onclick="document.getElementById('forgotModal').classList.remove('show')" style="margin-top:12px">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="upgradeModal" onclick="if(event.target===this)hideUpgrade()">
   <div class="modal">
-    <div class="modal-title">Confirm Action</div>
-    <div class="modal-sub" id="confirmMsg">Are you sure?</div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
-      <button class="btn btn-danger" id="confirmOK">Confirm</button>
-    </div>
+    <div class="modal-title">Upgrade GSTMind</div>
+    <div class="modal-sub">You've used all 10 free queries. Upgrade to continue researching without limits.</div>
+    <div class="plan-card" onclick="showToast('Razorpay payment — coming soon')"><div class="plan-name">Professional</div><div class="plan-price">₹999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div><div class="plan-feat">100 queries/month · All features · Email support</div></div>
+    <div class="plan-card rec" onclick="showToast('Razorpay payment — coming soon')"><div class="plan-name">Unlimited</div><div class="plan-price">₹1,999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div><div class="plan-feat">Unlimited queries · All features · Priority support</div></div>
+    <button class="modal-close" onclick="hideUpgrade()">Maybe later</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="settingsModal" onclick="if(event.target===this)hideSettings()">
+  <div class="settings-modal">
+    <h2>Account Settings</h2>
+    <div class="settings-section"><div class="settings-label">Profile</div><div style="display:flex;flex-direction:column;gap:10px"><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Full name</div><div class="settings-value" id="stg-name">—</div></div><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Email</div><div class="settings-value" id="stg-email">—</div></div><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Profession</div><div class="settings-value" id="stg-prof">—</div></div></div></div>
+    <div class="settings-section"><div class="settings-label">Subscription</div><div class="settings-value" id="stg-plan">Free Trial</div><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="settings-btn settings-btn-primary" onclick="hideSettings();showUpgrade()">Upgrade Plan</button><button class="settings-btn settings-btn-ghost" onclick="hideSettings()">Close</button></div></div>
+    <div class="settings-section"><div class="settings-label">Account</div><button class="settings-btn settings-btn-danger" onclick="doLogout()">Log out</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════════
-const API = 'https://web-production-399b0.up.railway.app';
-let TOKEN = localStorage.getItem('gm_admin_token') || '';
-let adminEmail = localStorage.getItem('gm_admin_email') || '';
-let _users = [];
-let _allDocs = [];
-let _syncPollTimer = null;
+function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('page-'+name);p.classList.add('active');if(name==='app')initApp();window.scrollTo(0,0);}
 
-// ══════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════
-function showStep1(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('step1').style.display='block'; }
-function showStep2(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('step2').style.display='block'; }
-function showSignup(){ ['step1','step2','stepSignup'].forEach(id=>document.getElementById(id).style.display='none'); document.getElementById('stepSignup').style.display='block'; }
-
-function otpInput(el){
-  el.value = el.value.replace(/\D/g,'');
-  const ids=['o1','o2','o3','o4','o5','o6'];
-  const idx = ids.indexOf(el.id);
-  if(el.value && idx<5) document.getElementById(ids[idx+1]).focus();
-  if(ids.every(id=>document.getElementById(id).value)) verifyOTP();
-}
-function getOTP(){ return ['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join(''); }
-
-async function sendOTP(){
-  const email = document.getElementById('loginEmail').value.trim();
-  if(!email||!email.includes('@')){ showErr('err1','Enter a valid email'); return; }
-  const btn = document.getElementById('sendBtn');
-  btn.textContent='Sending...'; btn.disabled=true;
-  hideErr('err1');
+async function initiateSignup(){
+  const fname=document.getElementById('signup-fname').value.trim();
+  const lname=document.getElementById('signup-lname').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-pass').value;
+  const prof=document.getElementById('signup-prof').value;
+  const err=document.getElementById('signup-error');
+  if(!fname||!lname||!email||!pass||!prof){err.textContent='Please fill in all fields.';err.classList.add('show');return;}
+  if(pass.length<8){err.textContent='Password must be at least 8 characters.';err.classList.add('show');return;}
+  if(!email.includes('@')){err.textContent='Please enter a valid email address.';err.classList.add('show');return;}
+  err.classList.remove('show');
+  const btn=document.querySelector('#signup-step1 .auth-btn');
+  if(btn){btn.textContent='Sending OTP...';btn.disabled=true;}
   try{
-    const r = await apiFetch('/auth/admin/otp/send', 'POST', {email}, false);
-    adminEmail = email;
-    localStorage.setItem('gm_admin_email', email);
-    document.getElementById('emailShow').textContent = email;
-    showStep2();
-    document.getElementById('o1').focus();
-    if(r.dev_otp) toast('Dev OTP: '+r.dev_otp, 'success');
-  }catch(e){ showErr('err1', e.message); }
-  finally{ btn.textContent='Send OTP →'; btn.disabled=false; }
-}
-
-async function verifyOTP(){
-  const otp = getOTP();
-  if(otp.length!==6) return;
-  const btn = document.getElementById('verifyBtn');
-  btn.textContent='Verifying...'; btn.disabled=true;
-  hideErr('err2');
-  try{
-    const r = await apiFetch('/auth/admin/otp/verify', 'POST', {email:adminEmail, otp}, false);
-    if(!r.user?.is_admin) throw new Error('This account does not have admin privileges.');
-    TOKEN = r.token;
-    localStorage.setItem('gm_admin_token', TOKEN);
-    localStorage.setItem('gm_admin_email', r.user.email||adminEmail);
-    localStorage.setItem('gm_admin_session','1');
-    enterShell(r.user);
-  }catch(e){
-    showErr('err2', e.message);
-    ['o1','o2','o3','o4','o5','o6'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('o1').focus();
-  }
-  finally{ btn.textContent='Verify & Login'; btn.disabled=false; }
+    const res = await apiCall('/auth/email/otp/send','POST',{email});
+    document.getElementById('signup-email-show').textContent = email;
+    document.getElementById('signup-step1').style.display='none';
+    document.getElementById('signup-step2').style.display='block';
+    clearOTPBoxes('signup');
+    startTimer('signup', 120);
+    setTimeout(()=>document.getElementById('signup-otp-boxes').querySelector('.otp-box').focus(),100);
+    if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
+  }catch(e){err.textContent = e.message||'Failed to send OTP. Please try again.';err.classList.add('show');}
+  finally{if(btn){btn.textContent='Continue →';btn.disabled=false;}}
 }
 
 async function doSignup(){
-  const fname=document.getElementById('sfname').value.trim();
-  const lname=document.getElementById('slname').value.trim();
-  const email=document.getElementById('semail').value.trim();
-  const invite=document.getElementById('sinvite').value.trim();
-  if(!fname||!lname||!email||!invite){ showErr('errSignup','Fill all fields'); return; }
-  const btn=document.getElementById('signupBtn');
-  btn.textContent='Creating...'; btn.disabled=true;
-  hideErr('errSignup');
+  const fname=document.getElementById('signup-fname').value.trim();
+  const lname=document.getElementById('signup-lname').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-pass').value;
+  const prof=document.getElementById('signup-prof').value;
+  const otp=getOTPValue('signup');
+  const err=document.getElementById('signup-error');
+  if(otp.length!==6){showToast('Please enter the complete 6-digit OTP.');return;}
+  const btn=document.querySelector('#signup-step2 .auth-btn');
+  if(btn){btn.textContent='Creating account...';btn.disabled=true;}
   try{
-    const r = await apiFetch('/auth/admin/signup', 'POST', {fname,lname,email,invite_code:invite}, false);
-    adminEmail=email;
-    localStorage.setItem('gm_admin_email',email);
-    document.getElementById('emailShow').textContent=email;
-    showStep2();
-    document.getElementById('o1').focus();
-    if(r.dev_otp) toast('Dev OTP: '+r.dev_otp,'success');
-    else toast('Account created! Check email for OTP.','success');
-  }catch(e){ showErr('errSignup',e.message); }
-  finally{ btn.textContent='Create Account & Send OTP'; btn.disabled=false; }
+    const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:true, fname, lname, profession:prof});
+    await apiCall('/auth/set-password','POST',{email, password:pass},{auth:false,token:res.token});
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    const userData = {...res.user, fname, lname, name:fname+' '+lname, queryCount:res.user.query_count||0, queryLimit:res.user.query_limit||10};
+    localStorage.setItem('gm_user', JSON.stringify(userData));
+    showToast('Account created! Welcome to GSTMind.');
+    showPage('app');
+  }catch(e){err.textContent=e.message||'Invalid OTP. Please try again.';err.classList.add('show');clearOTPBoxes('signup');}
+  finally{if(btn){btn.textContent='Verify & Create Account';btn.disabled=false;}}
 }
 
-function enterShell(user){
-  document.getElementById('loginWrap').style.display='none';
-  document.getElementById('shell').style.display='flex';
-  const initials = ((user.fname||'A')[0]).toUpperCase();
-  document.getElementById('adminAv').textContent = initials;
-  document.getElementById('adminName').textContent = user.fname ? user.fname+' '+(user.lname||'') : 'Admin';
-  initAdmin();
-}
-
-function logout(){
-  stopSyncPoll();
-  TOKEN='';
-  localStorage.removeItem('gm_admin_token');
-  localStorage.removeItem('gm_admin_session');
-  document.getElementById('loginWrap').style.display='flex';
-  document.getElementById('shell').style.display='none';
-  showStep1();
-}
-
-// Auto-login
-window.onload = async ()=>{
-  const token = localStorage.getItem('gm_admin_token');
-  if(token && localStorage.getItem('gm_admin_session')==='1'){
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  if(!email||!pass){err.textContent='Please fill in all details.';err.classList.add('show');return;}
+  const btn=document.querySelector('#page-login .auth-btn');
+  if(btn){btn.textContent='Logging in...';btn.disabled=true;}
+  try{
+    const res = await apiCall('/auth/login/email','POST',{email,password:pass});
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    const userData = {...res.user, queryCount: res.user.query_count || 0, queryLimit: res.user.query_limit || 10};
+    localStorage.setItem('gm_user', JSON.stringify(userData));
+    err.classList.remove('show');
+    showToast('Welcome back, '+(res.user.fname||'')+'!');
     try{
-      TOKEN = token;
-      const r = await apiFetch('/auth/admin/me','GET',null,true);
-      if(r && r.is_admin){ enterShell(r); return; }
-    }catch(e){}
-    localStorage.removeItem('gm_admin_session');
-    localStorage.removeItem('gm_admin_token');
-    TOKEN='';
+      const freshUser = await apiCall('/auth/me','GET',null,true);
+      const freshData = {...userData, queryCount: freshUser.query_count || userData.queryCount, queryLimit: freshUser.query_limit || userData.queryLimit, plan: freshUser.plan || userData.plan};
+      localStorage.setItem('gm_user', JSON.stringify(freshData));
+    } catch(e){}
+    showPage('app');
+  } catch(e){err.textContent = e.message==='Invalid email or password' ? 'Incorrect email or password.' : (e.message||'Login failed.');err.classList.add('show');}
+  finally {if(btn){btn.textContent='Log in';btn.disabled=false;}}
+}
+
+function doLogout(){hideSettings();authToken='';localStorage.removeItem('gm_token');localStorage.removeItem('gm_user');showPage('landing');showToast('Logged out successfully.');}
+
+const API = 'https://web-production-399b0.up.railway.app';
+let docs=[],history=[],busy=false,attachedFile=null;
+try{const kbRaw = localStorage.getItem('gm_admin_kb');if(kbRaw){ docs = JSON.parse(kbRaw); }} catch(e){ docs=[]; }
+let authToken = localStorage.getItem('gm_token')||'';
+
+async function apiCall(endpoint, method='GET', body=null, auth=false, retry=true){
+  const headers = {'Content-Type':'application/json'};
+  if(auth && authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  const opts = {method, headers, mode:'cors'};
+  if(body) opts.body = JSON.stringify(body);
+  let res;
+  try{ res = await fetch(API + endpoint, opts); }
+  catch(e){
+    if(retry){showToast('Server starting up, retrying...');await new Promise(r=>setTimeout(r,3000));return apiCall(endpoint, method, body, auth, false);}
+    throw new Error('Cannot reach server. Please check your internet connection and try again.');
   }
-  const savedEmail = localStorage.getItem('gm_admin_email');
-  if(savedEmail) document.getElementById('loginEmail').value = savedEmail;
-};
+  let data;
+  try { data = await res.json(); } catch(e) { data = {}; }
+  if(!res.ok) throw new Error(data.detail || 'Server error: ' + res.status);
+  return data;
+}
+const FREE_LIMIT=10;
+const BUILTIN=[];
 
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
-async function initAdmin(){
-  checkApiStatus();
-  await loadUsers();
-  await loadKBStats();
-  await loadSyncStatus();
-  renderDashboard();
-  startSyncPoll();
+function getPrompt(type){return localStorage.getItem('gm_prompt_'+type) || DEFAULT_PROMPTS[type];}
+const DEFAULT_PROMPTS={query:''};
+
+function initApp(){
+  const user=JSON.parse(localStorage.getItem('gm_user')||'null');
+  if(!user){showPage('login');return;}
+  if(localStorage.getItem('gm_sidebar_collapsed')==='1'){const sb=document.getElementById('appSidebar');if(sb)sb.classList.add('collapsed');}
+  const initials=(user.fname?.[0]||'')+(user.lname?.[0]||'');
+  document.getElementById('userAvatar').textContent=initials||'U';
+  document.getElementById('userName').textContent=user.name||'User';
+  document.getElementById('emptyGreet').textContent=`Good day, ${user.fname||''}! How can I help you?`;
+  const planEl=document.getElementById('userPlanBadge');
+  if(user.plan==='pro'){planEl.textContent='Professional';planEl.className='user-plan';}
+  else if(user.plan==='unlimited'){planEl.textContent='Unlimited';planEl.className='user-plan unlimited';}
+  else{planEl.textContent='Free Trial';planEl.className='user-plan free';}
+  updateQueryMeter(user);
+  document.getElementById('stg-name').textContent=user.name;
+  document.getElementById('stg-email').textContent=user.email;
+  document.getElementById('stg-prof').textContent=user.prof||'—';
+  document.getElementById('stg-plan').textContent=user.plan==='pro'?'Professional':user.plan==='unlimited'?'Unlimited':'Free Trial (10 queries)';
+  updateKBUI([]);
+  renderTrendingChips();
+  loadChatHistory();
+  const tw=document.getElementById('trialWarning');
+  if(tw)tw.style.display=user.plan==='free'?'flex':'none';
+  loadTheme();
 }
 
-async function refreshAll(){
-  await loadUsers();
-  await loadKBStats();
-  await loadSyncStatus();
-  renderDashboard();
-  // Refresh current panel
-  const active = document.querySelector('.panel.active');
-  if(active?.id==='panel-kb') await loadKBDocs();
-  if(active?.id==='panel-sync') await loadSyncHistory();
-  if(active?.id==='panel-analytics') renderAnalytics();
-  toast('Refreshed','success');
+function updateQueryMeter(user){
+  if(!user)user=JSON.parse(localStorage.getItem('gm_user')||'{}');
+  const qc=user.queryCount||0;const ql=user.queryLimit||10;
+  const pct=Math.min(100,Math.round((qc/ql)*100));
+  document.getElementById('queryMeterCount').textContent=user.plan==='unlimited'?`${qc} used`:`${qc}/${ql}`;
+  document.getElementById('queryMeterFill').style.width=pct+'%';
+  document.getElementById('queryMeterLabel').textContent=user.plan==='unlimited'?'Unlimited plan':'Queries used';
+  document.getElementById('twCount').textContent=`${qc} / ${ql}`;
+  document.getElementById('twFill').style.width=pct+'%';
 }
 
-async function checkApiStatus(){
+function getUser(){return JSON.parse(localStorage.getItem('gm_user')||'{}');}
+function saveUser(u){localStorage.setItem('gm_user',JSON.stringify(u));}
+
+function compressHistory(hist){
+  if(hist.length <= 4) return hist;
+  const recent = hist.slice(-4);
+  const older = hist.slice(-8, -4);
+  const compressed = older.map(msg => {
+    if(msg.role === 'user') return msg;
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    if(content.length <= 600) return msg;
+    return {...msg, content: content.slice(0, 500) + '... [continued]'};
+  });
+  return [...compressed, ...recent];
+}
+
+function showLoginOTP(){const sec = document.getElementById('login-otp-section');if(sec) sec.style.display = sec.style.display==='none' ? 'block' : 'none';}
+
+async function sendLoginEmailOTP(){
+  const email = document.getElementById('login-email').value.trim();
+  if(!email||!email.includes('@')){showToast('Please enter your email address above first.');return;}
+  const btn = document.querySelector('#login-otp-step1-wrap .auth-btn');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
   try{
-    await apiFetch('/health','GET',null,false);
-    document.getElementById('apiStatus').className='status-pill pill-green';
-    document.getElementById('apiStatusTxt').textContent='API Online';
-  }catch(e){
-    document.getElementById('apiStatus').className='status-pill pill-red';
-    document.getElementById('apiStatusTxt').textContent='API Offline';
-  }
+    const res = await apiCall('/auth/email/otp/send','POST',{email});
+    document.getElementById('login-otp-sent-msg').textContent = 'OTP sent to '+email;
+    document.getElementById('login-otp-step1-wrap').style.display='none';
+    document.getElementById('login-otp-step2-wrap').style.display='block';
+    clearOTPBoxes('loginotp');
+    startTimer('loginotp', 120);
+    setTimeout(()=>document.getElementById('login-otp-boxes').querySelector('.otp-box').focus(),100);
+    if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
+  }catch(e){showToast(e.message||'Failed to send OTP');}
+  finally{if(btn){btn.textContent='Send OTP to Email';btn.disabled=false;}}
 }
 
-// ══════════════════════════════════════════════
-// PANEL NAV
-// ══════════════════════════════════════════════
-const PANEL_META = {
-  dashboard: ['Dashboard','GSTMind platform overview'],
-  users: ['User Management','Add, edit and manage all users'],
-  kb: ['Knowledge Base','Gemini File Search document management'],
-  sync: ['Drive Sync','Google Drive → Gemini File Search pipeline'],
-  subscriptions: ['Subscriptions','Plans, revenue and billing'],
-  analytics: ['Analytics','Usage patterns and insights'],
-  prompts: ['Prompts & AI','Control AI behaviour without code changes'],
-  settings: ['Settings','Admin credentials and system config']
-};
-
-function nav(name, btn){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  const [title,sub] = PANEL_META[name]||[name,''];
-  document.getElementById('topTitle').textContent=title;
-  document.getElementById('topSub').textContent=sub;
-  if(name==='users') renderUserTable(_users);
-  if(name==='kb'){ loadKBDocs(); }
-  if(name==='sync'){ loadSyncStatus(); loadSyncHistory(); }
-  if(name==='analytics') renderAnalytics();
-  if(name==='prompts') loadPrompts();
-  if(name==='subscriptions') renderSubs();
-}
-
-// ══════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════
-async function renderDashboard(){
-  const users = _users;
-  const free = users.filter(u=>(!u.plan||u.plan==='free')).length;
-  const pro = users.filter(u=>u.plan==='pro').length;
-  const unlimited = users.filter(u=>u.plan==='unlimited').length;
-  const paid = pro+unlimited;
-  const rev = pro*999 + unlimited*1999;
-
-  document.getElementById('s-users').textContent = users.length;
-  document.getElementById('s-users-sub').textContent = users.length+' registered';
-  document.getElementById('s-paid').textContent = paid;
-  document.getElementById('s-rev').textContent = '₹'+(rev.toLocaleString('en-IN'));
-  document.getElementById('nc-users').textContent = users.length;
-
-  const mx = Math.max(users.length,1);
-  document.getElementById('b-free').style.width=(free/mx*100)+'%';
-  document.getElementById('b-pro').style.width=(pro/mx*100)+'%';
-  document.getElementById('b-unlimited').style.width=(unlimited/mx*100)+'%';
-  document.getElementById('bc-free').textContent=free;
-  document.getElementById('bc-pro').textContent=pro;
-  document.getElementById('bc-unlimited').textContent=unlimited;
-
-  // Recent signups
-  const rs = document.getElementById('recentSignups');
-  const recent = [...users].sort((a,b)=>new Date(b.joined_at||0)-new Date(a.joined_at||0)).slice(0,5);
-  if(!recent.length){ rs.innerHTML='<div class="empty"><p>No users yet</p></div>'; }
-  else rs.innerHTML = recent.map(u=>`
-    <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${(u.fname?.[0]||'?').toUpperCase()}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.name||u.fname+' '+(u.lname||''))}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${esc(u.email||'—')}</div>
-      </div>
-      <span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Pro':u.plan==='unlimited'?'∞':'Free'}</span>
-    </div>`).join('');
-
-  // KB store summary in dashboard
-  const kbEl = document.getElementById('kbStoreDash');
+async function verifyLoginEmailOTP(){
+  const email = document.getElementById('login-email').value.trim();
+  const otp = getOTPValue('loginotp');
+  if(otp.length!==6){showToast('Please enter the 6-digit OTP.');return;}
   try{
-    const stats = await apiFetch('/kb/stats','GET',null,true);
-    document.getElementById('s-docs').textContent = stats.total||0;
-    document.getElementById('s-docs-sub').textContent = `${stats.indexed||0} indexed · ${stats.failed||0} failed`;
-    document.getElementById('nc-kb').textContent = stats.total||0;
-    kbEl.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-        <div style="padding:10px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;text-align:center">
-          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--green)">${stats.indexed||0}</div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Indexed</div>
-        </div>
-        <div style="padding:10px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;text-align:center">
-          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--amber)">${stats.pending||0}</div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Pending</div>
-        </div>
-        <div style="padding:10px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;text-align:center">
-          <div style="font-size:22px;font-weight:600;font-family:var(--serif);color:var(--red)">${stats.failed||0}</div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Failed</div>
-        </div>
-        <div style="padding:10px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;text-align:center">
-          <div style="font-size:22px;font-weight:600;font-family:var(--serif)">${stats.total_size_mb||0} MB</div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Total Size</div>
-        </div>
-      </div>`;
-  }catch(e){ kbEl.innerHTML='<div class="empty"><p>Could not load KB stats</p></div>'; }
+    const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:false});
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    const userData = {...res.user, queryCount:res.user.query_count||0, queryLimit:res.user.query_limit||10};
+    localStorage.setItem('gm_user', JSON.stringify(userData));
+    showToast('Welcome back, '+(res.user.fname||'')+'!');
+    showPage('app');
+  }catch(e){showToast(e.message||'Invalid OTP');clearOTPBoxes('loginotp');}
 }
 
-// ══════════════════════════════════════════════
-// USERS
-// ══════════════════════════════════════════════
-async function loadUsers(){
+async function doTestLogin(){
+  const pass = document.getElementById('test-pass-input').value;
+  if(!pass){ showToast('Enter test password'); return; }
   try{
-    const data = await apiFetch('/admin/users','GET',null,true);
-    _users = (Array.isArray(data)?data:[]).map(u=>({
-      ...u,
-      name: u.name||(u.fname+' '+(u.lname||'')).trim()
-    }));
-    document.getElementById('nc-users').textContent = _users.length;
-  }catch(e){ console.error('loadUsers:', e.message); }
+    const res = await apiCall('/auth/test/login','POST',{email:'test@gstmind.in', password: pass});
+    authToken = res.token;
+    localStorage.setItem('gm_token', authToken);
+    localStorage.setItem('gm_user', JSON.stringify({...res.user, queryCount: 0, queryLimit: 99999}));
+    showToast('Test login successful — unlimited access');
+    showPage('app');
+  }catch(e){showToast(e.message||'Invalid test password');}
 }
 
-let _selUserId = null;
-let _currentUsers = [];
+function showForgotModal(){document.getElementById('forgotModal').classList.add('show');}
+function toggleSidebar(){const sb = document.getElementById('appSidebar');if(!sb) return;const collapsed = sb.classList.toggle('collapsed');localStorage.setItem('gm_sidebar_collapsed', collapsed?'1':'0');}
+function showUpgrade(){document.getElementById('upgradeModal').classList.add('show');}
+function hideUpgrade(){document.getElementById('upgradeModal').classList.remove('show');}
+function showSettings(){document.getElementById('settingsModal').classList.add('show');}
+function hideSettings(){document.getElementById('settingsModal').classList.remove('show');}
 
-function renderUserTable(users){
-  _currentUsers = users;
-  const tbody = document.getElementById('userTbody');
-  if(!users.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty"><p>No users yet.</p></div></td></tr>'; return; }
-  tbody.innerHTML = users.map((u,i)=>`
-    <tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${(u.fname?.[0]||'?').toUpperCase()}</div>
-          <strong>${esc(u.name||'Unknown')}</strong>
-        </div>
-      </td>
-      <td style="font-family:var(--mono);font-size:11px">${esc(u.email||u.phone||'—')}</td>
-      <td><span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Professional':u.plan==='unlimited'?'Unlimited':'Free Trial'}</span></td>
-      <td style="font-family:var(--mono)">${u.query_count||0}/${u.plan==='unlimited'?'∞':(u.query_limit||10)}</td>
-      <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'—'}</td>
-      <td><span class="badge badge-${u.blocked?'blocked':'active'}"><span class="badge-dot"></span>${u.blocked?'Blocked':'Active'}</span></td>
-      <td>
-        <div style="display:flex;gap:5px">
-          <button class="btn btn-ghost btn-sm" onclick="openPlanModal(${i})">Plan</button>
-          <button class="btn ${u.blocked?'btn-primary':'btn-danger'} btn-sm" onclick="toggleBlock(${i})">${u.blocked?'Unblock':'Block'}</button>
-        </div>
-      </td>
-    </tr>`).join('');
+function updateKBUI(docs){
+  const hint=document.getElementById('docHint');
+  if(!hint) return;
+  if(docs && docs.length > 0){
+    const chunks = docs.reduce((s,d)=>s+(d.chunk_count||d.chunks||0),0);
+    hint.textContent = `${docs.length} doc${docs.length!==1?'s':''} · ${chunks.toLocaleString()} chunks in KB`;
+  } else { hint.textContent = 'Knowledge base loading...'; }
 }
 
-function filterUsers(val){
-  const search=(val||document.getElementById('userSearch').value||'').toLowerCase();
-  const plan=document.getElementById('planFilter').value;
-  const status=document.getElementById('statusFilter').value;
-  let users=[..._users];
-  if(search) users=users.filter(u=>(u.name||'').toLowerCase().includes(search)||(u.email||'').toLowerCase().includes(search));
-  if(plan) users=users.filter(u=>(u.plan||'free')===plan);
-  if(status==='blocked') users=users.filter(u=>u.blocked);
-  if(status==='active') users=users.filter(u=>!u.blocked);
-  renderUserTable(users);
-}
-
-function openPlanModal(idx){
-  const u=_currentUsers[idx]; if(!u)return;
-  _selUserId=u.id;
-  document.getElementById('planModalUser').textContent='User: '+(u.name||u.email||'Unknown');
-  document.getElementById('planModalSel').value=u.plan||'free';
-  document.getElementById('planModalLimit').value='';
-  document.getElementById('planModal').classList.add('show');
-}
-
-async function savePlan(){
-  if(!_selUserId) return;
-  const plan=document.getElementById('planModalSel').value;
-  const lim=document.getElementById('planModalLimit').value;
-  const ql=lim?parseInt(lim):(plan==='pro'?100:plan==='unlimited'?999999:10);
-  try{
-    await apiFetch('/admin/users/'+_selUserId,'PATCH',{plan,query_limit:ql},true);
-    document.getElementById('planModal').classList.remove('show');
-    toast('Plan updated','success');
-    await loadUsers(); renderUserTable(_users);
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-async function toggleBlock(idx){
-  const u=_currentUsers[idx]; if(!u)return;
-  try{
-    await apiFetch('/admin/users/'+u.id,'PATCH',{blocked:!u.blocked},true);
-    toast((u.blocked?'Unblocked: ':'Blocked: ')+u.name, u.blocked?'success':'error');
-    await loadUsers(); filterUsers();
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-function showAddUser(){ document.getElementById('addUserModal').classList.add('show'); }
-
-async function addUser(){
-  const fname=document.getElementById('au-fname').value.trim();
-  const lname=document.getElementById('au-lname').value.trim();
-  const email=document.getElementById('au-email').value.trim();
-  const phone=document.getElementById('au-phone').value.trim();
-  const plan=document.getElementById('au-plan').value;
-  const profession=document.getElementById('au-prof').value;
-  if(!fname||!email){ toast('First name and email required','error'); return; }
-  try{
-    await apiFetch('/admin/users','POST',{fname,lname,email,phone,plan,profession},true);
-    document.getElementById('addUserModal').classList.remove('show');
-    toast('User created: '+fname+' '+lname,'success');
-    await loadUsers(); renderUserTable(_users);
-    ['au-fname','au-lname','au-email','au-phone'].forEach(id=>document.getElementById(id).value='');
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-function exportCSV(){
-  if(!_users.length){ toast('No users to export','error'); return; }
-  const header='Name,Email,Phone,Plan,Queries,Joined,Status';
-  const rows=_users.map(u=>[u.name,u.email,u.phone,u.plan,u.query_count,u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'',u.blocked?'Blocked':'Active'].map(v=>`"${v||''}"`).join(','));
-  const csv=[header,...rows].join('\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='GSTMind_Users.csv'; a.click();
-  toast('Exported '+_users.length+' users','success');
-}
-
-// ══════════════════════════════════════════════
-// KNOWLEDGE BASE
-// ══════════════════════════════════════════════
-let _docSearchTimer=null;
-let _selDocs=new Set();
-
-async function loadKBStats(){
-  try{
-    const stats = await apiFetch('/kb/stats','GET',null,true);
-    document.getElementById('kb-indexed').textContent=stats.indexed||0;
-    document.getElementById('kb-pending').textContent=stats.pending||0;
-    document.getElementById('kb-failed').textContent=stats.failed||0;
-    document.getElementById('kb-total').textContent=stats.total||0;
-    document.getElementById('kb-size').textContent=(stats.total_size_mb||0)+' MB';
-    document.getElementById('nc-kb').textContent=stats.total||0;
-
-    // Populate category filter
-    const catSel=document.getElementById('docCatFilter');
-    const cats=Object.keys(stats.by_category||{}).sort();
-    catSel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  }catch(e){ console.error('loadKBStats:', e.message); }
-}
-
-async function loadKBDocs(){
-  const search=document.getElementById('docSearch')?.value||'';
-  const status=document.getElementById('docStatusFilter')?.value||'';
-  const cat=document.getElementById('docCatFilter')?.value||'';
-
-  let url='/kb/documents?limit=200';
-  if(status) url+='&gemini_status='+encodeURIComponent(status);
-  if(cat) url+='&category='+encodeURIComponent(cat);
-  if(search) url+='&search='+encodeURIComponent(search);
-
-  document.getElementById('docList').innerHTML='<div class="empty"><p>Loading...</p></div>';
-  try{
-    const data = await apiFetch(url,'GET',null,true);
-    _allDocs = data.documents||[];
-    document.getElementById('docCountLabel').textContent=`${_allDocs.length} of ${data.total||_allDocs.length} documents`;
-    renderDocList(_allDocs);
-    _selDocs.clear(); updateDeleteBtn();
-  }catch(e){
-    document.getElementById('docList').innerHTML='<div class="empty"><p>Error: '+esc(e.message)+'</p></div>';
-  }
-}
-
-function filterDocs(val){
-  clearTimeout(_docSearchTimer);
-  _docSearchTimer = setTimeout(loadKBDocs, 300);
-}
-
-function renderDocList(docs){
-  const el = document.getElementById('docList');
-  if(!docs.length){ el.innerHTML='<div class="empty"><p>No documents found.</p></div>'; return; }
-
-  const statusIcon={'indexed':'✓','pending':'⏳','failed':'✗'};
-  const statusCls={'indexed':'indexed','pending':'pending','failed':'failed'};
-  const catIcon = c=>{
-    if(!c) return '📄';
-    const cl=c.toLowerCase();
-    if(cl.includes('act')) return '⚖';
-    if(cl.includes('rule')) return '📜';
-    if(cl.includes('circular')) return '📋';
-    if(cl.includes('notification')) return '🔔';
-    if(cl.includes('faq')) return '❓';
-    if(cl.includes('council')) return '🏛';
-    if(cl.includes('press')) return '📰';
-    return '📄';
+function onNoticeUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const isPDF=file.type==='application/pdf';
+  const isImg=file.type.startsWith('image/');
+  if(!isPDF&&!isImg){showToast('Please upload an image or PDF.');return;}
+  if(file.size>20*1024*1024){showToast('File too large. Please use a file under 20MB.');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const base64=ev.target.result.split(',')[1];
+    attachedFile={type:isPDF?'pdf':'image',base64,mediaType:file.type,name:file.name};
+    renderAttachPreview();
+    showToast('File attached — press Send to analyse');
   };
+  reader.readAsDataURL(file);e.target.value='';
+}
 
-  el.innerHTML = docs.map(d=>{
-    const s = d.gemini_status||'pending';
-    const size = d.file_size_bytes ? (d.file_size_bytes/1024/1024).toFixed(1)+'MB' : '—';
-    const date = d.created_at ? new Date(d.created_at).toLocaleDateString('en-IN') : '—';
-    const indexed = d.gemini_indexed_at ? new Date(d.gemini_indexed_at).toLocaleDateString('en-IN') : '—';
-    return `<div class="doc-row">
-      <input type="checkbox" class="doc-chk" data-id="${d.id}" onchange="onDocSelect(this)" style="accent-color:var(--accent);cursor:pointer;flex-shrink:0"/>
-      <div class="doc-icon">${catIcon(d.category)}</div>
-      <div class="doc-info">
-        <div class="doc-name" title="${esc(d.doc_name||d.file_name||'Unknown')}">${esc(d.doc_name||d.file_name||'Unknown')}</div>
-        <div class="doc-meta">${esc(d.category||'—')} · ${size} · Added ${date}${d.gemini_status==='indexed'?' · Indexed '+indexed:''}</div>
-      </div>
-      ${d.drive_url?`<a href="${esc(d.drive_url)}" target="_blank" class="btn btn-ghost btn-sm" title="Open in Drive">Drive</a>`:''}
-      ${d.last_error?`<span title="${esc(d.last_error)}" style="font-size:10px;color:var(--red);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="btn btn-sm">⚠ Error</span>`:''}
-      <span class="badge badge-${statusCls[s]||'pending'}">${statusIcon[s]||'⏳'} ${s}</span>
-      <div class="doc-actions">
-        ${s==='failed'?`<button class="btn btn-ghost btn-sm" onclick="reindexDoc('${d.id}')">↺ Retry</button>`:''}
-        <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">✕</button>
-      </div>
-    </div>`;
+function renderAttachPreview(){
+  if(!attachedFile){document.getElementById('attachPreview').classList.remove('show');document.getElementById('attachChips').innerHTML='';return;}
+  document.getElementById('attachPreview').classList.add('show');
+  const icon=attachedFile.type==='pdf'?'📄':'🖼';
+  document.getElementById('attachChips').innerHTML=`<div class="attach-chip"><span>${icon}</span><span class="attach-chip-name">${esc(attachedFile.name)}</span><button class="attach-chip-del" onclick="clearAttach()">✕</button></div>`;
+}
+function clearAttach(){attachedFile=null;renderAttachPreview();}
+
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function autoR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+function newChat(){
+  history=[];
+  currentChatId = 'c'+Date.now();
+  currentChatTitle = '';
+  currentChatQueryCount = 0;
+  document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState"><div class="empty-icon"><span>G</span></div><div class="empty-title" id="emptyGreet">How can I help you today?</div><div class="empty-sub">Ask any GST research question. Attach a document, notice, or photo using the 📎 button below.</div><div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div></div>`;
+  renderTrendingChips();
+}
+
+async function send(){
+  if(busy)return;
+  const user=getUser();
+  if(user.plan==='free'&&(user.queryCount||0)>=(user.queryLimit||10)){showUpgrade();return;}
+  const q=document.getElementById('qi').value.trim();
+  if(!q&&!attachedFile){showToast('Please type a query or attach a notice file.');return;}
+  const queryText=q||'Please analyse this attached document and answer any GST-related questions about it.';
+  const currentAttach=attachedFile;
+  document.getElementById('qi').value='';document.getElementById('qi').style.height='auto';
+  clearAttach();removeEmpty();
+  addUserRow(queryText,currentAttach);
+  let msgContent;
+  if(currentAttach){
+    msgContent=[];
+    if(currentAttach.type==='image'){msgContent.push({type:'image',source:{type:'base64',media_type:currentAttach.mediaType,data:currentAttach.base64}});}
+    else{msgContent.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:currentAttach.base64}});}
+    msgContent.push({type:'text',text:queryText});
+  } else {msgContent=queryText;}
+  history.push({role:'user',content:msgContent});
+  addToHistory(queryText);
+  busy=true;document.getElementById('sendBtn').disabled=true;
+  const tid=addThinkRow();
+  const isFollowUp = history.length > 2;
+  let retrieved = [];
+  let hasRAG = false;
+  try{
+    const res = await fetch(API+'/query',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({messages: compressHistory(history),query_text: queryText,is_followup: isFollowUp,has_attachment: !!currentAttach})});
+    if(!res.ok){
+      const data = await res.json().catch(()=>({}));
+      delEl(tid);
+      if(res.status===429){showUpgrade();busy=false;document.getElementById('sendBtn').disabled=false;return;}
+      if(res.status===401){showPage('login');busy=false;document.getElementById('sendBtn').disabled=false;return;}
+      addErrMsg('Error '+(res.status)+': '+(data.detail||'Something went wrong. Please try again.'));
+      busy=false;document.getElementById('sendBtn').disabled=false;return;
+    }
+    const ct = res.headers.get('content-type')||'';
+    if(!ct.includes('event-stream')){
+      const text = await res.text().catch(()=>'');
+      delEl(tid);
+      let detail = 'AI service error. Please try again.';
+      try{ detail = JSON.parse(text).detail || detail; }catch(e){}
+      addErrMsg(detail);
+      busy=false;document.getElementById('sendBtn').disabled=false;return;
+    }
+    delEl(tid);
+    const msgId = 'm'+Date.now();
+    const streamDiv = document.createElement('div');
+    streamDiv.className = 'msg-row bot';
+    streamDiv.id = msgId;
+    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body" id="mb_${msgId}"><div class="stream-bubble" id="sb_${msgId}"></div></div></div>`;
+    msgsEl().appendChild(streamDiv);
+    scrollBot();
+    const streamEl = document.getElementById('sb_'+msgId);
+    let fullText = '';
+    let queryCountFromServer = null;
+    const streamTextNode = document.createTextNode('');
+    const streamPre = document.createElement('div');
+    streamPre.className = 'stream-raw';
+    streamPre.appendChild(streamTextNode);
+    streamEl.appendChild(streamPre);
+    const tokenQueue = [];
+    let rafId = null;
+    let streamDone = false;
+    let lastScrollTime = 0;
+    const CHARS_PER_FRAME = 8;
+    function drainQueue(){
+      if(tokenQueue.length === 0){
+        if(streamDone){finalizeStream();return;}
+        rafId = null;return;
+      }
+      let charsThisFrame = 0;
+      while(tokenQueue.length > 0 && charsThisFrame < CHARS_PER_FRAME){
+        const token = tokenQueue[0];
+        if(charsThisFrame + token.length <= CHARS_PER_FRAME){streamTextNode.appendData(token);fullText += token;tokenQueue.shift();charsThisFrame += token.length;}
+        else {const part = token.slice(0, CHARS_PER_FRAME - charsThisFrame);streamTextNode.appendData(part);fullText += part;tokenQueue[0] = token.slice(CHARS_PER_FRAME - charsThisFrame);charsThisFrame = CHARS_PER_FRAME;}
+      }
+      const now = Date.now();
+      if(now - lastScrollTime > 200){ lastScrollTime = now; scrollBot(); }
+      rafId = requestAnimationFrame(drainQueue);
+    }
+    function finalizeStream(){
+      streamDiv.style.transition = 'opacity 0.15s';
+      streamDiv.style.opacity = '0';
+      setTimeout(()=>{
+        streamDiv.remove();
+        history.push({role:'assistant', content:fullText});
+        renderBotRow(fullText, hasRAG, retrieved);
+        const finalRow = msgsEl().lastElementChild;
+        if(finalRow){ finalRow.style.opacity='0'; finalRow.style.transition='opacity 0.15s'; requestAnimationFrame(()=>{ finalRow.style.opacity='1'; }); }
+        scrollBot();
+      }, 150);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if(!raw) continue;
+        try{
+          const event = JSON.parse(raw);
+          if(event.type === 'meta'){
+            queryCountFromServer = event.query_count;
+            if(event.sources && event.sources.length > 0){
+              retrieved = event.sources.map(s => ({doc: s.doc, score: s.score, url: s.url||'', pages: Array.isArray(s.pages)?s.pages:[], doc_number: s.doc_number||'', year: s.year||'', doc_type: s.doc_type||'', chunk:'', docDate:'', docType:''}));
+              hasRAG = true;
+            }
+          } else if(event.type === 'text'){if(event.text){tokenQueue.push(event.text);if(!rafId) rafId = requestAnimationFrame(drainQueue);}}
+          else if(event.type === 'done'){break;}
+          else if(event.type === 'waiting'){if(streamEl) streamEl.textContent = '⏱ High traffic — retrying in ' + event.seconds + 's...';}
+          else if(event.type === 'error'){streamDiv.remove();if(event.message === 'rate_limit'){addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');} else {addErrMsg('Error: ' + (event.message||'Please try again.'));}}
+        } catch(e){}
+      }
+    }
+    streamDone = true;
+    if(!rafId && tokenQueue.length === 0) finalizeStream();
+    user.queryCount = queryCountFromServer || (user.queryCount||0)+1;
+    saveUser(user); updateQueryMeter(user);
+    if(user.plan==='free'&&user.queryCount>=FREE_LIMIT) setTimeout(showUpgrade,1200);
+    else if(user.plan==='free'&&user.queryCount>=FREE_LIMIT-3) showToast(`${FREE_LIMIT-user.queryCount} free quer${FREE_LIMIT-user.queryCount===1?'y':'ies'} remaining`);
+  }catch(e){delEl(tid);console.error('Query error:', e.message);addErrMsg('Connection error — '+e.message+'. Please try again.');}
+  busy=false;document.getElementById('sendBtn').disabled=false;
+}
+
+let currentChatId = 'c'+Date.now();
+let currentChatTitle = '';
+let currentChatQueryCount = 0;
+
+function addToHistory(q){
+  logQuery(q);
+  currentChatQueryCount++;
+  if(currentChatQueryCount === 1){currentChatTitle = q.length > 48 ? q.slice(0,48)+'…' : q;renderChatInSidebar();}
+  else {const item = document.getElementById('chat_'+currentChatId);if(item){const meta = item.querySelector('.hist-m');if(meta) meta.textContent = currentChatQueryCount+' queries · '+getCurrentTime();}}
+}
+
+function getCurrentTime(){const now=new Date();return now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
+
+function renderChatInSidebar(){
+  const list=document.getElementById('histList');
+  const empty=list.querySelector('[style*="color:var(--light)"]');
+  if(empty)empty.remove();
+  const existing=document.getElementById('chat_'+currentChatId);
+  if(existing)existing.remove();
+  const d=document.createElement('div');
+  d.className='hist-item';
+  d.id='chat_'+currentChatId;
+  d.innerHTML=`<div class="hist-q">${esc(currentChatTitle)}</div><div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
+  d.onclick=()=>{};
+  list.prepend(d);
+  if(list.children.length>30)list.removeChild(list.lastChild);
+  saveChatHistory();
+}
+
+function saveChatHistory(){
+  try{
+    const chats = JSON.parse(localStorage.getItem('gm_chat_history')||'[]');
+    const idx = chats.findIndex(ch=>ch.id===currentChatId);
+    const entry = {id:currentChatId, title:currentChatTitle, count:currentChatQueryCount, time:getCurrentTime(), date:new Date().toLocaleDateString('en-IN')};
+    if(idx>=0) chats[idx]=entry; else chats.unshift(entry);
+    localStorage.setItem('gm_chat_history', JSON.stringify(chats.slice(0,30)));
+  }catch(e){}
+}
+
+function loadChatHistory(){
+  try{
+    const chats = JSON.parse(localStorage.getItem('gm_chat_history')||'[]');
+    if(!chats.length) return;
+    const list = document.getElementById('histList');
+    const empty = list.querySelector('[style*="color:var(--light)"]');
+    if(empty)empty.remove();
+    chats.forEach(ch=>{
+      const d=document.createElement('div');
+      d.className='hist-item';
+      d.id='chat_'+ch.id;
+      d.innerHTML=`<div class="hist-q">${esc(ch.title)}</div><div class="hist-m">${ch.count} quer${ch.count===1?'y':'ies'} · ${ch.date||ch.time}</div>`;
+      d.onclick=()=>{};
+      list.appendChild(d);
+    });
+  }catch(e){}
+}
+
+const DEFAULT_POPULAR = ['Time limit for ITC under Section 16(4)?','Is GST applicable on liquidated damages?','Penalty for non-filing of GSTR-3B?','Zero-rated supply under IGST Act?','ITC reversal under Rule 42 — how calculated?','Place of supply for export of services?','Section 73 vs 74 — what is the difference?','Can ITC be claimed on works contract services?','GSTR-9 annual return filing deadline?','RCM applicability on legal services?'];
+
+function logQuery(q){
+  if(q.length < 15) return;
+  if(q.startsWith('Please analyse this attached')) return;
+  const clean = q;
+  const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
+  log[clean] = (log[clean]||0) + 1;
+  const entries = Object.entries(log).sort((a,b)=>b[1]-a[1]).slice(0,50);
+  localStorage.setItem('gm_query_log', JSON.stringify(Object.fromEntries(entries)));
+}
+
+function getTopQueries(n=8){
+  const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
+  const entries = Object.entries(log).sort((a,b)=>b[1]-a[1]);
+  if(entries.length >= 4){return entries.slice(0,n).map(([q,cnt])=>({q,cnt,real:true}));}
+  const realKeys = new Set(entries.map(e=>e[0]));
+  const defaults = DEFAULT_POPULAR.filter(d=>!realKeys.has(d)).slice(0,n-entries.length);
+  const realItems = entries.slice(0,n).map(([q,cnt])=>({q,cnt,real:true}));
+  const defItems = defaults.map(q=>({q,cnt:null,real:false}));
+  return [...realItems,...defItems].slice(0,n);
+}
+
+function renderTrendingChips(){
+  const el = document.getElementById('trendingChips');
+  if(!el) return;
+  const queries = getTopQueries(8);
+  el.innerHTML = queries.map((item,i) => {
+    const rankHtml = item.real ? `<span class="chip-rank">${i+1}</span>` : '';
+    const countHtml = item.cnt && item.cnt > 1 ? `<span class="chip-count">${item.cnt}×</span>` : '';
+    const shortQ = item.q.length > 55 ? item.q.slice(0,55)+'…' : item.q;
+    return `<div class="chip" onclick="useChipText(${JSON.stringify(item.q)})">${rankHtml}${esc(shortQ)}${countHtml}</div>`;
   }).join('');
 }
 
-function onDocSelect(chk){
-  if(chk.checked) _selDocs.add(chk.dataset.id);
-  else _selDocs.delete(chk.dataset.id);
-  updateDeleteBtn();
+function useChipText(q){ document.getElementById('qi').value=q; send(); }
+
+const msgsEl=()=>document.getElementById('msgs');
+const scrollBot=()=>{const m=msgsEl();m.scrollTop=m.scrollHeight;};
+function removeEmpty(){const e=document.getElementById('emptyState');if(e)e.remove();}
+function delEl(id){document.getElementById(id)?.remove();}
+
+function addUserRow(txt,attach){
+  const d=document.createElement('div');d.className='msg-row user';
+  let attachHtml='';
+  if(attach){attachHtml=attach.type==='image'?`<img class="notice-img" src="data:${attach.mediaType};base64,${attach.base64}" alt="Notice"/>`:`<div class="notice-file-chip">📄 ${esc(attach.name)}</div>`;}
+  d.innerHTML=`<div class="msg-inner"><div class="av">You</div><div class="msg-body">${attachHtml}<div class="bubble">${esc(txt)}</div></div></div>`;
+  msgsEl().appendChild(d);scrollBot();
 }
 
-function toggleSelectAll(checked){
-  document.querySelectorAll('.doc-chk').forEach(c=>{ c.checked=checked; if(checked) _selDocs.add(c.dataset.id); else _selDocs.delete(c.dataset.id); });
-  updateDeleteBtn();
+function addThinkRow(){
+  const id='tk'+Date.now();
+  const d=document.createElement('div');d.className='msg-row bot';d.id=id;
+  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="think-bub"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-txt" id="thinkTxt">Searching knowledge base…</span></div></div></div>`;
+  const thinkMsgs = ['Searching knowledge base…','Analyzing GST provisions…','Checking relevant circulars…','Cross-referencing sections…','Reviewing applicable rules…','Drafting legal analysis…'];
+  let thinkIdx = 0;
+  const thinkInterval = setInterval(()=>{thinkIdx = (thinkIdx+1) % thinkMsgs.length;const el = document.getElementById('thinkTxt');if(el) el.textContent = thinkMsgs[thinkIdx];else clearInterval(thinkInterval);}, 1800);
+  d._thinkInterval = thinkInterval;
+  msgsEl().appendChild(d);scrollBot();return id;
 }
 
-function updateDeleteBtn(){
-  const btn=document.getElementById('deleteSelBtn');
-  if(btn) btn.style.display=_selDocs.size>0?'inline-flex':'none';
-  if(btn) btn.textContent=`🗑 Delete Selected (${_selDocs.size})`;
-}
-
-async function reindexDoc(docId){
-  try{
-    await apiFetch('/kb/documents/'+docId+'/reindex','POST',{},true);
-    toast('Reindex triggered','success');
-    setTimeout(loadKBDocs, 1000);
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-async function deleteDoc(docId){
-  confirmAct('Delete this document from the knowledge base and Gemini store?', async()=>{
-    try{
-      await apiFetch('/kb/documents/'+docId,'DELETE',null,true);
-      toast('Document deleted','success');
-      _allDocs=_allDocs.filter(d=>d.id!==docId);
-      _selDocs.delete(docId);
-      renderDocList(_allDocs);
-      updateDeleteBtn();
-      loadKBStats();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
-async function deleteSelectedDocs(){
-  if(!_selDocs.size) return;
-  confirmAct(`Delete ${_selDocs.size} documents from the knowledge base?`, async()=>{
-    let ok=0,fail=0;
-    for(const id of _selDocs){
-      try{ await apiFetch('/kb/documents/'+id,'DELETE',null,true); ok++; }
-      catch(e){ fail++; }
+function renderBotRow(raw,hasRAG,retrieved){
+  let conf='MEDIUM',refs=[];
+  const cm=raw.match(/CONFIDENCE\s*:\s*(HIGH|MEDIUM|LOW)/i);
+  if(cm)conf=cm[1].toUpperCase();
+  const refM=raw.match(/REFERENCES\s*:\s*([\s\S]+)$/i);
+  if(refM){
+    refM[1].trim().split(/\n/).forEach(line=>{const m=line.match(/^(\d+)\.\s*(.+)/);if(m)refs.push({num:m[1],text:m[2].trim()});});
+    raw=raw.replace(/REFERENCES\s*:[\s\S]+$/i,'').trim();
+  }
+  let answer = raw
+    .replace(/CONFIDENCE\s*:\s*(HIGH|MEDIUM|LOW)\s*\n*/gi, '')
+    .replace(/^\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/im, '')
+    .replace(/\n\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/gi, '\n')
+    .trim();
+  let noticeTag='';
+  const ntm=answer.match(/NOTICE TYPE IDENTIFIED\s*:\s*([^\n]+)/i);
+  if(ntm){noticeTag=`<div class="notice-type-tag">Identified: ${esc(ntm[1].trim())}</div>`;answer=answer.replace(/NOTICE TYPE IDENTIFIED\s*:[^\n]+\n?/i,'').trim();}
+  let refsHtml='';
+  if(refs.length>0){
+    refsHtml=`<div class="refs-wrap"><div class="refs-label">References</div>${refs.map(r=>`<div class="ref-item"><div class="ref-n">${esc(r.num)}</div><div class="ref-txt">${esc(r.text)}</div></div>`).join('')}</div>`;
+  } else if(hasRAG){
+    const seen=new Set(), uniqueSrcs=[];
+    retrieved.forEach(r=>{if(!seen.has(r.doc)){seen.add(r.doc);uniqueSrcs.push(r);}});
+    if(uniqueSrcs.length){
+      refsHtml=`<div class="refs-wrap"><div class="refs-label">Sources used</div>${uniqueSrcs.map((s,i)=>{
+        const baseUrl = s.url || '';
+        const yearTag = s.year ? ` <span style="color:var(--text3);font-size:11px">(${esc(String(s.year))})</span>` : '';
+        const docLabel = `${esc(s.doc)}${yearTag}`;
+        const title = baseUrl
+          ? `<a href="${baseUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">${docLabel}</a>`
+          : `<strong>${docLabel}</strong>`;
+        const pageText = (Array.isArray(s.pages) && s.pages.length > 0)
+          ? ` <span style="color:var(--text3);font-size:11px">— pp. ${s.pages.join(', ')}</span>`
+          : '';
+        return `<div class="ref-item"><div class="ref-n">${i+1}</div><div class="ref-txt">${title}${pageText}</div></div>`;
+      }).join('')}</div>`;
     }
-    toast(`${ok} deleted${fail?' · '+fail+' failed':''}`, fail?'error':'success');
-    _selDocs.clear();
-    await loadKBDocs();
-    await loadKBStats();
-  });
+  }
+  const msgId='m'+Date.now();
+  const d=document.createElement('div');d.className='msg-row bot';d.id=msgId;
+  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body">${noticeTag}<div class="bubble">${fmt(answer)}</div>${refsHtml}<div class="msg-acts"><button class="act-btn" onclick="copyAns('${msgId}')">📋 Copy</button><button class="act-btn" onclick="downloadAns('${msgId}')">⬇ Download</button><button class="act-btn" onclick="shareWA('${msgId}')">💬 WhatsApp</button><button class="act-btn" onclick="shareEmail('${msgId}')">✉ Email</button></div></div></div>`;
+  msgsEl().appendChild(d);scrollBot();
 }
 
-// ══════════════════════════════════════════════
-// DRIVE SYNC
-// ══════════════════════════════════════════════
-async function loadSyncStatus(){
+function addErrMsg(m){
+  const d=document.createElement('div');d.className='msg-row bot';
+  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="bubble" style="color:var(--text3);font-size:13px;border-color:var(--border2)">${esc(m)}</div></div></div>`;
+  msgsEl().appendChild(d);scrollBot();
+}
+
+function getContent(id){
+  const el=document.getElementById(id);
+  const bubble=el?.querySelector('.bubble')?.innerText||'';
+  const refs=el?.querySelector('.refs-wrap')?.innerText||'';
+  return bubble+(refs?'\n\n'+refs:'');
+}
+function copyAns(id){navigator.clipboard.writeText(getContent(id)).then(()=>showToast('Copied to clipboard'));}
+function downloadAns(id){
+  const user=getUser();
+  const text=getContent(id);
+  const full=`GSTMIND RESEARCH OUTPUT\nGenerated: ${new Date().toLocaleString('en-IN')}\nUser: ${user.name||''}\n\n${'─'.repeat(60)}\n\n${text}\n\n${'─'.repeat(60)}\nDISCLAIMER: For research purposes only. Not legal or professional advice. Verify with primary legislation.\n\nGSTMind — GST AI Research Platform`;
+  const blob=new Blob([full],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`GSTMind_${Date.now()}.txt`;a.click();
+  showToast('Downloaded');
+}
+function shareWA(id){const text=getContent(id);const msg=`*GSTMind — GST Research Output*\n\n${text.slice(0,800)}${text.length>800?'\n\n_[Full answer in GSTMind app]_':''}\n\n_⚠ Research only. Not legal advice. Verify with primary legislation._\n_GSTMind — GST AI Research Platform_`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+function shareEmail(id){const text=getContent(id);const sub='GSTMind Research Output';const body=`GSTMind Research Output\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n${text}\n\nDisclaimer: For research purposes only. Not legal advice. Verify with primary legislation.\n\nGSTMind — GST AI Research Platform`;window.location.href=`mailto:?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;}
+
+function fmt(s){
+  const lines = esc(s).split('\n');
+  const out = [];
+  for(let i=0; i<lines.length; i++){
+    let line = lines[i];
+    if(/^###\s+/.test(line)){ out.push(`<div class="fh3">${line.replace(/^###\s+/,'')}</div>`); continue; }
+    if(/^##\s+/.test(line)){ out.push(`<div class="fh2">${line.replace(/^##\s+/,'')}</div>`); continue; }
+    if(/^#\s+/.test(line)){ out.push(`<div class="fh1">${line.replace(/^#\s+/,'')}</div>`); continue; }
+    if(/^[\*\-]\s+/.test(line)){ out.push(`<div class="fbul">${line.replace(/^[\*\-]\s+/,'')}</div>`); continue; }
+    if(/^\d+\.\s+/.test(line)){ const m = line.match(/^(\d+)\.\s+(.*)/); out.push(`<div class="fbul"><span class="fnum">${m[1]}.</span>${m[2]}</div>`); continue; }
+    if(line.trim()===''){ out.push('<div class="fgap"></div>'); continue; }
+    out.push('<span class="fline">'+line+'</span><br>');
+  }
+  return out.join('')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>')
+    .replace(/([¹²³⁴⁵⁶⁷⁸⁹])(?=[¹²³⁴⁵⁶⁷⁸⁹])/g,'$1<span class="cite-sep">,</span>')
+    .replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g,(m)=>{const map={'¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};const n=parseInt(map[m]||'1',10);return `<a href="#" class="cite-link" onclick="return scrollToRef(event,${n},this)"><sup class="fn">${map[m]||m}</sup></a>`;})
+    .replace(/\[(\d+)\]/g,(_m,n)=>`<a href="#" class="cite-link" onclick="return scrollToRef(event,${parseInt(n,10)},this)"><sup class="fn">${n}</sup></a>`)
+    .replace(/⚠ This draft is prepared for review([^<\n]*)/g,'<div class="draft-disclaimer">⚠ This draft is prepared for review$1</div>');
+}
+
+function toggleTheme(){document.body.classList.toggle('dark-mode');const isDark = document.body.classList.contains('dark-mode');localStorage.setItem('gm_theme', isDark ? 'dark' : 'light');document.querySelectorAll('.theme-toggle').forEach(btn => { btn.textContent = isDark ? '☀️' : '🌙'; });}
+function loadTheme(){const saved = localStorage.getItem('gm_theme');if(saved === 'dark'){document.body.classList.add('dark-mode');document.querySelectorAll('.theme-toggle').forEach(btn => btn.textContent = '☀️');}}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function scrollToRef(event, n, anchor){
+  event.preventDefault();
+  const row = anchor && anchor.closest && anchor.closest('.msg-row');
+  if(!row) return false;
+  const items = row.querySelectorAll('.ref-item');
+  const target = items[n - 1];
+  if(!target) return false;
+  target.scrollIntoView({behavior:'smooth', block:'center'});
+  target.classList.add('cite-flash');
+  setTimeout(()=>target.classList.remove('cite-flash'), 1600);
+  return false;
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+let currentOTP = {};
+let otpTimers = {};
+let forgotEmail = '';
+
+async function sendForgotOTP(){
+  const email = document.getElementById('forgot-email').value.trim();
+  if(!email || !email.includes('@')){showToast('Please enter a valid email address.');return;}
+  const btn = document.querySelector('#forgotStep1 .auth-btn');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
   try{
-    const s = await apiFetch('/sync/status','GET',null,true);
-    const running = s.currently_running;
-    const lr = s.last_result||s.latest_db_run||{};
+    const res = await apiCall('/auth/forgot/send','POST',{email});
+    forgotEmail = email;
+    document.getElementById('forgot-phone-show').textContent = 'OTP sent to: ' + email;
+    document.getElementById('forgotStep1').style.display='none';
+    document.getElementById('forgotStep2').style.display='block';
+    clearOTPBoxes('forgot');
+    startTimer('forgot', 120);
+    setTimeout(()=>document.getElementById('forgot-otp-boxes').querySelector('.otp-box').focus(),100);
+    showToast('OTP sent to your email');
+  }catch(e){showToast(e.message||'Failed to send OTP. Please try again.','error');}
+  finally{if(btn){btn.textContent='Send Reset OTP';btn.disabled=false;}}
+}
 
-    document.getElementById('syncStat').textContent = running ? '🔄 Running' : (lr.status||'Idle');
-    document.getElementById('syncStat').style.color = running ? 'var(--amber)' : lr.status==='done'?'var(--green)':'var(--text2)';
-    document.getElementById('syncTrigger').textContent = s.triggered_by||lr.triggered_by||'—';
-    document.getElementById('syncStarted').textContent = s.started_at ? new Date(s.started_at).toLocaleString('en-IN') : '—';
+async function verifyForgotOTPAndNext(){
+  const entered = getOTPValue('forgot');
+  if(entered.length !== 6){showToast('Please enter the complete 6-digit OTP.');return;}
+  try{await apiCall('/auth/forgot/verify','POST',{email:forgotEmail, otp:entered});currentOTP['forgot'] = {verified:true};document.getElementById('forgotStep2').style.display='none';document.getElementById('forgotStep3').style.display='block';}
+  catch(e){showToast(e.message||'Invalid OTP. Please try again.');clearOTPBoxes('forgot');}
+}
 
-    const lrr = s.last_result||{};
-    document.getElementById('syncLastResult').textContent = lrr.status ? `${lrr.status} · +${lrr.files_added||0} added · ${lrr.duration_seconds||0}s` : '—';
+async function resetPassword(){
+  const newPass = document.getElementById('forgot-new-pass').value;
+  const confPass = document.getElementById('forgot-conf-pass').value;
+  if(newPass.length < 8){showToast('Password must be at least 8 characters.');return;}
+  if(newPass !== confPass){showToast('Passwords do not match.');return;}
+  if(!currentOTP['forgot']?.verified){showToast('Please verify OTP first.');return;}
+  const btn = document.querySelector('#forgotStep3 .auth-btn');
+  if(btn){btn.textContent='Resetting...';btn.disabled=true;}
+  try{await apiCall('/auth/forgot/reset','POST',{email:forgotEmail, new_password:newPass});document.getElementById('forgotModal').classList.remove('show');showToast('Password reset successfully. Please log in.');showPage('login');}
+  catch(e){showToast(e.message||'Failed to reset password. Please try again.');}
+  finally{if(btn){btn.textContent='Reset Password';btn.disabled=false;}}
+}
 
-    // Latest DB run details
-    const db = s.latest_db_run||{};
-    document.getElementById('lr-scanned').textContent = db.drive_scanned??'—';
-    document.getElementById('lr-added').textContent = db.files_added??'—';
-    document.getElementById('lr-deleted').textContent = db.files_deleted??'—';
-    document.getElementById('lr-failed').textContent = db.files_failed??'—';
-    document.getElementById('lr-duration').textContent = db.duration_seconds!=null ? db.duration_seconds+'s' : '—';
-    document.getElementById('lr-completed').textContent = db.completed_at ? new Date(db.completed_at).toLocaleString('en-IN') : '—';
-
-    // Topbar sync status
-    const dot=document.getElementById('syncDot');
-    const txt=document.getElementById('syncStatusTxt');
-    const pill=document.getElementById('syncStatus');
-    if(running){
-      pill.className='status-pill pill-amber';
-      dot.classList.add('pulse');
-      txt.textContent='Sync: Running...';
-    } else if(db.status==='done'){
-      pill.className='status-pill pill-green';
-      dot.classList.remove('pulse');
-      txt.textContent='Sync: Idle';
-    } else {
-      pill.className='status-pill pill-amber';
-      dot.classList.remove('pulse');
-      txt.textContent='Sync: '+( db.status||'Never run');
+function otpInput(el, prefix) {
+  el.value = el.value.replace(/\D/g,'');
+  if(el.value) {
+    el.classList.add('filled');
+    const boxes = [...document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box')];
+    const idx = boxes.indexOf(el);
+    if(idx < boxes.length - 1) boxes[idx+1].focus();
+    if(boxes.every(b => b.value)) {
+      setTimeout(() => {if(prefix==='loginotp') verifyLoginEmailOTP();else if(prefix==='signup') doSignup();else if(prefix==='forgot') verifyForgotOTPAndNext();}, 300);
     }
-
-    // Run/stop btn state
-    const runBtn=document.getElementById('syncRunBtn');
-    const stopBtn=document.getElementById('syncStopBtn');
-            if(runBtn){ runBtn.disabled=running; runBtn.textContent=running?'⏳ Running...':'▶ Trigger Sync'; runBtn.style.display=running?'none':'flex'; }
-    if(stopBtn){ stopBtn.style.display=running?'inline-flex':'none'; }
-
-  }catch(e){ console.error('loadSyncStatus:', e.message); }
+  } else { el.classList.remove('filled'); }
 }
 
-async function stopSync(){
-  try{
-    const r = await apiFetch('/sync/stop','POST',{},true);
-    toast(r.message,'success');
-    setTimeout(loadSyncStatus, 1000);
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-async function deleteAllDocs(){
-  confirmAct('Delete ALL documents from the Gemini File Search store? Google Drive files are untouched. You can re-sync afterwards.', async()=>{
-    toast('Deleting all documents... please wait','');
-    try{
-      const r = await apiFetch('/kb/documents','DELETE',null,true);
-      toast('✓ '+r.deleted+' deleted'+(r.failed?' · '+r.failed+' failed':''), r.failed?'error':'success');
-      await loadKBDocs(); await loadKBStats();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
-async function triggerSync(){
-  const btn = document.getElementById('syncRunBtn');
-  if(btn){ btn.disabled=true; btn.textContent='Starting...'; }
-  try{
-    const r = await apiFetch('/sync/run','POST',{},true);
-    toast(r.already_running?'Sync already running':'Sync started ✓','success');
-    setTimeout(loadSyncStatus, 1500);
-    setTimeout(loadSyncHistory, 2000);
-    startSyncPoll();
-  }catch(e){
-    toast('Error: '+e.message,'error');
-    if(btn){ btn.disabled=false; btn.textContent='▶ Trigger Sync'; }
+function otpKeydown(e, el, prefix) {
+  if(e.key==='Backspace' && !el.value) {
+    const boxes = [...document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box')];
+    const idx = boxes.indexOf(el);
+    if(idx > 0) { boxes[idx-1].value=''; boxes[idx-1].classList.remove('filled'); boxes[idx-1].focus(); }
   }
 }
 
-async function loadSyncHistory(){
-  try{
-    const data = await apiFetch('/sync/history?limit=20','GET',null,true);
-    const runs = data.runs||[];
-    const tbody = document.getElementById('syncHistoryTbody');
-    if(!runs.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty"><p>No sync history yet.</p></div></td></tr>'; return; }
-    tbody.innerHTML = runs.map(r=>{
-      const s=r.status||'—';
-      const cls=s==='done'?'badge-active':s==='running'?'badge-pending':'badge-failed';
-      return `<tr>
-        <td style="font-family:var(--mono);font-size:11px">${r.started_at?new Date(r.started_at).toLocaleString('en-IN'):'—'}</td>
-        <td>${esc(r.triggered_by||'—')}</td>
-        <td style="font-family:var(--mono)">${r.drive_scanned??'—'}</td>
-        <td style="font-family:var(--mono);color:var(--green)">${r.files_added??'—'}</td>
-        <td style="font-family:var(--mono);color:var(--amber)">${r.files_failed??'—'}</td>
-        <td style="font-family:var(--mono)">${r.duration_seconds!=null?r.duration_seconds+'s':'—'}</td>
-        <td><span class="badge ${cls}">${s}</span></td>
-      </tr>`;
-    }).join('');
-  }catch(e){ document.getElementById('syncHistoryTbody').innerHTML='<tr><td colspan="7"><div class="empty"><p>Error loading history</p></div></td></tr>'; }
+function getOTPValue(prefix) {return [...document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box')].map(b=>b.value).join('');}
+function clearOTPBoxes(prefix) {document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box').forEach(b=>{b.value='';b.classList.remove('filled');});}
+
+function startTimer(prefix, seconds) {
+  clearInterval(otpTimers[prefix]);
+  let remaining = seconds;
+  const wrapId = prefix==='loginotp' ? 'loginotp-timer-wrap' : prefix+'-timer-wrap';
+  const wrapEl = document.getElementById(wrapId);
+  if(!wrapEl) return;
+  wrapEl.innerHTML = `Resend OTP in <span id="${prefix}-timer-count">${remaining}</span>s`;
+  otpTimers[prefix] = setInterval(() => {
+    remaining--;
+    const ce = document.getElementById(prefix+'-timer-count');
+    if(ce) ce.textContent = remaining;
+    if(remaining <= 0) {clearInterval(otpTimers[prefix]);wrapEl.innerHTML = `<span class="auth-link" onclick="${prefix==='loginotp'?'sendLoginEmailOTP':prefix==='signup'?'initiateSignup':'sendForgotOTP'}()">Resend OTP</span>`;}
+  }, 1000);
 }
 
-function startSyncPoll(){
-  stopSyncPoll();
-  let errs = 0;
-  _syncPollTimer = setInterval(async()=>{
-    try{
-      await loadSyncStatus();
-      await loadKBStats();
-      errs = 0;
-      // Stop polling when sync no longer running
-      const stopBtn = document.getElementById('syncStopBtn');
-      if(!stopBtn || stopBtn.style.display === 'none') stopSyncPoll();
-    }catch(e){
-      if(++errs >= 3) stopSyncPoll();
-    }
-  }, 6000);
+window.onload=async ()=>{
+  loadTheme();
+  fetch(API+'/health').catch(()=>{});
+  const token = localStorage.getItem('gm_token');
+  const user = JSON.parse(localStorage.getItem('gm_user')||'null');
+  if(token && user){
+    authToken = token;
+    try{const fresh = await apiCall('/auth/me','GET',null,true);localStorage.setItem('gm_user', JSON.stringify(fresh));showPage('app');}
+    catch(e){localStorage.removeItem('gm_token');localStorage.removeItem('gm_user');showPage('landing');}
+  }
+};
+
+function isMobile(){ return window.innerWidth <= 768; }
+function toggleSidebarMobile(){const sb = document.getElementById('appSidebar');const ov = document.getElementById('sidebarOverlay');const isOpen = sb.classList.contains('mobile-open');if(isOpen){sb.classList.remove('mobile-open');ov.classList.remove('show');} else {sb.classList.add('mobile-open');ov.classList.add('show');}}
+function closeSidebar(){const sb = document.getElementById('appSidebar');const ov = document.getElementById('sidebarOverlay');sb.classList.remove('mobile-open');ov.classList.remove('show');}
+function handleResize(){
+  const btn = document.getElementById('mobileMenuBtn');
+  const sb = document.getElementById('appSidebar');
+  if(window.innerWidth <= 768){if(btn) btn.style.display = 'flex';if(!sb.classList.contains('mobile-open')){sb.classList.remove('collapsed');}}
+  else {if(btn) btn.style.display = 'none';closeSidebar();if(localStorage.getItem('gm_sidebar_collapsed')==='1'){sb.classList.add('collapsed');}}
 }
-function stopSyncPoll(){ if(_syncPollTimer){ clearInterval(_syncPollTimer); _syncPollTimer=null; } }
-
-// ══════════════════════════════════════════════
-// SUBSCRIPTIONS
-// ══════════════════════════════════════════════
-function renderSubs(){
-  const users=_users;
-  const free=users.filter(u=>(!u.plan||u.plan==='free')).length;
-  const pro=users.filter(u=>u.plan==='pro').length;
-  const unlimited=users.filter(u=>u.plan==='unlimited').length;
-  const paid=pro+unlimited;
-  const rev=pro*999+unlimited*1999;
-
-  document.getElementById('sub-mrr').textContent='₹'+(rev.toLocaleString('en-IN'));
-  document.getElementById('sub-paid').textContent=paid;
-  document.getElementById('sub-trial').textContent=free;
-  document.getElementById('pc-free').textContent=free;
-  document.getElementById('pc-pro').textContent=pro;
-  document.getElementById('pc-unlimited').textContent=unlimited;
-
-  const tbody=document.getElementById('subTbody');
-  if(!users.length){ tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>No subscribers yet</p></div></td></tr>'; return; }
-  _currentUsers=[...users];
-  tbody.innerHTML=users.map((u,i)=>`
-    <tr>
-      <td><strong>${esc(u.name||'Unknown')}</strong><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${esc(u.email||'—')}</div></td>
-      <td><span class="badge badge-${u.plan||'free'}">${u.plan==='pro'?'Professional':u.plan==='unlimited'?'Unlimited':'Free Trial'}</span></td>
-      <td style="font-family:var(--mono)">${u.query_count||0}/${u.plan==='unlimited'?'∞':(u.query_limit||10)}</td>
-      <td style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.joined_at?new Date(u.joined_at).toLocaleDateString('en-IN'):'—'}</td>
-      <td><span class="badge badge-${u.blocked?'blocked':'active'}"><span class="badge-dot"></span>${u.blocked?'Blocked':'Active'}</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="openPlanModal(${i})">Change Plan</button></td>
-    </tr>`).join('');
-}
-
-// ══════════════════════════════════════════════
-// ANALYTICS
-// ══════════════════════════════════════════════
-function renderAnalytics(){
-  const users=_users;
-  const free=users.filter(u=>(!u.plan||u.plan==='free')).length;
-  const pro=users.filter(u=>u.plan==='pro').length;
-  const unlimited=users.filter(u=>u.plan==='unlimited').length;
-  const paid=pro+unlimited;
-  const mx=Math.max(users.length,1);
-
-  const convEl=document.getElementById('convBars');
-  convEl.innerHTML=`
-    <div class="bar-row"><span class="bar-lbl">Signed up (free)</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--text3)"></div></div><span class="bar-cnt">${users.length}</span></div>
-    <div class="bar-row"><span class="bar-lbl">Professional</span><div class="bar-track"><div class="bar-fill" style="width:${pro/mx*100}%"></div></div><span class="bar-cnt">${pro}</span></div>
-    <div class="bar-row"><span class="bar-lbl">Unlimited</span><div class="bar-track"><div class="bar-fill" style="width:${unlimited/mx*100}%;background:var(--accent2)"></div></div><span class="bar-cnt">${unlimited}</span></div>`;
-
-  // KB categories
-  apiFetch('/kb/stats','GET',null,true).then(stats=>{
-    const cats=Object.entries(stats.by_category||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const mxc=cats[0]?.[1]||1;
-    const catEl=document.getElementById('catBars');
-    catEl.innerHTML=cats.length?cats.map(([c,n])=>`
-      <div class="bar-row"><span class="bar-lbl">${esc(c)}</span><div class="bar-track"><div class="bar-fill" style="width:${n/mxc*100}%"></div></div><span class="bar-cnt">${n}</span></div>`).join('')
-      :'<div class="empty"><p>No KB data</p></div>';
-  }).catch(()=>{});
-}
-
-// ══════════════════════════════════════════════
-// PROMPTS
-// ══════════════════════════════════════════════
-let _defaultPrompts={};
-
-async function loadPrompts(){
-  const container=document.getElementById('promptsContainer');
-  container.innerHTML='<div class="empty"><p>Loading...</p></div>';
-  try{
-    const [settings,defaults]=await Promise.all([
-      apiFetch('/settings','GET',null,true),
-      apiFetch('/settings/defaults','GET',null,true)
-    ]);
-    _defaultPrompts=defaults||{};
-    const map={};
-    (Array.isArray(settings)?settings:[]).forEach(s=>map[s.key]=s);
-
-    const prompts=[
-      {key:'main_prompt',title:'GST Query Prompt',sub:'Controls how GSTMind answers queries. Saved to DB — changes apply immediately without redeployment.'}
-    ];
-
-    container.innerHTML = prompts.map(p=>{
-      const val=map[p.key]?.value||_defaultPrompts[p.key]||'';
-      const updated=map[p.key]?.updated_at?new Date(map[p.key].updated_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Using default';
-      return `<div class="prompt-wrap">
-        <div class="prompt-hdr">
-          <div>
-            <div class="prompt-title">${esc(p.title)}</div>
-            <div class="prompt-sub">${esc(p.sub)}</div>
-          </div>
-          <div class="prompt-saved" id="psaved-${p.key}">✓ ${updated}</div>
-        </div>
-        <div class="prompt-body"><textarea id="prompt-${p.key}" rows="10">${esc(val)}</textarea></div>
-        <div class="prompt-footer">
-          <button class="btn btn-ghost btn-sm" onclick="resetPrompt('${p.key}')">↺ Reset to Default</button>
-          <button class="btn btn-primary btn-sm" onclick="savePrompt('${p.key}')">Save</button>
-        </div>
-      </div>`;
-    }).join('');
-
-    // After rendering, unescape textarea values
-    prompts.forEach(p=>{
-      const el=document.getElementById('prompt-'+p.key);
-      if(el) el.value=map[p.key]?.value||_defaultPrompts[p.key]||'';
-    });
-
-  }catch(e){ container.innerHTML='<div class="empty"><p>Error loading prompts: '+esc(e.message)+'</p></div>'; }
-}
-
-async function savePrompt(key){
-  const el=document.getElementById('prompt-'+key); if(!el)return;
-  const value=el.value.trim(); if(!value){ toast('Prompt cannot be empty','error'); return; }
-  try{
-    await apiFetch('/settings/'+key,'PUT',{value},true);
-    const lbl=document.getElementById('psaved-'+key);
-    if(lbl) lbl.textContent='✓ Saved '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-    el.style.outline='2px solid var(--green)';
-    setTimeout(()=>el.style.outline='',2000);
-    toast('✓ Prompt saved — takes effect immediately','success');
-  }catch(e){ toast('Error: '+e.message,'error'); }
-}
-
-async function resetPrompt(key){
-  const def=_defaultPrompts[key]; if(!def){ toast('Default not loaded','error'); return; }
-  const el=document.getElementById('prompt-'+key); if(!el)return;
-  el.value=def;
-  await savePrompt(key);
-  toast('Reset to default','success');
-}
-
-// ══════════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════════
-async function changePass(){
-  toast('Password change not yet wired to API endpoint','error');
-}
-
-async function resetQueryCounts(){
-  toast('Reset query counts not yet implemented','error');
-}
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-async function apiFetch(path, method='GET', body=null, auth=true){
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(auth && TOKEN) opts.headers['Authorization']='Bearer '+TOKEN;
-  if(body) opts.body=JSON.stringify(body);
-  const r=await fetch(API+path,opts);
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.detail||('HTTP '+r.status));
-  return data;
-}
-
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-function showErr(id,msg){ const e=document.getElementById(id); if(e){e.textContent=msg;e.classList.add('show');} }
-function hideErr(id){ const e=document.getElementById(id); if(e)e.classList.remove('show'); }
-
-function confirmAct(msg,cb){
-  document.getElementById('confirmMsg').textContent=msg;
-  const btn=document.getElementById('confirmOK');
-  btn.onclick=async()=>{ document.getElementById('confirmModal').classList.remove('show'); await cb(); };
-  document.getElementById('confirmModal').classList.add('show');
-}
+function handleInputFocus(){if(!isMobile()) return;setTimeout(()=>{const qi = document.getElementById('qi');if(qi) qi.scrollIntoView({behavior:'smooth', block:'nearest'});}, 300);}
+window.addEventListener('resize', handleResize);
+window.addEventListener('load', ()=>{handleResize();const qi = document.getElementById('qi');if(qi) qi.addEventListener('focus', handleInputFocus);});
 </script>
+
 </body>
 </html>
