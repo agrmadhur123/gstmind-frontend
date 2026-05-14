@@ -627,6 +627,16 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
         <div id="promptsContainer">
           <div class="empty"><p>Loading prompts...</p></div>
         </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">Raw API Test (No System Prompt)</div>
+          <div class="card-sub">Calls Gemini File Search directly with NO system prompt. Use this to see what citations/chunks the API returns before our shaping layer.</div>
+          <div class="fg"><label>Query</label><input type="text" id="rawTestQuery" placeholder="e.g. What is the threshold for GST registration?"/></div>
+          <div class="fg"><label>Metadata filter (optional)</label><input type="text" id="rawTestFilter" placeholder='e.g. year=2024'/></div>
+          <div class="fg"><label>Model (optional)</label><input type="text" id="rawTestModel" placeholder="gemini-2.5-flash"/></div>
+          <button class="btn btn-primary" onclick="runRawTest()">Run Raw Test</button>
+          <div id="rawTestOut" style="margin-top:16px"></div>
+        </div>
       </div>
 
       <!-- ── SETTINGS ── -->
@@ -1544,11 +1554,45 @@ async function savePrompt(key){
 }
 
 async function resetPrompt(key){
-  const def=_defaultPrompts[key]; if(!def){ toast('Default not loaded','error'); return; }
   const el=document.getElementById('prompt-'+key); if(!el)return;
+  try{
+    const fresh=await apiFetch('/settings/defaults','GET',null,true);
+    _defaultPrompts=fresh||_defaultPrompts;
+  }catch(e){ /* fall back to cached defaults */ }
+  const def=_defaultPrompts[key];
+  if(!def){ toast('Default not available from backend','error'); return; }
   el.value=def;
   await savePrompt(key);
   toast('Reset to default','success');
+}
+
+async function runRawTest(){
+  const q=(document.getElementById('rawTestQuery').value||'').trim();
+  if(!q){ toast('Enter a query','error'); return; }
+  const filter=(document.getElementById('rawTestFilter').value||'').trim();
+  const model=(document.getElementById('rawTestModel').value||'').trim();
+  const out=document.getElementById('rawTestOut');
+  out.innerHTML='<div class="empty"><p>Running...</p></div>';
+  const body={query:q};
+  if(filter) body.metadata_filter=filter;
+  if(model) body.model=model;
+  try{
+    const r=await apiFetch('/kb/test-query','POST',body,true);
+    const chunks=Array.isArray(r.chunks)?r.chunks:[];
+    const chunksHtml=chunks.map((c,i)=>`
+      <div class="sync-box" style="margin-bottom:8px">
+        <div class="sync-row"><span class="sync-lbl">#${i+1} Title</span><span class="sync-val">${esc(String(c.title||'—'))}</span></div>
+        <div class="sync-row"><span class="sync-lbl">Page</span><span class="sync-val">${esc(String(c.page_number??'—'))}</span></div>
+        <div class="sync-row"><span class="sync-lbl">Metadata</span><span class="sync-val" style="font-size:10px;word-break:break-all">${esc(JSON.stringify(c.custom_metadata||{}))}</span></div>
+        <div style="margin-top:6px;font-size:12px;color:var(--text2);white-space:pre-wrap;max-height:180px;overflow:auto;border-top:1px solid var(--bd);padding-top:6px">${esc(String(c.text_preview||''))}</div>
+      </div>`).join('');
+    out.innerHTML=`
+      <div class="card-title" style="font-size:14px">Answer</div>
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px;white-space:pre-wrap;margin-bottom:12px">${esc(String(r.answer_text||'(no answer)'))}</div>
+      <div class="card-title" style="font-size:14px">Chunks (${chunks.length})</div>
+      ${chunksHtml || '<div class="empty"><p>No chunks returned.</p></div>'}
+      <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--text2)">Raw first chunk JSON</summary><pre style="font-size:11px;background:var(--bg2);padding:8px;border-radius:6px;overflow:auto;max-height:300px">${esc(JSON.stringify(r.raw_first_chunk||{},null,2))}</pre></details>`;
+  }catch(e){ out.innerHTML='<div class="empty"><p>Error: '+esc(e.message)+'</p></div>'; }
 }
 
 // ══════════════════════════════════════════════
