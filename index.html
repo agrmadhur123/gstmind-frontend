@@ -236,6 +236,7 @@ body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
 .ref-item.cite-flash{background-color:var(--accent-bg,rgba(201,169,110,.12));outline-color:var(--accent)}
 .cite-link{color:var(--accent);text-decoration:none;cursor:pointer}
 .cite-link:hover{text-decoration:underline}
+.cite-sep{color:var(--text3);font-size:11px;vertical-align:super;margin:0 1px}
 .ref-n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:'DM Mono',monospace}
 .ref-txt{color:var(--text2);font-family:'DM Mono',monospace;line-height:1.5}
 .msg-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
@@ -1175,6 +1176,7 @@ function fmt(s){
   return out.join('')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>')
+    .replace(/([¹²³⁴⁵⁶⁷⁸⁹])(?=[¹²³⁴⁵⁶⁷⁸⁹])/g,'$1<span class="cite-sep">,</span>')
     .replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g,(m)=>{const map={'¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};const n=parseInt(map[m]||'1',10);return `<a href="#" class="cite-link" onclick="return scrollToRef(event,${n},this)"><sup class="fn">${map[m]||m}</sup></a>`;})
     .replace(/\[(\d+)\]/g,(_m,n)=>`<a href="#" class="cite-link" onclick="return scrollToRef(event,${parseInt(n,10)},this)"><sup class="fn">${n}</sup></a>`)
     .replace(/⚠ This draft is prepared for review([^<\n]*)/g,'<div class="draft-disclaimer">⚠ This draft is prepared for review$1</div>');
