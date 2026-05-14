@@ -188,14 +188,9 @@ section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
 .app-topbar { height: 54px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 14px; }
 .sidebar-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--text3); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
 .sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.mode-pills { display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 22px; border: 1px solid var(--border); }
-.mode-pill { padding: 6px 16px; border-radius: 18px; background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 13px; font-weight: 500; font-family: inherit; transition: all .2s; }
-.mode-pill.active { background: var(--text); color: var(--bg); }
-body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
+
 .topbar-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
-.notice-banner { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 10px 18px; font-size: 13px; color: var(--text2); display: none; align-items: center; gap: 10px; }
-.notice-banner.show { display: flex; }
-.nb-bar { width: 3px; height: 14px; background: var(--amber); border-radius: 2px; }
+
 .trial-warning { background: var(--amber-bg); border-bottom: 1px solid var(--amber); padding: 8px 20px; font-size: 12px; display: none; align-items: center; gap: 12px; font-family: 'DM Mono', monospace; }
 .trial-warning .tw-count { color: var(--amber); font-weight: 600; }
 .trial-warning .tw-track { flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; max-width: 200px; }
@@ -224,11 +219,7 @@ body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
 .notice-img { max-width: 280px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
 .notice-file-chip { display: inline-block; padding: 8px 14px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 10px; font-size: 13px; color: var(--accent); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
 .notice-type-tag { display: inline-block; padding: 4px 10px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 12px; font-size: 11px; color: var(--accent); font-family: 'DM Mono', monospace; letter-spacing: .03em; margin-bottom: 10px; }
-.conf { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: .05em; margin-bottom: 10px; }
-.conf-H { background: var(--green-bg); color: var(--green); }
-.conf-M { background: var(--amber-bg); color: var(--amber); }
-.conf-L { background: var(--red-bg); color: var(--red); }
-.conf-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
 .refs-wrap{margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
 .refs-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--light);font-weight:600;margin-bottom:8px;font-family:'DM Mono',monospace}
 .ref-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;border-radius:4px;transition:background-color .25s,outline-color .25s;outline:1.5px solid transparent}
@@ -264,7 +255,7 @@ body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
 .sh1 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
 .sh2 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
 .sh3 { font-size: 13px; font-weight: 600; margin: 8px 0 2px; }
-.draft-disclaimer { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 8px 12px; margin-top: 10px; font-size: 12.5px; color: var(--text2); }
+
 .input-wrap { padding: 14px 20px 18px; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
 .attach-preview { display: none; max-width: 720px; margin: 0 auto 8px; align-items: center; gap: 8px; flex-wrap: wrap; }
 .attach-preview.show { display: flex; }
@@ -334,7 +325,6 @@ button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
   .input-wrap { padding: 10px 12px max(10px, env(safe-area-inset-bottom)); }
   .inp-hint { display: none; }
   .app-topbar { padding: 0 12px; }
-  .mode-pill { padding: 5px 12px; font-size: 12px; }
   .auth-card { padding: 28px 20px; margin: 0 12px; }
 }
 @media (max-width: 480px) {
@@ -344,8 +334,6 @@ button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
   .form-row { flex-direction: column; gap: 0; }
   .app-sidebar { width: 100% !important; }
   .app-topbar { height: 48px; gap: 6px; padding: 0 10px; }
-  .mode-pills { gap: 2px; }
-  .mode-pill { padding: 5px 10px; font-size: 11.5px; }
   .topbar-right { gap: 4px; }
   .msg-inner { padding: 0 12px; max-width: 100%; }
   .bubble { font-size: 14px; line-height: 1.8; }
@@ -384,7 +372,7 @@ button:focus:not(:focus-visible) { outline: none; }
 <div class="page fullpage active" id="page-landing">
   <nav class="land-nav">
     <a class="land-logo" href="#"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a>
-    <div class="land-nav-links"><a href="#features" onclick="scrollTo('features')">Features</a><a href="#how" onclick="scrollTo('how')">How it works</a><a href="#pricing" onclick="scrollTo('pricing')">Pricing</a></div>
+    <div class="land-nav-links"><a href="#features" onclick="scrollToSection('features')">Features</a><a href="#how" onclick="scrollToSection('how')">How it works</a><a href="#pricing" onclick="scrollToSection('pricing')">Pricing</a></div>
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="margin-right:4px">🌙</button>
     <button class="land-nav-btn land-btn-outline" onclick="showPage('login')">Log in</button>
     <button class="land-nav-btn land-btn-solid" onclick="showPage('signup')">Start free trial</button>
@@ -571,6 +559,22 @@ button:focus:not(:focus-visible) { outline: none; }
 <div class="toast" id="toast"></div>
 
 <script>
+function scrollToSection(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
+
+async function fetchKBStats(){
+  try{
+    const r=await fetch(API+'/kb/stats');
+    if(r.ok){const d=await r.json();const hint=document.getElementById('docHint');if(hint&&d.total_documents)hint.textContent=Number(d.total_documents).toLocaleString()+' CBIC documents indexed';}
+  }catch(e){const hint=document.getElementById('docHint');if(hint)hint.textContent='CBIC knowledge base ready';}
+}
+
+function updateKBUI(docs){
+  const hint=document.getElementById('docHint');
+  if(!hint)return;
+  if(docs&&docs.length>0){const chunks=docs.reduce((s,d)=>s+(d.chunk_count||d.chunks||0),0);hint.textContent=docs.length+' docs · '+chunks.toLocaleString()+' chunks in KB';}
+  else{hint.textContent='CBIC knowledge base ready';}
+}
+
 function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('page-'+name);p.classList.add('active');if(name==='app')initApp();window.scrollTo(0,0);}
 
 async function initiateSignup(){
@@ -612,7 +616,7 @@ async function doSignup(){
   if(btn){btn.textContent='Creating account...';btn.disabled=true;}
   try{
     const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:true, fname, lname, profession:prof});
-    await apiCall('/auth/set-password','POST',{email, password:pass},{auth:false,token:res.token});
+    await apiCall('/auth/set-password','POST',{email, password:pass},true);
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
     const userData = {...res.user, fname, lname, name:fname+' '+lname, queryCount:res.user.query_count||0, queryLimit:res.user.query_limit||10};
@@ -672,9 +676,7 @@ async function apiCall(endpoint, method='GET', body=null, auth=false, retry=true
   return data;
 }
 const FREE_LIMIT=10;
-const BUILTIN=[];
 
-function getPrompt(type){return localStorage.getItem('gm_prompt_'+type) || DEFAULT_PROMPTS[type];}
 const DEFAULT_PROMPTS={query:''};
 
 function initApp(){
@@ -692,14 +694,13 @@ function initApp(){
   updateQueryMeter(user);
   document.getElementById('stg-name').textContent=user.name;
   document.getElementById('stg-email').textContent=user.email;
-  document.getElementById('stg-prof').textContent=user.prof||'—';
+  document.getElementById('stg-prof').textContent=user.profession||user.prof||'—';
   document.getElementById('stg-plan').textContent=user.plan==='pro'?'Professional':user.plan==='unlimited'?'Unlimited':'Free Trial (10 queries)';
-  updateKBUI([]);
+  fetchKBStats();
   renderTrendingChips();
   loadChatHistory();
   const tw=document.getElementById('trialWarning');
   if(tw)tw.style.display=user.plan==='free'?'flex':'none';
-  loadTheme();
 }
 
 function updateQueryMeter(user){
@@ -825,7 +826,7 @@ function newChat(){
   currentChatId = 'c'+Date.now();
   currentChatTitle = '';
   currentChatQueryCount = 0;
-  document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState"><div class="empty-icon"><span>G</span></div><div class="empty-title" id="emptyGreet">How can I help you today?</div><div class="empty-sub">Ask any GST research question. Attach a document, notice, or photo using the 📎 button below.</div><div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div></div>`;
+  const _u=getUser();const _greet=_u.fname?`Good day, ${_u.fname}! How can I help?`:'How can I help you today?';document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState"><div class="empty-icon"><span>G</span></div><div class="empty-title" id="emptyGreet">${_greet}</div><div class="empty-sub">Ask any GST research question. Attach a document, notice, or photo using the 📎 button below.</div><div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div></div>`;
   renderTrendingChips();
 }
 
@@ -982,7 +983,6 @@ function renderChatInSidebar(){
   d.className='hist-item';
   d.id='chat_'+currentChatId;
   d.innerHTML=`<div class="hist-q">${esc(currentChatTitle)}</div><div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
-  d.onclick=()=>{};
   list.prepend(d);
   if(list.children.length>30)list.removeChild(list.lastChild);
   saveChatHistory();
@@ -1010,7 +1010,6 @@ function loadChatHistory(){
       d.className='hist-item';
       d.id='chat_'+ch.id;
       d.innerHTML=`<div class="hist-q">${esc(ch.title)}</div><div class="hist-m">${ch.count} quer${ch.count===1?'y':'ies'} · ${ch.date||ch.time}</div>`;
-      d.onclick=()=>{};
       list.appendChild(d);
     });
   }catch(e){}
@@ -1078,18 +1077,15 @@ function addThinkRow(){
 }
 
 function renderBotRow(raw,hasRAG,retrieved){
-  let conf='MEDIUM',refs=[];
-  const cm=raw.match(/CONFIDENCE\s*:\s*(HIGH|MEDIUM|LOW)/i);
-  if(cm)conf=cm[1].toUpperCase();
+  let refs=[];
   const refM=raw.match(/REFERENCES\s*:\s*([\s\S]+)$/i);
   if(refM){
     refM[1].trim().split(/\n/).forEach(line=>{const m=line.match(/^(\d+)\.\s*(.+)/);if(m)refs.push({num:m[1],text:m[2].trim()});});
     raw=raw.replace(/REFERENCES\s*:[\s\S]+$/i,'').trim();
   }
   let answer = raw
-    .replace(/CONFIDENCE\s*:\s*(HIGH|MEDIUM|LOW)\s*\n*/gi, '')
-    .replace(/^\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/im, '')
-    .replace(/\n\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/gi, '\n')
+    .replace(/^\s*(ANSWER|LEGAL ANALYSIS|RESPONSE)\s*:\s*/im, '')
+    .replace(/\n\s*(ANSWER|LEGAL ANALYSIS|RESPONSE)\s*:\s*/gi, '\n')
     .trim();
   let noticeTag='';
   const ntm=answer.match(/NOTICE TYPE IDENTIFIED\s*:\s*([^\n]+)/i);
@@ -1143,7 +1139,7 @@ function downloadAns(id){
   a.download=`GSTMind_${Date.now()}.txt`;a.click();
   showToast('Downloaded');
 }
-function shareWA(id){const text=getContent(id);const msg=`*GSTMind — GST Research Output*\n\n${text.slice(0,800)}${text.length>800?'\n\n_[Full answer in GSTMind app]_':''}\n\n_⚠ Research only. Not legal advice. Verify with primary legislation._\n_GSTMind — GST AI Research Platform_`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+function shareWA(id){const text=getContent(id);const _wt=text.length>800?text.slice(0,text.lastIndexOf(' ',800)||800):text;const msg=`*GSTMind — GST Research Output*\n\n${_wt}${text.length>800?'\n\n_[Full answer in GSTMind app]_':''}\n\n_⚠ Research only. Not legal advice. Verify with primary legislation._\n_GSTMind — GST AI Research Platform_`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 function shareEmail(id){const text=getContent(id);const sub='GSTMind Research Output';const body=`GSTMind Research Output\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n${text}\n\nDisclaimer: For research purposes only. Not legal advice. Verify with primary legislation.\n\nGSTMind — GST AI Research Platform`;window.location.href=`mailto:?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;}
 
 function fmt(s){
