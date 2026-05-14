@@ -36,7 +36,6 @@
   --shadow-lg: 0 8px 32px rgba(42,31,20,.1);
 }
 
-/* DARK MODE */
 body.dark-mode {
   --bg: #0c0e13;
   --surface: #13151c;
@@ -65,666 +64,171 @@ body.dark-mode {
 }
 
 html { scroll-behavior: smooth; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14.5px;
-  line-height: 1.5;
-  min-height: 100vh;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14.5px; line-height: 1.5; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--light); }
-
 .page { display: none; min-height: 100vh; }
 .page.active { display: flex; flex-direction: column; }
 .fullpage { display: none; }
 .fullpage.active { display: block; min-height: 100vh; }
 
-/* ════════════════════════════════
-   LANDING — Premium serif headlines
-   ════════════════════════════════ */
-.land-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 7vw; max-width: 1400px; margin: 0 auto;
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(254,252,248,.92); backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  gap: 16px;
-}
+.land-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 7vw; max-width: 1400px; margin: 0 auto; position: sticky; top: 0; z-index: 50; background: rgba(254,252,248,.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); gap: 16px; }
 body.dark-mode .land-nav { background: rgba(12,14,19,.92); }
-
-.land-logo {
-  display: flex; align-items: center; gap: 10px;
-  text-decoration: none; color: var(--text);
-}
-.land-logo-mark {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: var(--accent);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px; font-weight: 700; color: #fefcf8;
-}
-.land-logo-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 600;
-  letter-spacing: -.01em;
-}
+.land-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.land-logo-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700; color: #fefcf8; }
+.land-logo-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
 .land-nav-links { display: flex; gap: 24px; align-items: center; flex: 1; justify-content: center; }
-.land-nav-links a {
-  color: var(--text2); text-decoration: none; font-size: 14px;
-  transition: color .2s;
-}
+.land-nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color .2s; }
 .land-nav-links a:hover { color: var(--accent); }
-.land-nav-btn {
-  padding: 8px 16px; border-radius: 24px;
-  font-size: 13.5px; font-weight: 500;
-  border: none; cursor: pointer; font-family: inherit;
-  transition: all .2s;
-}
-.land-btn-outline {
-  background: transparent; color: var(--text);
-  border: 1px solid var(--border2);
-}
+.land-nav-btn { padding: 8px 16px; border-radius: 24px; font-size: 13.5px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+.land-btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
 .land-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-.land-btn-solid {
-  background: var(--text); color: var(--bg);
-}
+.land-btn-solid { background: var(--text); color: var(--bg); }
 .land-btn-solid:hover { background: var(--accent); }
-
-.hero {
-  text-align: center; padding: 80px 7vw 100px;
-  max-width: 980px; margin: 0 auto;
-}
-.hero-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--accent-light); border: 1px solid var(--accent-border);
-  padding: 6px 14px; border-radius: 20px;
-  font-size: 12px; color: var(--accent);
-  margin-bottom: 28px; font-family: 'DM Mono', monospace;
-}
-.hero-badge-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent);
-  animation: pulse 2s ease-in-out infinite;
-}
+.hero { text-align: center; padding: 80px 7vw 100px; max-width: 980px; margin: 0 auto; }
+.hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-light); border: 1px solid var(--accent-border); padding: 6px 14px; border-radius: 20px; font-size: 12px; color: var(--accent); margin-bottom: 28px; font-family: 'DM Mono', monospace; }
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-.hero-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(38px, 5.5vw, 64px); font-weight: 500;
-  line-height: 1.05; letter-spacing: -.015em;
-  margin-bottom: 24px; color: var(--text);
-}
-.hero-sub {
-  font-size: clamp(15px, 1.4vw, 18px);
-  color: var(--text2); max-width: 680px;
-  margin: 0 auto 40px; line-height: 1.55;
-}
+.hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(38px, 5.5vw, 64px); font-weight: 500; line-height: 1.05; letter-spacing: -.015em; margin-bottom: 24px; color: var(--text); }
+.hero-sub { font-size: clamp(15px, 1.4vw, 18px); color: var(--text2); max-width: 680px; margin: 0 auto 40px; line-height: 1.55; }
 .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.hero-btn-primary {
-  padding: 14px 28px; border-radius: 30px;
-  background: var(--text); color: var(--bg);
-  font-size: 15px; font-weight: 500;
-  border: none; cursor: pointer; font-family: inherit;
-  transition: all .2s; box-shadow: var(--shadow-lg);
-}
-.hero-btn-primary:hover {
-  transform: translateY(-1px); background: var(--accent);
-}
-.hero-btn-secondary {
-  padding: 14px 28px; border-radius: 30px;
-  background: transparent; color: var(--text);
-  border: 1px solid var(--border2);
-  font-size: 15px; font-weight: 500;
-  cursor: pointer; font-family: inherit;
-  transition: all .2s;
-}
+.hero-btn-primary { padding: 14px 28px; border-radius: 30px; background: var(--text); color: var(--bg); font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; box-shadow: var(--shadow-lg); }
+.hero-btn-primary:hover { transform: translateY(-1px); background: var(--accent); }
+.hero-btn-secondary { padding: 14px 28px; border-radius: 30px; background: transparent; color: var(--text); border: 1px solid var(--border2); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all .2s; }
 .hero-btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-.hero-trust {
-  margin-top: 36px; font-size: 12.5px; color: var(--light);
-  font-family: 'DM Mono', monospace; letter-spacing: .03em;
-}
-
-/* SECTIONS */
+.hero-trust { margin-top: 36px; font-size: 12.5px; color: var(--light); font-family: 'DM Mono', monospace; letter-spacing: .03em; }
 section { padding: 100px 7vw; max-width: 1180px; margin: 0 auto; }
-.section-label {
-  text-align: center; font-size: 11px;
-  text-transform: uppercase; letter-spacing: .15em;
-  color: var(--accent); font-family: 'DM Mono', monospace;
-  margin-bottom: 14px; font-weight: 600;
-}
-.section-title {
-  text-align: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(28px, 3.5vw, 44px); font-weight: 500;
-  line-height: 1.15; letter-spacing: -.01em;
-  margin-bottom: 60px; color: var(--text);
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 32px;
-}
-.feat-card {
-  padding: 32px 28px; border: 1px solid var(--border);
-  border-radius: 16px; background: var(--surface);
-  transition: all .25s;
-}
-.feat-card:hover {
-  border-color: var(--accent-border);
-  transform: translateY(-2px); box-shadow: var(--shadow-lg);
-}
-.feat-icon {
-  font-size: 28px; margin-bottom: 16px;
-  color: var(--accent);
-}
-.feat-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 600;
-  margin-bottom: 8px; color: var(--text);
-}
+.section-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .15em; color: var(--accent); font-family: 'DM Mono', monospace; margin-bottom: 14px; font-weight: 600; }
+.section-title { text-align: center; font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 3.5vw, 44px); font-weight: 500; line-height: 1.15; letter-spacing: -.01em; margin-bottom: 60px; color: var(--text); }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.feat-card { padding: 32px 28px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); transition: all .25s; }
+.feat-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.feat-icon { font-size: 28px; margin-bottom: 16px; color: var(--accent); }
+.feat-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
 .feat-desc { font-size: 14.5px; color: var(--text2); line-height: 1.55; }
-
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
-.step {
-  text-align: center; padding: 28px 20px;
-  border: 1px solid var(--border); border-radius: 16px;
-  background: var(--surface);
-}
-.step-num {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: var(--accent); color: #fefcf8;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px; font-weight: 700; margin: 0 auto 16px;
-}
-.step-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px; font-weight: 600; margin-bottom: 8px;
-}
+.step { text-align: center; padding: 28px 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; margin: 0 auto 16px; }
+.step-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
 .step-desc { font-size: 13.5px; color: var(--text2); line-height: 1.55; }
-
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-.price-card {
-  padding: 36px 28px; border: 1px solid var(--border);
-  border-radius: 18px; background: var(--surface);
-  transition: all .25s;
-  position: relative;
-}
+.price-card { padding: 36px 28px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); transition: all .25s; position: relative; }
 .price-card:hover { border-color: var(--accent-border); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.price-card.popular {
-  border: 2px solid var(--accent); background: var(--accent-light);
-}
-.popular-badge {
-  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-  background: var(--accent); color: #fefcf8;
-  padding: 4px 14px; border-radius: 12px;
-  font-size: 11px; font-weight: 600;
-  font-family: 'DM Mono', monospace; letter-spacing: .05em;
-  text-transform: uppercase;
-}
-.price-plan {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 600;
-  margin-bottom: 4px;
-}
-.price-amount {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 42px; font-weight: 600;
-  margin-bottom: 4px; color: var(--text);
-}
+.price-card.popular { border: 2px solid var(--accent); background: var(--accent-light); }
+.popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fefcf8; padding: 4px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
+.price-plan { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.price-amount { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .price-period { font-size: 16px; font-weight: 400; color: var(--text3); }
 .price-desc { font-size: 13px; color: var(--text2); margin-bottom: 20px; min-height: 38px; }
 .price-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
 .price-feat { font-size: 13.5px; color: var(--text2); display: flex; align-items: flex-start; gap: 8px; }
 .price-check { color: var(--green); font-weight: 600; flex-shrink: 0; }
-.price-cta {
-  width: 100%; padding: 12px; border-radius: 24px;
-  font-size: 14px; font-weight: 500;
-  border: none; cursor: pointer; font-family: inherit;
-  transition: all .2s;
-}
+.price-cta { width: 100%; padding: 12px; border-radius: 24px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
 .price-cta-solid { background: var(--text); color: var(--bg); }
 .price-cta-solid:hover { background: var(--accent); }
 .price-cta-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
 .price-cta-outline:hover { border-color: var(--accent); color: var(--accent); }
-
-.land-footer {
-  border-top: 1px solid var(--border); padding: 40px 7vw;
-  text-align: center; font-size: 12.5px;
-  color: var(--text3); font-family: 'DM Mono', monospace;
-  line-height: 1.8; letter-spacing: .03em;
-}
-
-/* ════════════════════════════════
-   AUTH PAGES
-   ════════════════════════════════ */
-.auth-page {
-  min-height: 100vh; display: flex; flex-direction: column;
-}
-.auth-nav {
-  padding: 20px 7vw; border-bottom: 1px solid var(--border);
-}
-.auth-body {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 40px 20px;
-}
-.auth-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 44px 40px;
-  width: 100%; max-width: 440px;
-  box-shadow: var(--shadow);
-}
-.auth-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 30px; font-weight: 600;
-  margin-bottom: 6px; color: var(--text);
-}
-.auth-sub {
-  font-size: 13.5px; color: var(--text2);
-  margin-bottom: 28px; line-height: 1.55;
-}
-.auth-error {
-  display: none; background: var(--red-bg);
-  border: 1px solid rgba(176,72,72,.25);
-  color: var(--red); padding: 10px 14px;
-  border-radius: 10px; font-size: 13px;
-  margin-bottom: 16px;
-}
+.land-footer { border-top: 1px solid var(--border); padding: 40px 7vw; text-align: center; font-size: 12.5px; color: var(--text3); font-family: 'DM Mono', monospace; line-height: 1.8; letter-spacing: .03em; }
+.auth-page { min-height: 100vh; display: flex; flex-direction: column; }
+.auth-nav { padding: 20px 7vw; border-bottom: 1px solid var(--border); }
+.auth-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 44px 40px; width: 100%; max-width: 440px; box-shadow: var(--shadow); }
+.auth-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.auth-sub { font-size: 13.5px; color: var(--text2); margin-bottom: 28px; line-height: 1.55; }
+.auth-error { display: none; background: var(--red-bg); border: 1px solid rgba(176,72,72,.25); color: var(--red); padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
 .auth-error.show { display: block; }
 .form-group { margin-bottom: 16px; }
 .form-row { display: flex; gap: 12px; }
 .form-row > .form-group { flex: 1; }
-.form-label {
-  display: block; font-size: 11px; font-weight: 500;
-  color: var(--text2); margin-bottom: 6px;
-  text-transform: uppercase; letter-spacing: .05em;
-}
-.form-input {
-  width: 100%; padding: 12px 14px;
-  border: 1px solid var(--border2); border-radius: 10px;
-  background: var(--bg); color: var(--text);
-  font-family: inherit; font-size: 14.5px;
-  transition: all .2s;
-}
-.form-input:focus {
-  outline: none; border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-}
-.auth-btn {
-  width: 100%; padding: 13px; border-radius: 24px;
-  background: var(--text); color: var(--bg);
-  font-size: 15px; font-weight: 500; border: none;
-  cursor: pointer; font-family: inherit; margin-top: 8px;
-  transition: all .2s;
-}
+.form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border2); border-radius: 10px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 14.5px; transition: all .2s; }
+.form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.auth-btn { width: 100%; padding: 13px; border-radius: 24px; background: var(--text); color: var(--bg); font-size: 15px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; margin-top: 8px; transition: all .2s; }
 .auth-btn:hover { background: var(--accent); }
 .auth-btn:disabled { background: var(--light); cursor: not-allowed; }
-.auth-switch {
-  margin-top: 20px; text-align: center;
-  font-size: 13px; color: var(--text2);
-}
-.auth-link {
-  color: var(--accent); cursor: pointer; font-weight: 500;
-}
+.auth-switch { margin-top: 20px; text-align: center; font-size: 13px; color: var(--text2); }
+.auth-link { color: var(--accent); cursor: pointer; font-weight: 500; }
 .auth-link:hover { text-decoration: underline; }
-
-/* OTP boxes */
 .otp-boxes { display: flex; gap: 8px; justify-content: center; }
-.otp-box {
-  width: 46px; height: 52px;
-  border: 1px solid var(--border2); border-radius: 10px;
-  background: var(--bg); color: var(--text);
-  text-align: center; font-size: 20px; font-weight: 600;
-  font-family: 'DM Mono', monospace;
-  transition: all .2s;
-}
-.otp-box:focus, .otp-box.filled {
-  outline: none; border-color: var(--accent);
-  background: var(--surface);
-}
+.otp-box { width: 46px; height: 52px; border: 1px solid var(--border2); border-radius: 10px; background: var(--bg); color: var(--text); text-align: center; font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; transition: all .2s; }
+.otp-box:focus, .otp-box.filled { outline: none; border-color: var(--accent); background: var(--surface); }
 .otp-timer { font-size: 12px; color: var(--text3); margin-top: 12px; }
-
-/* ════════════════════════════════
-   APP — Chat interface
-   ════════════════════════════════ */
-.app-shell {
-  display: flex; height: 100vh;
-  background: var(--bg);
-}
-.app-sidebar {
-  width: 240px; flex-shrink: 0;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  transition: width .25s ease;
-}
+.app-shell { display: flex; height: 100vh; background: var(--bg); }
+.app-sidebar { width: 240px; flex-shrink: 0; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width .25s ease; }
 .app-sidebar.collapsed { width: 0; overflow: hidden; }
-.app-brand {
-  padding: 16px 18px;
-  display: flex; align-items: center; gap: 10px;
-  border-bottom: 1px solid var(--border);
-}
-.app-brand-icon {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: var(--accent);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px; font-weight: 700; color: #fefcf8;
-}
-.app-brand-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px; font-weight: 600;
-  line-height: 1;
-}
-.app-brand-tag {
-  font-size: 9.5px; color: var(--light);
-  font-family: 'DM Mono', monospace;
-  letter-spacing: .06em; text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.user-card {
-  margin: 14px; padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
+.app-brand { padding: 16px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.app-brand-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700; color: #fefcf8; }
+.app-brand-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; line-height: 1; }
+.app-brand-tag { font-size: 9.5px; color: var(--light); font-family: 'DM Mono', monospace; letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
+.user-card { margin: 14px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .user-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.user-avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--accent); color: #fefcf8;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 600;
-  font-family: 'DM Mono', monospace;
-  text-transform: uppercase;
-}
-.user-name {
-  font-size: 13px; font-weight: 500;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 140px;
-}
-.user-plan {
-  font-size: 10px; color: var(--text3);
-  font-family: 'DM Mono', monospace;
-  text-transform: uppercase; letter-spacing: .04em;
-  margin-top: 2px;
-}
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; text-transform: uppercase; }
+.user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.user-plan { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
 .user-plan.unlimited { color: var(--accent); }
 .user-plan.free { color: var(--amber); }
-
 .query-meter { font-size: 11px; }
-.query-meter-top {
-  display: flex; justify-content: space-between;
-  color: var(--text3); margin-bottom: 4px;
-}
-.query-meter-bar {
-  width: 100%; height: 4px;
-  background: var(--border); border-radius: 4px;
-  overflow: hidden;
-}
-.query-meter-fill {
-  height: 100%; background: var(--accent);
-  border-radius: 4px; transition: width .4s ease;
-}
-
-.new-chat {
-  margin: 0 14px 12px; padding: 10px 12px;
-  background: transparent; border: 1px dashed var(--border2);
-  color: var(--text2); border-radius: 10px;
-  font-size: 13px; cursor: pointer; font-family: inherit;
-  transition: all .2s;
-  display: flex; align-items: center; gap: 8px;
-}
-.new-chat:hover {
-  border-color: var(--accent); border-style: solid;
-  color: var(--accent);
-}
-
-.sidebar-scroll {
-  flex: 1; overflow-y: auto;
-  padding: 0 14px 14px;
-}
-.sb-label {
-  font-size: 10px; color: var(--light);
-  text-transform: uppercase; letter-spacing: .08em;
-  font-family: 'DM Mono', monospace; font-weight: 600;
-  padding: 12px 4px 8px;
-}
-.hist-item {
-  padding: 10px 12px; margin-bottom: 2px;
-  font-size: 12.5px; color: var(--text2);
-  cursor: pointer; border-radius: 8px;
-  transition: all .15s;
-}
+.query-meter-top { display: flex; justify-content: space-between; color: var(--text3); margin-bottom: 4px; }
+.query-meter-bar { width: 100%; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.query-meter-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s ease; }
+.new-chat { margin: 0 14px 12px; padding: 10px 12px; background: transparent; border: 1px dashed var(--border2); color: var(--text2); border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all .2s; display: flex; align-items: center; gap: 8px; }
+.new-chat:hover { border-color: var(--accent); border-style: solid; color: var(--accent); }
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: 0 14px 14px; }
+.sb-label { font-size: 10px; color: var(--light); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; padding: 12px 4px 8px; }
+.hist-item { padding: 10px 12px; margin-bottom: 2px; font-size: 12.5px; color: var(--text2); cursor: pointer; border-radius: 8px; transition: all .15s; }
 .hist-item:hover { background: var(--accent-light); color: var(--text); }
-.hist-q {
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-weight: 500; margin-bottom: 2px;
-}
-.hist-m {
-  font-size: 10.5px; color: var(--light);
-  font-family: 'DM Mono', monospace;
-}
-
-.sidebar-bottom {
-  padding: 12px 14px;
-  border-top: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 4px;
-}
-.sb-bottom-btn {
-  padding: 9px 12px; background: transparent;
-  border: 1px solid transparent; border-radius: 8px;
-  color: var(--text2); font-size: 13px; cursor: pointer;
-  font-family: inherit; text-align: left;
-  display: flex; align-items: center; gap: 10px;
-  transition: all .15s;
-}
+.hist-q { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; margin-bottom: 2px; }
+.hist-m { font-size: 10.5px; color: var(--light); font-family: 'DM Mono', monospace; }
+.sidebar-bottom { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.sb-bottom-btn { padding: 9px 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 10px; transition: all .15s; }
 .sb-bottom-btn:hover { background: var(--accent-light); color: var(--accent); }
 .sb-bottom-btn > span:first-child { font-size: 14px; }
-
-.app-main {
-  flex: 1; display: flex; flex-direction: column;
-  overflow: hidden; background: var(--bg);
-}
-.app-topbar {
-  height: 54px; flex-shrink: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  display: flex; align-items: center; gap: 14px;
-}
-.sidebar-toggle {
-  width: 32px; height: 32px;
-  background: none; border: 1px solid var(--border);
-  border-radius: 8px; cursor: pointer;
-  color: var(--text3); font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .15s;
-}
+.app-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.app-topbar { height: 54px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 14px; }
+.sidebar-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--text3); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
 .sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
-
-.mode-pills {
-  display: flex; gap: 4px;
-  background: var(--bg); padding: 3px; border-radius: 22px;
-  border: 1px solid var(--border);
-}
-.mode-pill {
-  padding: 6px 16px; border-radius: 18px;
-  background: transparent; border: none; cursor: pointer;
-  color: var(--text3); font-size: 13px; font-weight: 500;
-  font-family: inherit; transition: all .2s;
-}
-.mode-pill.active {
-  background: var(--text); color: var(--bg);
-}
+.mode-pills { display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 22px; border: 1px solid var(--border); }
+.mode-pill { padding: 6px 16px; border-radius: 18px; background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 13px; font-weight: 500; font-family: inherit; transition: all .2s; }
+.mode-pill.active { background: var(--text); color: var(--bg); }
 body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
-
-.topbar-right {
-  margin-left: auto; display: flex; gap: 10px; align-items: center;
-}
-
-.notice-banner {
-  background: var(--amber-bg);
-  border-left: 3px solid var(--amber);
-  padding: 10px 18px;
-  font-size: 13px; color: var(--text2);
-  display: none; align-items: center; gap: 10px;
-}
+.topbar-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.notice-banner { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 10px 18px; font-size: 13px; color: var(--text2); display: none; align-items: center; gap: 10px; }
 .notice-banner.show { display: flex; }
 .nb-bar { width: 3px; height: 14px; background: var(--amber); border-radius: 2px; }
-
-.trial-warning {
-  background: var(--amber-bg);
-  border-bottom: 1px solid var(--amber);
-  padding: 8px 20px;
-  font-size: 12px; display: none;
-  align-items: center; gap: 12px;
-  font-family: 'DM Mono', monospace;
-}
+.trial-warning { background: var(--amber-bg); border-bottom: 1px solid var(--amber); padding: 8px 20px; font-size: 12px; display: none; align-items: center; gap: 12px; font-family: 'DM Mono', monospace; }
 .trial-warning .tw-count { color: var(--amber); font-weight: 600; }
-.trial-warning .tw-track {
-  flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden;
-  max-width: 200px;
-}
+.trial-warning .tw-track { flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; max-width: 200px; }
 .trial-warning .tw-fill { height: 100%; background: var(--amber); transition: width .3s; }
-.trial-warning .tw-upgrade {
-  margin-left: auto; color: var(--accent);
-  cursor: pointer; font-weight: 500;
-}
-
-.msgs {
-  flex: 1; overflow-y: auto;
-  padding: 30px 0; scroll-behavior: smooth;
-}
-
-.empty {
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center; padding: 40px 20px;
-  min-height: 60vh; justify-content: center;
-}
-.empty-icon {
-  width: 56px; height: 56px; border-radius: 14px;
-  background: var(--accent); color: #fefcf8;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px; font-weight: 700;
-}
-.empty-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px; font-weight: 500;
-  margin-bottom: 8px;
-}
-.empty-sub {
-  font-size: 14px; color: var(--text2);
-  max-width: 480px; line-height: 1.55;
-  margin-bottom: 30px;
-}
+.trial-warning .tw-upgrade { margin-left: auto; color: var(--accent); cursor: pointer; font-weight: 500; }
+.msgs { flex: 1; overflow-y: auto; padding: 30px 0; scroll-behavior: smooth; }
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; min-height: 60vh; justify-content: center; }
+.empty-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; }
+.empty-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; margin-bottom: 8px; }
+.empty-sub { font-size: 14px; color: var(--text2); max-width: 480px; line-height: 1.55; margin-bottom: 30px; }
 .trending-wrap { width: 100%; max-width: 720px; }
-.trending-label {
-  font-size: 10.5px; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em;
-  font-family: 'DM Mono', monospace; font-weight: 600;
-  margin-bottom: 14px; text-align: center;
-}
-.chip-grid, .chips-grid {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  justify-content: center;
-}
-.chip {
-  background: var(--surface); border: 1px solid var(--border);
-  padding: 9px 14px; border-radius: 20px;
-  font-size: 13px; color: var(--text2);
-  cursor: pointer; transition: all .2s;
-  display: flex; align-items: center; gap: 8px;
-}
-.chip:hover {
-  border-color: var(--accent); color: var(--text);
-  transform: translateY(-1px);
-}
-.chip-rank {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: var(--accent); color: #fefcf8;
-  font-size: 10px; font-weight: 700;
-  font-family: 'DM Mono', monospace;
-  flex-shrink: 0;
-}
-.chip-count {
-  font-size: 10px; color: var(--accent);
-  font-family: 'DM Mono', monospace;
-  font-weight: 600;
-}
-
-.msg-row {
-  padding: 0 20px; margin-bottom: 20px;
-  animation: fadeUp .3s ease;
-}
+.trending-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 14px; text-align: center; }
+.chip-grid, .chips-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip { background: var(--surface); border: 1px solid var(--border); padding: 9px 14px; border-radius: 20px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 8px; }
+.chip:hover { border-color: var(--accent); color: var(--text); transform: translateY(-1px); }
+.chip-rank { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fefcf8; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; flex-shrink: 0; }
+.chip-count { font-size: 10px; color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 600; }
+.msg-row { padding: 0 20px; margin-bottom: 20px; animation: fadeUp .3s ease; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.msg-inner {
-  max-width: 720px; margin: 0 auto;
-  display: flex; gap: 14px;
-}
-.av {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--accent); color: #fefcf8;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600;
-  font-family: 'DM Mono', monospace;
-  flex-shrink: 0; text-transform: uppercase;
-}
+.msg-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 14px; }
+.av { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fefcf8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; flex-shrink: 0; text-transform: uppercase; }
 .msg-row.user .av { background: var(--text); }
 .msg-body { flex: 1; min-width: 0; }
-.bubble {
-  background: var(--bot-bubble);
-  border: 1px solid var(--border);
-  padding: 14px 18px; border-radius: 14px;
-  font-size: 14.5px; line-height: 1.65;
-  color: var(--text); word-wrap: break-word;
-}
-.msg-row.user .bubble {
-  background: var(--user-bubble);
-  color: var(--user-text);
-  border-color: var(--user-bubble);
-}
-.notice-img {
-  max-width: 280px; border-radius: 12px;
-  margin-bottom: 10px; border: 1px solid var(--border);
-}
-.notice-file-chip {
-  display: inline-block; padding: 8px 14px;
-  background: var(--accent-light); border: 1px solid var(--accent-border);
-  border-radius: 10px; font-size: 13px; color: var(--accent);
-  margin-bottom: 10px; font-family: 'DM Mono', monospace;
-}
-
-.notice-type-tag {
-  display: inline-block; padding: 4px 10px;
-  background: var(--accent-light); border: 1px solid var(--accent-border);
-  border-radius: 12px; font-size: 11px; color: var(--accent);
-  font-family: 'DM Mono', monospace;
-  letter-spacing: .03em; margin-bottom: 10px;
-}
-
-.conf {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 12px;
-  font-size: 10px; font-weight: 600;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: .05em; margin-bottom: 10px;
-}
+.bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; }
+.msg-row.user .bubble { background: var(--user-bubble); color: var(--user-text); border-color: var(--user-bubble); }
+.notice-img { max-width: 280px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); }
+.notice-file-chip { display: inline-block; padding: 8px 14px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 10px; font-size: 13px; color: var(--accent); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
+.notice-type-tag { display: inline-block; padding: 4px 10px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 12px; font-size: 11px; color: var(--accent); font-family: 'DM Mono', monospace; letter-spacing: .03em; margin-bottom: 10px; }
+.conf { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: .05em; margin-bottom: 10px; }
 .conf-H { background: var(--green-bg); color: var(--green); }
 .conf-M { background: var(--amber-bg); color: var(--amber); }
 .conf-L { background: var(--red-bg); color: var(--red); }
 .conf-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-
 .refs-wrap{margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
 .refs-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--light);font-weight:600;margin-bottom:8px;font-family:'DM Mono',monospace}
 .ref-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;border-radius:4px;transition:background-color .25s,outline-color .25s;outline:1.5px solid transparent}
@@ -734,48 +238,17 @@ body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
 .cite-link:hover{text-decoration:underline}
 .ref-n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:'DM Mono',monospace}
 .ref-txt{color:var(--text2);font-family:'DM Mono',monospace;line-height:1.5}
-
-.msg-acts {
-  display: flex; gap: 6px; margin-top: 10px;
-  flex-wrap: wrap;
-}
-.act-btn {
-  padding: 5px 11px; background: transparent;
-  border: 1px solid var(--border2); border-radius: 14px;
-  font-size: 11.5px; color: var(--text3);
-  cursor: pointer; font-family: inherit;
-  transition: all .15s;
-}
-.act-btn:hover {
-  border-color: var(--accent); color: var(--accent);
-}
-
-.think-bub {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--bot-bubble); border: 1px solid var(--border);
-  padding: 12px 18px; border-radius: 14px;
-  font-size: 13px; color: var(--text3);
-  font-style: italic;
-}
+.msg-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.act-btn { padding: 5px 11px; background: transparent; border: 1px solid var(--border2); border-radius: 14px; font-size: 11.5px; color: var(--text3); cursor: pointer; font-family: inherit; transition: all .15s; }
+.act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.think-bub { display: inline-flex; align-items: center; gap: 10px; background: var(--bot-bubble); border: 1px solid var(--border); padding: 12px 18px; border-radius: 14px; font-size: 13px; color: var(--text3); font-style: italic; }
 .think-dots { display: flex; gap: 4px; }
-.think-dots span {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent);
-  animation: think 1.2s ease-in-out infinite;
-}
+.think-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: think 1.2s ease-in-out infinite; }
 .think-dots span:nth-child(2) { animation-delay: .15s; }
 .think-dots span:nth-child(3) { animation-delay: .3s; }
 @keyframes think { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
-
-.stream-bubble {
-  background: var(--bot-bubble); border: 1px solid var(--border);
-  padding: 14px 18px; border-radius: 14px;
-  font-size: 14.5px; line-height: 1.65;
-  color: var(--text); word-wrap: break-word;
-  min-height: 30px;
-}
+.stream-bubble { background: var(--bot-bubble); border: 1px solid var(--border); padding: 14px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; color: var(--text); word-wrap: break-word; min-height: 30px; }
 .stream-raw { white-space: pre-wrap; }
-
 .fh1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin: 14px 0 6px; color: var(--text); }
 .fh2 { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; margin: 12px 0 4px; color: var(--text); }
 .fh3 { font-size: 14px; font-weight: 600; margin: 10px 0 4px; color: var(--text); }
@@ -791,241 +264,67 @@ body.dark-mode .mode-pill.active { background: var(--accent); color: #0c0e13; }
 .sh2 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
 .sh3 { font-size: 13px; font-weight: 600; margin: 8px 0 2px; }
 .draft-disclaimer { background: var(--amber-bg); border-left: 3px solid var(--amber); padding: 8px 12px; margin-top: 10px; font-size: 12.5px; color: var(--text2); }
-
-.input-wrap {
-  padding: 14px 20px 18px;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
-  flex-shrink: 0;
-}
-.attach-preview {
-  display: none; max-width: 720px; margin: 0 auto 8px;
-  align-items: center; gap: 8px; flex-wrap: wrap;
-}
+.input-wrap { padding: 14px 20px 18px; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.attach-preview { display: none; max-width: 720px; margin: 0 auto 8px; align-items: center; gap: 8px; flex-wrap: wrap; }
 .attach-preview.show { display: flex; }
-.attach-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 10px; background: var(--accent-light);
-  border: 1px solid var(--accent-border); border-radius: 14px;
-  font-size: 12px; color: var(--accent);
-}
+.attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 14px; font-size: 12px; color: var(--accent); }
 .attach-chip-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.attach-chip-del {
-  background: none; border: none; color: var(--accent);
-  cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
-}
-
-.input-outer {
-  max-width: 720px; margin: 0 auto;
-  background: var(--surface);
-  border: 1px solid var(--border2); border-radius: 16px;
-  box-shadow: var(--shadow);
-  transition: border-color .2s;
-}
-.input-outer:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-}
-.input-inner {
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 10px;
-}
-.attach-btn, .send-btn {
-  width: 36px; height: 36px;
-  border-radius: 10px; border: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all .15s;
-  flex-shrink: 0;
-}
+.attach-chip-del { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+.input-outer { max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; box-shadow: var(--shadow); transition: border-color .2s; }
+.input-outer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.input-inner { padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.attach-btn, .send-btn { width: 36px; height: 36px; border-radius: 10px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; flex-shrink: 0; }
 .attach-btn { background: transparent; color: var(--text3); }
 .attach-btn:hover { background: var(--accent-light); color: var(--accent); }
 .send-btn { background: var(--accent); color: #fefcf8; }
 .send-btn:hover { background: var(--accent2); }
 .send-btn:disabled { background: var(--light); cursor: not-allowed; }
-.send-icon {
-  width: 16px; height: 16px;
-  fill: none; stroke: currentColor; stroke-width: 2;
-  stroke-linecap: round; stroke-linejoin: round;
-}
-
-#qi {
-  flex: 1; background: transparent; border: none;
-  font-family: inherit; font-size: 14.5px; color: var(--text);
-  resize: none; outline: none; line-height: 1.5;
-  max-height: 120px; padding: 6px 0;
-}
+.send-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#qi { flex: 1; background: transparent; border: none; font-family: inherit; font-size: 14.5px; color: var(--text); resize: none; outline: none; line-height: 1.5; max-height: 120px; padding: 6px 0; }
 #qi::placeholder { color: var(--text3); }
-
-.inp-hint {
-  max-width: 720px; margin: 6px auto 0;
-  display: flex; justify-content: space-between;
-  font-size: 11px; color: var(--text3);
-  font-family: 'DM Mono', monospace;
-}
-.disclaimer {
-  max-width: 720px; margin: 6px auto 0;
-  font-size: 10.5px; color: var(--light);
-  text-align: center; line-height: 1.5;
-  font-family: 'DM Mono', monospace;
-}
-
-/* ════════════════════════════════
-   MODALS
-   ════════════════════════════════ */
-.modal-bg {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.5);
-  align-items: center; justify-content: center;
-  z-index: 100; padding: 20px;
-  backdrop-filter: blur(4px);
-}
+.inp-hint { max-width: 720px; margin: 6px auto 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.disclaimer { max-width: 720px; margin: 6px auto 0; font-size: 10.5px; color: var(--light); text-align: center; line-height: 1.5; font-family: 'DM Mono', monospace; }
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
 .modal-bg.show { display: flex; }
-.modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 18px; padding: 32px;
-  width: 100%; max-width: 420px;
-  box-shadow: var(--shadow-lg);
-  max-height: 90vh; overflow-y: auto;
-}
-.modal-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px; font-weight: 600;
-  margin-bottom: 8px;
-}
-.modal-sub {
-  font-size: 13.5px; color: var(--text2);
-  margin-bottom: 24px; line-height: 1.55;
-}
-.modal-close {
-  width: 100%; padding: 11px;
-  background: transparent; border: 1px solid var(--border2);
-  border-radius: 22px; color: var(--text2);
-  font-size: 13px; cursor: pointer; font-family: inherit;
-  margin-top: 14px;
-}
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+.modal-sub { font-size: 13.5px; color: var(--text2); margin-bottom: 24px; line-height: 1.55; }
+.modal-close { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--border2); border-radius: 22px; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; margin-top: 14px; }
 .modal-close:hover { border-color: var(--accent); color: var(--accent); }
-
-.plan-card {
-  padding: 18px 20px; border: 1px solid var(--border);
-  border-radius: 14px; margin-bottom: 12px;
-  cursor: pointer; transition: all .2s;
-}
+.plan-card { padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all .2s; }
 .plan-card:hover { border-color: var(--accent); background: var(--accent-light); }
 .plan-card.rec { border-color: var(--accent); background: var(--accent-light); }
-.plan-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px; font-weight: 600;
-}
-.plan-price {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 600; color: var(--accent);
-  margin: 4px 0;
-}
+.plan-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; }
+.plan-price { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--accent); margin: 4px 0; }
 .plan-feat { font-size: 12px; color: var(--text2); }
-
-.settings-modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 18px; padding: 32px;
-  width: 100%; max-width: 500px;
-  box-shadow: var(--shadow-lg);
-  max-height: 90vh; overflow-y: auto;
-}
-.settings-modal h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 26px; font-weight: 600;
-  margin-bottom: 20px;
-}
-.settings-section {
-  padding: 18px 0; border-top: 1px solid var(--border);
-}
+.settings-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; }
+.settings-modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
+.settings-section { padding: 18px 0; border-top: 1px solid var(--border); }
 .settings-section:first-of-type { border-top: none; }
-.settings-label {
-  font-size: 10.5px; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em;
-  font-family: 'DM Mono', monospace; font-weight: 600;
-  margin-bottom: 10px;
-}
+.settings-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 10px; }
 .settings-value { font-size: 13.5px; color: var(--text); }
-.settings-btn {
-  padding: 9px 18px; border-radius: 22px;
-  font-size: 13px; cursor: pointer; font-family: inherit;
-  border: 1px solid transparent;
-  transition: all .15s;
-}
+.settings-btn { padding: 9px 18px; border-radius: 22px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid transparent; transition: all .15s; }
 .settings-btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
 .settings-btn-primary:hover { background: var(--accent); border-color: var(--accent); }
 .settings-btn-ghost { background: transparent; color: var(--text2); border-color: var(--border2); }
 .settings-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 .settings-btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
 .settings-btn-danger:hover { background: var(--red); color: white; }
-
-/* THEME TOGGLE */
-.theme-toggle {
-  width:34px;height:34px;border-radius:50%;
-  background:none;border:1px solid var(--border);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:16px;transition:all .2s;color:var(--text3);flex-shrink:0;
-}
+.theme-toggle { width:34px;height:34px;border-radius:50%; background:none;border:1px solid var(--border); cursor:pointer;display:flex;align-items:center;justify-content:center; font-size:16px;transition:all .2s;color:var(--text3);flex-shrink:0; }
 .theme-toggle:hover{border-color:var(--accent-border);color:var(--accent)}
-
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--sidebar-bg);padding:9px 18px;border-radius:20px;font-size:12.5px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap;font-family:'DM Mono',monospace}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ═══════════════════════════════════════════════════════
-   MOBILE RESPONSIVENESS — GSTMind
-   Best practices:
-   - Sidebar slides over content (not pushes)
-   - Input fixed at bottom with safe area
-   - Touch targets min 44px
-   - No horizontal scroll
-   - Keyboard-aware input
-   ═══════════════════════════════════════════════════════ */
-
-/* Prevent horizontal overflow globally */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
-
-/* Better tap highlights */
 button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
-
-/* ── Sidebar overlay (mobile) ── */
-#sidebarOverlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-  z-index: 99;
-  backdrop-filter: blur(1px);
-}
-
-/* ── Safe area for notched phones ── */
-.input-wrap {
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
-}
-
-/* ════════════════════════════════
-   TABLET: 481px – 768px
-   ════════════════════════════════ */
+#sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 99; backdrop-filter: blur(1px); }
+.input-wrap { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 @media (max-width: 768px) {
-  .app-sidebar {
-    position: fixed;
-    left: 0; top: 0; bottom: 0;
-    z-index: 100;
-    transform: translateX(-100%);
-    transition: transform .28s cubic-bezier(.4,0,.2,1);
-    width: 280px !important;
-    box-shadow: 4px 0 24px rgba(0,0,0,.15);
-  }
-  .app-sidebar.mobile-open {
-    transform: translateX(0);
-  }
-  .app-sidebar.collapsed {
-    transform: translateX(-100%);
-    width: 280px !important;
-  }
+  .app-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); width: 280px !important; box-shadow: 4px 0 24px rgba(0,0,0,.15); }
+  .app-sidebar.mobile-open { transform: translateX(0); }
+  .app-sidebar.collapsed { transform: translateX(-100%); width: 280px !important; }
   #sidebarOverlay.show { display: block; }
   .app-main { width: 100%; }
-  .kb-drawer.open { width: 100%; position: fixed; inset: 0; z-index: 98; }
   .msg-inner { padding: 0 16px; }
   .empty { padding: 32px 16px; min-height: 50vh; }
   .empty-title { font-size: 22px; }
@@ -1035,660 +334,246 @@ button, a, [onclick] { -webkit-tap-highlight-color: transparent; }
   .inp-hint { display: none; }
   .app-topbar { padding: 0 12px; }
   .mode-pill { padding: 5px 12px; font-size: 12px; }
-  .topbar-right .kb-chip { display: none; }
   .auth-card { padding: 28px 20px; margin: 0 12px; }
 }
-
-/* ════════════════════════════════
-   MOBILE: ≤ 480px
-   ════════════════════════════════ */
 @media (max-width: 480px) {
-  /* Auth pages */
   .auth-page { padding: 16px 0; align-items: flex-start; min-height: 100dvh; }
-  .auth-card {
-    width: 100%; margin: 0;
-    border-radius: 0;
-    border-left: none; border-right: none;
-    padding: 24px 20px;
-    min-height: 100dvh;
-  }
+  .auth-card { width: 100%; margin: 0; border-radius: 0; border-left: none; border-right: none; padding: 24px 20px; min-height: 100dvh; }
   .auth-title { font-size: 22px; }
   .form-row { flex-direction: column; gap: 0; }
-
-  /* Sidebar */
   .app-sidebar { width: 100% !important; }
-
-  /* Topbar */
   .app-topbar { height: 48px; gap: 6px; padding: 0 10px; }
   .mode-pills { gap: 2px; }
   .mode-pill { padding: 5px 10px; font-size: 11.5px; }
   .topbar-right { gap: 4px; }
-  .docs-btn { padding: 5px 10px; font-size: 11px; }
-  .topbar-right .upgrade-btn { display: none; } /* hide on mobile — in sidebar */
-
-  /* Messages */
   .msg-inner { padding: 0 12px; max-width: 100%; }
   .bubble { font-size: 14px; line-height: 1.8; }
-  .msg-actions { gap: 6px; }
-  .msg-action-btn { padding: 4px 10px; font-size: 11px; }
   .msgs { padding: 16px 0; }
-
-  /* Input bar */
   .input-wrap { padding: 8px 10px max(8px, env(safe-area-inset-bottom)); }
   .input-outer { border-radius: 14px; margin: 0; }
   .input-inner { padding: 8px 10px; gap: 8px; }
-  #qi { font-size: 16px !important; } /* 16px prevents iOS auto-zoom */
+  #qi { font-size: 16px !important; }
   .attach-btn { width: 38px; height: 38px; }
   .send-btn { width: 38px; height: 38px; border-radius: 10px; }
   .disclaimer { font-size: 10px; }
-
-  /* Empty state */
   .empty { padding: 24px 16px; gap: 12px; }
   .empty-icon { width: 46px; height: 46px; }
   .empty-title { font-size: 20px; }
   .empty-sub { font-size: 12.5px; }
   .chips-grid { max-width: 100%; }
   .chip { font-size: 11.5px; padding: 7px 11px; }
-
-  /* Source chips */
-  .src-chips { flex-wrap: wrap; }
-  .src-chip { font-size: 10px; }
-
-  /* Trial warning */
   .trial-warning { padding: 6px 12px; font-size: 11px; }
-
-  /* Landing page */
-  .land-hero-title { font-size: 32px; }
-  .land-hero-sub { font-size: 14px; }
-  .land-features-grid { grid-template-columns: 1fr; }
-
-  /* OTP boxes */
   .otp-boxes { gap: 6px; }
   .otp-box { width: 42px; height: 48px; font-size: 18px; }
-
-  /* Upgrade modal */
-  .upgrade-card { margin: 16px; padding: 24px 20px; }
 }
-
-/* ════════════════════════════════
-   iOS KEYBOARD FIX
-   When keyboard opens, keep input visible
-   ════════════════════════════════ */
-@supports (height: 100dvh) {
-  .app-shell { height: 100dvh; }
-  .auth-page { min-height: 100dvh; }
-}
-
-/* ════════════════════════════════
-   TOUCH IMPROVEMENTS
-   ════════════════════════════════ */
-.chip, .mode-pill, .sb-bottom-btn, .new-chat, .hist-item,
-.send-btn, .attach-btn, .docs-btn {
-  touch-action: manipulation; /* faster tap, no double-tap zoom */
-}
-.msgs, .sidebar-scroll {
-  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
-  overscroll-behavior: contain;
-}
-
-/* ════════════════════════════════
-   UI BEST PRACTICES
-   ════════════════════════════════ */
-
-/* Smooth scroll to new messages */
+@supports (height: 100dvh) { .app-shell { height: 100dvh; } .auth-page { min-height: 100dvh; } }
+.chip, .mode-pill, .sb-bottom-btn, .new-chat, .hist-item, .send-btn, .attach-btn { touch-action: manipulation; }
+.msgs, .sidebar-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .msgs { scroll-behavior: smooth; }
-
-/* Better focus rings (accessibility) */
-button:focus-visible, textarea:focus-visible, input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button:focus:not(:focus-visible) { outline: none; }
-
-/* Prevent text selection on UI elements */
-.mode-pill, .chip, .send-btn, .attach-btn, .sb-bottom-btn,
-.new-chat, .hist-item { user-select: none; }
-
-/* Better loading state */
+.mode-pill, .chip, .send-btn, .attach-btn, .sb-bottom-btn, .new-chat, .hist-item { user-select: none; }
 .send-btn:disabled { opacity: .5; transform: scale(.95); }
-
-/* Smooth sidebar toggle */
 .sidebar-toggle { transition: transform .25s ease; }
-
-/* Message animation feels snappier on mobile */
-@media (prefers-reduced-motion: reduce) {
-  .msg-row { animation: none; }
-  .app-sidebar { transition: none; }
-}
-
+@media (prefers-reduced-motion: reduce) { .msg-row { animation: none; } .app-sidebar { transition: none; } }
 </style>
 </head>
 <body>
 
-<!-- ════ LANDING PAGE ════ -->
 <div class="page fullpage active" id="page-landing">
   <nav class="land-nav">
-    <a class="land-logo" href="#">
-      <div class="land-logo-mark"><span>G</span></div>
-      <span class="land-logo-name">GSTMind</span>
-    </a>
-    <div class="land-nav-links">
-      <a href="#features" onclick="scrollTo('features')">Features</a>
-      <a href="#how" onclick="scrollTo('how')">How it works</a>
-      <a href="#pricing" onclick="scrollTo('pricing')">Pricing</a>
-    </div>
+    <a class="land-logo" href="#"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a>
+    <div class="land-nav-links"><a href="#features" onclick="scrollTo('features')">Features</a><a href="#how" onclick="scrollTo('how')">How it works</a><a href="#pricing" onclick="scrollTo('pricing')">Pricing</a></div>
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="margin-right:4px">🌙</button>
     <button class="land-nav-btn land-btn-outline" onclick="showPage('login')">Log in</button>
     <button class="land-nav-btn land-btn-solid" onclick="showPage('signup')">Start free trial</button>
   </nav>
-
   <section class="hero">
     <div class="hero-badge"><div class="hero-badge-dot"></div>AI-powered GST research for Indian professionals</div>
     <h1 class="hero-title">The smartest GST research assistant for CAs & Tax Consultants</h1>
     <p class="hero-sub">Ask any GST query. Upload a notice photo or PDF. Get a cited, professional reply draft — in seconds. Always grounded in CBIC documents.</p>
-    <div class="hero-btns">
-      <button class="hero-btn-primary" onclick="showPage('signup')">Start free — 10 queries free</button>
-      <button class="hero-btn-secondary" onclick="showPage('login')">Already have an account</button>
-    </div>
+    <div class="hero-btns"><button class="hero-btn-primary" onclick="showPage('signup')">Start free — 10 queries free</button><button class="hero-btn-secondary" onclick="showPage('login')">Already have an account</button></div>
     <div class="hero-trust">Trusted by practising CAs · Built on Claude AI · CBIC documents auto-updated</div>
   </section>
-
   <section class="features" id="features">
     <div class="section-label">Features</div>
     <div class="section-title">Everything a GST professional needs</div>
     <div class="features-grid">
-      <div class="feat-card">
-        <div class="feat-icon">⚖</div>
-        <div class="feat-title">Cited GST Answers</div>
-        <div class="feat-desc">Every answer cites the exact Act, Rule, or Circular with footnote-style references. Verify in seconds.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">📋</div>
-        <div class="feat-title">Notice Reply Drafts</div>
-        <div class="feat-desc">Paste or photograph any GST notice — SCN, demand, ITC mismatch, scrutiny. Get a court-ready formal reply.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">📸</div>
-        <div class="feat-title">Photo & PDF Upload</div>
-        <div class="feat-desc">Upload a WhatsApp photo of a notice or a PDF from the GSTN portal. GSTMind reads it and drafts the reply.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">📤</div>
-        <div class="feat-title">Share Instantly</div>
-        <div class="feat-desc">Download as PDF, share via WhatsApp, or email the reply to your client directly from the app.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔄</div>
-        <div class="feat-title">Always Current</div>
-        <div class="feat-desc">CBIC circulars and notifications auto-synced within 48 hours of publication. Always up to date.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔒</div>
-        <div class="feat-title">Private & Secure</div>
-        <div class="feat-desc">Your queries stay private. No query is visible to anyone else. Your history, only yours.</div>
-      </div>
+      <div class="feat-card"><div class="feat-icon">⚖</div><div class="feat-title">Cited GST Answers</div><div class="feat-desc">Every answer cites the exact Act, Rule, or Circular with footnote-style references. Verify in seconds.</div></div>
+      <div class="feat-card"><div class="feat-icon">📋</div><div class="feat-title">Notice Reply Drafts</div><div class="feat-desc">Paste or photograph any GST notice — SCN, demand, ITC mismatch, scrutiny. Get a court-ready formal reply.</div></div>
+      <div class="feat-card"><div class="feat-icon">📸</div><div class="feat-title">Photo & PDF Upload</div><div class="feat-desc">Upload a WhatsApp photo of a notice or a PDF from the GSTN portal. GSTMind reads it and drafts the reply.</div></div>
+      <div class="feat-card"><div class="feat-icon">📤</div><div class="feat-title">Share Instantly</div><div class="feat-desc">Download as PDF, share via WhatsApp, or email the reply to your client directly from the app.</div></div>
+      <div class="feat-card"><div class="feat-icon">🔄</div><div class="feat-title">Always Current</div><div class="feat-desc">CBIC circulars and notifications auto-synced within 48 hours of publication. Always up to date.</div></div>
+      <div class="feat-card"><div class="feat-icon">🔒</div><div class="feat-title">Private & Secure</div><div class="feat-desc">Your queries stay private. No query is visible to anyone else. Your history, only yours.</div></div>
     </div>
   </section>
-
   <section class="how" id="how">
     <div class="section-label">How it works</div>
     <div class="section-title">Research in 4 simple steps</div>
     <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-title">Sign up</div>
-        <div class="step-desc">Create your account. Get 10 free queries immediately — no credit card needed.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-title">Ask or upload</div>
-        <div class="step-desc">Type a GST query, or upload a notice photo/PDF directly from your phone.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-title">Get cited answer</div>
-        <div class="step-desc">Receive a professional answer with footnote citations from CBIC documents.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-title">Share or download</div>
-        <div class="step-desc">Send via WhatsApp, email your client, or download as PDF. Done.</div>
-      </div>
+      <div class="step"><div class="step-num">1</div><div class="step-title">Sign up</div><div class="step-desc">Create your account. Get 10 free queries immediately — no credit card needed.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-title">Ask or upload</div><div class="step-desc">Type a GST query, or upload a notice photo/PDF directly from your phone.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-title">Get cited answer</div><div class="step-desc">Receive a professional answer with footnote citations from CBIC documents.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-title">Share or download</div><div class="step-desc">Send via WhatsApp, email your client, or download as PDF. Done.</div></div>
     </div>
   </section>
-
   <section class="pricing" id="pricing">
     <div class="section-label">Pricing</div>
     <div class="section-title">Simple, transparent pricing</div>
     <div class="pricing-grid">
-      <div class="price-card">
-        <div class="price-plan">Free Trial</div>
-        <div class="price-amount">₹0</div>
-        <div class="price-desc">Start immediately. No card required.</div>
-        <div class="price-features">
-          <div class="price-feat"><span class="price-check">✓</span> 10 queries lifetime</div>
-          <div class="price-feat"><span class="price-check">✓</span> All features included</div>
-          <div class="price-feat"><span class="price-check">✓</span> Notice draft mode</div>
-          <div class="price-feat"><span class="price-check">✓</span> Photo & PDF upload</div>
-        </div>
-        <button class="price-cta price-cta-outline" onclick="showPage('signup')">Start free trial</button>
-      </div>
-      <div class="price-card popular">
-        <div class="popular-badge">Most Popular</div>
-        <div class="price-plan">Professional</div>
-        <div class="price-amount">₹999 <span class="price-period">/mo</span></div>
-        <div class="price-desc">For active practitioners handling regular notices.</div>
-        <div class="price-features">
-          <div class="price-feat"><span class="price-check">✓</span> 100 queries per month</div>
-          <div class="price-feat"><span class="price-check">✓</span> All features</div>
-          <div class="price-feat"><span class="price-check">✓</span> PDF download</div>
-          <div class="price-feat"><span class="price-check">✓</span> WhatsApp & email share</div>
-        </div>
-        <button class="price-cta price-cta-solid" onclick="showPage('signup')">Get started</button>
-      </div>
-      <div class="price-card">
-        <div class="price-plan">Unlimited</div>
-        <div class="price-amount">₹1,999 <span class="price-period" style="font-size:14px;font-weight:400">/mo</span></div>
-        <div class="price-desc">For high-volume practitioners and firms.</div>
-        <div class="price-features">
-          <div class="price-feat"><span class="price-check">✓</span> Unlimited queries</div>
-          <div class="price-feat"><span class="price-check">✓</span> All features</div>
-          <div class="price-feat"><span class="price-check">✓</span> Priority support</div>
-          <div class="price-feat"><span class="price-check">✓</span> Early access to new features</div>
-        </div>
-        <button class="price-cta price-cta-outline" onclick="showPage('signup')">Get started</button>
-      </div>
+      <div class="price-card"><div class="price-plan">Free Trial</div><div class="price-amount">₹0</div><div class="price-desc">Start immediately. No card required.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> 10 queries lifetime</div><div class="price-feat"><span class="price-check">✓</span> All features included</div><div class="price-feat"><span class="price-check">✓</span> Notice draft mode</div><div class="price-feat"><span class="price-check">✓</span> Photo & PDF upload</div></div><button class="price-cta price-cta-outline" onclick="showPage('signup')">Start free trial</button></div>
+      <div class="price-card popular"><div class="popular-badge">Most Popular</div><div class="price-plan">Professional</div><div class="price-amount">₹999 <span class="price-period">/mo</span></div><div class="price-desc">For active practitioners handling regular notices.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> 100 queries per month</div><div class="price-feat"><span class="price-check">✓</span> All features</div><div class="price-feat"><span class="price-check">✓</span> PDF download</div><div class="price-feat"><span class="price-check">✓</span> WhatsApp & email share</div></div><button class="price-cta price-cta-solid" onclick="showPage('signup')">Get started</button></div>
+      <div class="price-card"><div class="price-plan">Unlimited</div><div class="price-amount">₹1,999 <span class="price-period" style="font-size:14px;font-weight:400">/mo</span></div><div class="price-desc">For high-volume practitioners and firms.</div><div class="price-features"><div class="price-feat"><span class="price-check">✓</span> Unlimited queries</div><div class="price-feat"><span class="price-check">✓</span> All features</div><div class="price-feat"><span class="price-check">✓</span> Priority support</div><div class="price-feat"><span class="price-check">✓</span> Early access to new features</div></div><button class="price-cta price-cta-outline" onclick="showPage('signup')">Get started</button></div>
     </div>
   </section>
-
-  <footer class="land-footer">
-    <div>© 2026 GSTMind. All rights reserved.</div>
-    <div>Built for Indian CA & Tax Professionals · Powered by Claude AI</div>
-    <div>Disclaimer: For research purposes only. Not legal advice.</div>
-  </footer>
+  <footer class="land-footer"><div>© 2026 GSTMind. All rights reserved.</div><div>Built for Indian CA & Tax Professionals · Powered by Claude AI</div><div>Disclaimer: For research purposes only. Not legal advice.</div></footer>
 </div>
 
-<!-- ════ LOGIN PAGE ════ -->
 <div class="page" id="page-login">
   <div class="auth-page">
-    <div class="auth-nav">
-      <a class="land-logo" href="#" onclick="showPage('landing')">
-        <div class="land-logo-mark"><span>G</span></div>
-        <span class="land-logo-name">GSTMind</span>
-      </a>
-    </div>
+    <div class="auth-nav"><a class="land-logo" href="#" onclick="showPage('landing')"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a></div>
     <div class="auth-body">
       <div class="auth-card">
         <div class="auth-title">Welcome back</div>
         <div class="auth-sub">Log in to your GSTMind account to continue your research.</div>
         <div class="auth-error" id="login-error">Invalid email or password. Please try again.</div>
-        <div class="form-group">
-          <label class="form-label">Email address</label>
-          <input class="form-input" type="email" id="login-email" placeholder="yourname@example.com"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
-        </div>
+        <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="login-email" placeholder="yourname@example.com"/></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
         <button class="auth-btn" onclick="doLogin()">Log in to GSTMind</button>
-        <div class="auth-switch" style="margin-top:12px;font-size:12px">
-          <span class="auth-link" onclick="showForgotModal()">Forgot password?</span>
-          &nbsp;·&nbsp;
-          <span class="auth-link" onclick="showLoginOTP()">Login with OTP instead</span>
-        </div>
+        <div class="auth-switch" style="margin-top:12px;font-size:12px"><span class="auth-link" onclick="showForgotModal()">Forgot password?</span>&nbsp;·&nbsp;<span class="auth-link" onclick="showLoginOTP()">Login with OTP instead</span></div>
         <div id="login-otp-section" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:14px">
           <div style="font-size:12px;color:var(--text3);margin-bottom:10px">We'll send a one-time password to your email</div>
-          <div id="login-otp-step1-wrap">
-            <button class="auth-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="sendLoginEmailOTP()">Send OTP to Email</button>
-          </div>
+          <div id="login-otp-step1-wrap"><button class="auth-btn" style="background:var(--surface);color:var(--text);border:1px solid var(--border)" onclick="sendLoginEmailOTP()">Send OTP to Email</button></div>
           <div id="login-otp-step2-wrap" style="display:none">
             <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:10px" id="login-otp-sent-msg"></div>
             <div class="otp-boxes" id="login-otp-boxes" style="display:flex;gap:8px;margin-bottom:12px">
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
-              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
+              <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'loginotp')" onkeydown="otpKeydown(event,this,'loginotp')"/>
             </div>
             <button class="auth-btn" onclick="verifyLoginEmailOTP()">Verify & Login</button>
             <div style="margin-top:8px;font-size:11px" id="loginotp-timer-wrap"></div>
           </div>
         </div>
-        <div class="auth-switch">
-          Don't have an account? <span class="auth-link" onclick="showPage('signup')">Sign up free</span>
-        </div>
-        <div class="auth-switch" style="margin-top:8px">
-          <span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span>
-        </div>
-        <!-- Hidden test login — for internal testing only -->
-        <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--light);text-align:center;margin-bottom:8px;letter-spacing:.05em">TESTING ACCESS</div>
-          <div style="display:flex;gap:8px">
-            <input class="form-input" type="password" id="test-pass-input" placeholder="Test password" style="font-size:12px;padding:7px 10px"/>
-            <button onclick="doTestLogin()" style="padding:7px 14px;background:var(--text);color:var(--surface);border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap">Test →</button>
-          </div>
-        </div>
+        <div class="auth-switch">Don't have an account? <span class="auth-link" onclick="showPage('signup')">Sign up free</span></div>
+        <div class="auth-switch" style="margin-top:8px"><span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span></div>
+        <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)"><div style="font-size:10px;color:var(--light);text-align:center;margin-bottom:8px;letter-spacing:.05em">TESTING ACCESS</div><div style="display:flex;gap:8px"><input class="form-input" type="password" id="test-pass-input" placeholder="Test password" style="font-size:12px;padding:7px 10px"/><button onclick="doTestLogin()" style="padding:7px 14px;background:var(--text);color:var(--surface);border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap">Test →</button></div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ════ SIGNUP PAGE ════ -->
 <div class="page" id="page-signup">
   <div class="auth-page">
-    <div class="auth-nav">
-      <a class="land-logo" href="#" onclick="showPage('landing')">
-        <div class="land-logo-mark"><span>G</span></div>
-        <span class="land-logo-name">GSTMind</span>
-      </a>
-    </div>
+    <div class="auth-nav"><a class="land-logo" href="#" onclick="showPage('landing')"><div class="land-logo-mark"><span>G</span></div><span class="land-logo-name">GSTMind</span></a></div>
     <div class="auth-body">
       <div class="auth-card">
         <div class="auth-title">Create your account</div>
         <div class="auth-sub">Start with 10 free queries. No credit card required.</div>
         <div class="auth-error" id="signup-error">Please fill all fields correctly.</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">First name</label>
-            <input class="form-input" type="text" id="signup-fname" placeholder="Rajesh"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Last name</label>
-            <input class="form-input" type="text" id="signup-lname" placeholder="Kumar"/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email address</label>
-          <input class="form-input" type="email" id="signup-email" placeholder="yourname@example.com"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" type="password" id="signup-pass" placeholder="Min. 8 characters"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Profession</label>
-          <select class="form-input" id="signup-prof" style="cursor:pointer">
-            <option value="">Select your profession</option>
-            <option>Chartered Accountant</option>
-            <option>Tax Consultant</option>
-            <option>Advocate / Tax Lawyer</option>
-            <option>Company Secretary</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div id="signup-step1">
-          <button class="auth-btn" onclick="initiateSignup()">Continue — Verify Email</button>
-        </div>
+        <div class="form-row"><div class="form-group"><label class="form-label">First name</label><input class="form-input" type="text" id="signup-fname" placeholder="Rajesh"/></div><div class="form-group"><label class="form-label">Last name</label><input class="form-input" type="text" id="signup-lname" placeholder="Kumar"/></div></div>
+        <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="signup-email" placeholder="yourname@example.com"/></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="signup-pass" placeholder="Min. 8 characters"/></div>
+        <div class="form-group"><label class="form-label">Profession</label><select class="form-input" id="signup-prof" style="cursor:pointer"><option value="">Select your profession</option><option>Chartered Accountant</option><option>Tax Consultant</option><option>Advocate / Tax Lawyer</option><option>Company Secretary</option><option>Other</option></select></div>
+        <div id="signup-step1"><button class="auth-btn" onclick="initiateSignup()">Continue — Verify Email</button></div>
         <div id="signup-step2" style="display:none">
-          <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px">
-            OTP sent to <strong id="signup-email-show"></strong>
-          </div>
+          <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px">OTP sent to <strong id="signup-email-show"></strong></div>
           <label class="form-label">Enter 6-digit OTP</label>
-          <div class="otp-boxes" id="signup-otp-boxes" style="display:flex;gap:8px;margin:8px 0 16px">
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-            <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/>
-          </div>
+          <div class="otp-boxes" id="signup-otp-boxes" style="display:flex;gap:8px;margin:8px 0 16px"><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'signup')" onkeydown="otpKeydown(event,this,'signup')"/></div>
           <button class="auth-btn" onclick="doSignup()">Verify & Create Account</button>
           <div style="margin-top:8px;font-size:11px;color:var(--light)" id="signup-timer-wrap"></div>
         </div>
-        <div class="auth-switch">
-          Already have an account? <span class="auth-link" onclick="showPage('login')">Log in</span>
-        </div>
-        <div class="auth-switch" style="margin-top:8px">
-          <span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span>
-        </div>
+        <div class="auth-switch">Already have an account? <span class="auth-link" onclick="showPage('login')">Log in</span></div>
+        <div class="auth-switch" style="margin-top:8px"><span class="auth-link" style="font-size:12px;color:var(--light)" onclick="showPage('landing')">← Back to home</span></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ════ MAIN APP ════ -->
 <div class="page" id="page-app">
   <div id="sidebarOverlay" onclick="closeSidebar()"></div>
-<div class="app-shell">
-
-    <!-- SIDEBAR -->
+  <div class="app-shell">
     <div class="app-sidebar" id="appSidebar">
-      <div class="app-brand">
-        <div class="app-brand-icon"><span>G</span></div>
-        <div>
-          <div class="app-brand-name">GSTMind</div>
-          <div class="app-brand-tag">GST AI Research</div>
-        </div>
-      </div>
-
-      <!-- USER CARD -->
+      <div class="app-brand"><div class="app-brand-icon"><span>G</span></div><div><div class="app-brand-name">GSTMind</div><div class="app-brand-tag">GST AI Research</div></div></div>
       <div class="user-card">
-        <div class="user-card-top">
-          <div class="user-avatar" id="userAvatar">?</div>
-          <div>
-            <div class="user-name" id="userName">User</div>
-            <div class="user-plan" id="userPlanBadge">Free Trial</div>
-          </div>
-        </div>
-        <div class="query-meter" id="queryMeter">
-          <div class="query-meter-top">
-            <span id="queryMeterLabel">Queries used</span>
-            <span id="queryMeterCount" style="font-family:'DM Mono',monospace">0/10</span>
-          </div>
-          <div class="query-meter-bar">
-            <div class="query-meter-fill" id="queryMeterFill" style="width:0%"></div>
-          </div>
-        </div>
+        <div class="user-card-top"><div class="user-avatar" id="userAvatar">?</div><div><div class="user-name" id="userName">User</div><div class="user-plan" id="userPlanBadge">Free Trial</div></div></div>
+        <div class="query-meter" id="queryMeter"><div class="query-meter-top"><span id="queryMeterLabel">Queries used</span><span id="queryMeterCount" style="font-family:'DM Mono',monospace">0/10</span></div><div class="query-meter-bar"><div class="query-meter-fill" id="queryMeterFill" style="width:0%"></div></div></div>
       </div>
-
-      <button class="new-chat" onclick="newChat()">
-        <span style="font-size:16px;color:var(--text3)">+</span> New Chat
-      </button>
-
-      <div class="sidebar-scroll">
-        <div class="sb-label">Recent Chats</div>
-        <div id="histList"><div style="font-size:11.5px;color:var(--light);padding:4px">No queries yet.</div></div>
-      </div>
-
+      <button class="new-chat" onclick="newChat()"><span style="font-size:16px;color:var(--text3)">+</span> New Chat</button>
+      <div class="sidebar-scroll"><div class="sb-label">Recent Chats</div><div id="histList"><div style="font-size:11.5px;color:var(--light);padding:4px">No queries yet.</div></div></div>
       <div class="sidebar-bottom">
-        <button class="sb-bottom-btn" onclick="showSettings()">
-          <span>⚙</span> Account Settings
-        </button>
-        <button class="sb-bottom-btn" onclick="doLogout()">
-          <span>↩</span> Log out
-        </button>
+        <button class="sb-bottom-btn" onclick="showSettings()"><span>⚙</span> Account Settings</button>
+        <button class="sb-bottom-btn" onclick="doLogout()"><span>↩</span> Log out</button>
         <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
       </div>
     </div>
-
-    <!-- MAIN -->
     <div class="app-main">
       <div class="app-topbar">
-      <button onclick="toggleSidebarMobile()" class="sidebar-toggle" id="mobileMenuBtn" 
-        style="display:none;width:36px;height:36px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;color:var(--text2)" 
-        aria-label="Menu">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/>
-        </svg>
-      </button>
+        <button onclick="toggleSidebarMobile()" class="sidebar-toggle" id="mobileMenuBtn" style="display:none;width:36px;height:36px;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;color:var(--text2)" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg></button>
         <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">⟨</button>
-        <div class="mode-pills">
-          <button class="mode-pill active" onclick="setMode('query',this)">GST Query</button>
-          <button class="mode-pill" onclick="setMode('draft',this)">Notice Draft</button>
-        </div>
-        <div class="topbar-right">
-  
-        </div>
+        <div class="mode-pills"><button class="mode-pill active" onclick="setMode('query',this)">GST Query</button><button class="mode-pill" onclick="setMode('draft',this)">Notice Draft</button></div>
+        <div class="topbar-right"></div>
       </div>
-
-      <div class="notice-banner" id="noticeBanner">
-        <div class="nb-bar"></div>
-        <span>Notice Draft Mode — upload a notice photo/PDF using 📎 or paste the text below. GSTMind will identify the type and draft a formal reply.</span>
-      </div>
-
-      <div class="trial-warning" id="trialWarning">
-        <span style="color:var(--text3)">Free trial</span>
-        <span class="tw-count" id="twCount">0 / 10</span>
-        <div class="tw-track"><div class="tw-fill" id="twFill" style="width:0%"></div></div>
-        <span class="tw-upgrade" onclick="showUpgrade()">Upgrade to Pro →</span>
-      </div>
-
+      <div class="notice-banner" id="noticeBanner"><div class="nb-bar"></div><span>Notice Draft Mode — upload a notice photo/PDF using 📎 or paste the text below. GSTMind will identify the type and draft a formal reply.</span></div>
+      <div class="trial-warning" id="trialWarning"><span style="color:var(--text3)">Free trial</span><span class="tw-count" id="twCount">0 / 10</span><div class="tw-track"><div class="tw-fill" id="twFill" style="width:0%"></div></div><span class="tw-upgrade" onclick="showUpgrade()">Upgrade to Pro →</span></div>
       <div class="msgs" id="msgs">
         <div class="empty" id="emptyState">
           <div class="empty-icon"><span>G</span></div>
           <div class="empty-title" id="emptyGreet">How can I help you today?</div>
           <div class="empty-sub">Ask any GST research question, or switch to Notice Draft mode and upload a notice for a formal reply draft.</div>
-          <div class="trending-wrap">
-            <div class="trending-label">Frequently asked</div>
-            <div class="chip-grid" id="trendingChips"></div>
-          </div>
+          <div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div>
         </div>
       </div>
-
       <div class="input-wrap">
-        <div style="max-width:720px;margin:0 auto">
-          <div class="attach-preview" id="attachPreview">
-            <span style="font-size:11px;color:var(--accent);font-style:italic">Attached:</span>
-            <div id="attachChips"></div>
-          </div>
-        </div>
+        <div style="max-width:720px;margin:0 auto"><div class="attach-preview" id="attachPreview"><span style="font-size:11px;color:var(--accent);font-style:italic">Attached:</span><div id="attachChips"></div></div></div>
         <div class="input-outer" style="max-width:720px">
           <div class="input-inner">
-            <button class="attach-btn" onclick="document.getElementById('noticeUpload').click()" title="Upload notice photo or PDF">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-            </button>
+            <button class="attach-btn" onclick="document.getElementById('noticeUpload').click()" title="Upload notice photo or PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
             <input type="file" id="noticeUpload" accept="image/*,.pdf" style="display:none" onchange="onNoticeUpload(event)"/>
             <textarea id="qi" rows="1" placeholder="Ask a GST query..." onkeydown="onKey(event)" oninput="autoR(this)"></textarea>
-            <button class="send-btn" id="sendBtn" onclick="send()">
-              <svg class="send-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
+            <button class="send-btn" id="sendBtn" onclick="send()"><svg class="send-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
           </div>
         </div>
-        <div class="inp-hint" style="max-width:720px">
-          <span>📎 Attach notice photo/PDF · Enter to send · Shift+Enter for new line</span>
-          <span id="docHint">Loading KB...</span>
-        </div>
+        <div class="inp-hint" style="max-width:720px"><span>📎 Attach notice photo/PDF · Enter to send · Shift+Enter for new line</span><span id="docHint">Loading KB...</span></div>
         <div class="disclaimer">GSTMind is for research purposes only. Not legal advice. Always verify with primary legislation.</div>
       </div>
     </div>
   </div>
-
-</div>
-    </div>
-
-  </div>
 </div>
 
-
-<!-- FORGOT PASSWORD MODAL -->
 <div class="modal-bg" id="forgotModal" onclick="if(event.target===this)document.getElementById('forgotModal').classList.remove('show')">
   <div class="modal" style="max-width:380px">
     <div class="modal-title">Reset Password</div>
     <div class="modal-sub" id="forgotModalSub">Enter your registered email address and we will send you a reset link.</div>
-    <div id="forgotStep1">
-      <div class="form-group">
-        <label class="form-label">Email address</label>
-        <input class="form-input" type="email" id="forgot-email" placeholder="yourname@example.com"/>
-      </div>
-      <button class="auth-btn" onclick="sendForgotOTP()">Send Reset OTP</button>
-    </div>
-    <div id="forgotStep2" style="display:none">
-      <div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:14px" id="forgot-phone-show"></div>
-      <div class="form-group">
-        <label class="form-label">Enter OTP</label>
-        <div class="otp-boxes" id="forgot-otp-boxes">
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-          <input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/>
-        </div>
-        <div class="otp-timer" id="forgot-otp-timer">Resend in <span id="forgot-timer-count">30</span>s</div>
-      </div>
-    </div>
-    <div id="forgotStep3" style="display:none">
-      <div class="form-group">
-        <label class="form-label">New Password</label>
-        <input class="form-input" type="password" id="forgot-new-pass" placeholder="Min. 8 characters"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Confirm Password</label>
-        <input class="form-input" type="password" id="forgot-conf-pass" placeholder="Confirm new password"/>
-      </div>
-      <button class="auth-btn" onclick="resetPassword()">Set New Password</button>
-    </div>
+    <div id="forgotStep1"><div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="forgot-email" placeholder="yourname@example.com"/></div><button class="auth-btn" onclick="sendForgotOTP()">Send Reset OTP</button></div>
+    <div id="forgotStep2" style="display:none"><div style="background:var(--accent-light);border:1px solid var(--accent-border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:14px" id="forgot-phone-show"></div><div class="form-group"><label class="form-label">Enter OTP</label><div class="otp-boxes" id="forgot-otp-boxes"><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/><input class="otp-box" type="tel" maxlength="1" oninput="otpInput(this,'forgot')" onkeydown="otpKeydown(event,this,'forgot')"/></div><div class="otp-timer" id="forgot-otp-timer">Resend in <span id="forgot-timer-count">30</span>s</div></div></div>
+    <div id="forgotStep3" style="display:none"><div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="forgot-new-pass" placeholder="Min. 8 characters"/></div><div class="form-group"><label class="form-label">Confirm Password</label><input class="form-input" type="password" id="forgot-conf-pass" placeholder="Confirm new password"/></div><button class="auth-btn" onclick="resetPassword()">Set New Password</button></div>
     <button class="modal-close" onclick="document.getElementById('forgotModal').classList.remove('show')" style="margin-top:12px">Cancel</button>
   </div>
 </div>
 
-<!-- UPGRADE MODAL -->
 <div class="modal-bg" id="upgradeModal" onclick="if(event.target===this)hideUpgrade()">
   <div class="modal">
     <div class="modal-title">Upgrade GSTMind</div>
     <div class="modal-sub">You've used all 10 free queries. Upgrade to continue researching without limits.</div>
-    <div class="plan-card" onclick="showToast('Razorpay payment — coming soon')">
-      <div class="plan-name">Professional</div>
-      <div class="plan-price">₹999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div>
-      <div class="plan-feat">100 queries/month · All features · Email support</div>
-    </div>
-    <div class="plan-card rec" onclick="showToast('Razorpay payment — coming soon')">
-      <div class="plan-name">Unlimited</div>
-      <div class="plan-price">₹1,999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div>
-      <div class="plan-feat">Unlimited queries · All features · Priority support</div>
-    </div>
+    <div class="plan-card" onclick="showToast('Razorpay payment — coming soon')"><div class="plan-name">Professional</div><div class="plan-price">₹999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div><div class="plan-feat">100 queries/month · All features · Email support</div></div>
+    <div class="plan-card rec" onclick="showToast('Razorpay payment — coming soon')"><div class="plan-name">Unlimited</div><div class="plan-price">₹1,999 <span style="font-size:14px;font-weight:400;font-family:'DM Sans',sans-serif">/month</span></div><div class="plan-feat">Unlimited queries · All features · Priority support</div></div>
     <button class="modal-close" onclick="hideUpgrade()">Maybe later</button>
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
 <div class="modal-bg" id="settingsModal" onclick="if(event.target===this)hideSettings()">
   <div class="settings-modal">
     <h2>Account Settings</h2>
-    <div class="settings-section">
-      <div class="settings-label">Profile</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Full name</div><div class="settings-value" id="stg-name">—</div></div>
-        <div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Email</div><div class="settings-value" id="stg-email">—</div></div>
-        <div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Profession</div><div class="settings-value" id="stg-prof">—</div></div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-label">Subscription</div>
-      <div class="settings-value" id="stg-plan">Free Trial</div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="settings-btn settings-btn-primary" onclick="hideSettings();showUpgrade()">Upgrade Plan</button>
-        <button class="settings-btn settings-btn-ghost" onclick="hideSettings()">Close</button>
-      </div>
-    </div>
-    <div class="settings-section">
-      <div class="settings-label">Account</div>
-      <button class="settings-btn settings-btn-danger" onclick="doLogout()">Log out</button>
-    </div>
+    <div class="settings-section"><div class="settings-label">Profile</div><div style="display:flex;flex-direction:column;gap:10px"><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Full name</div><div class="settings-value" id="stg-name">—</div></div><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Email</div><div class="settings-value" id="stg-email">—</div></div><div><div style="font-size:11px;color:var(--light);margin-bottom:4px">Profession</div><div class="settings-value" id="stg-prof">—</div></div></div></div>
+    <div class="settings-section"><div class="settings-label">Subscription</div><div class="settings-value" id="stg-plan">Free Trial</div><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="settings-btn settings-btn-primary" onclick="hideSettings();showUpgrade()">Upgrade Plan</button><button class="settings-btn settings-btn-ghost" onclick="hideSettings()">Close</button></div></div>
+    <div class="settings-section"><div class="settings-label">Account</div><button class="settings-btn settings-btn-danger" onclick="doLogout()">Log out</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════
-// PAGE ROUTING
-// ════════════════════════════════
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const p=document.getElementById('page-'+name);
-  p.classList.add('active');
-  if(name==='app')initApp();
-  window.scrollTo(0,0);
-}
+function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('page-'+name);p.classList.add('active');if(name==='app')initApp();window.scrollTo(0,0);}
 
-// ════════════════════════════════
-// AUTH (simulated with localStorage)
-// ════════════════════════════════
-// Step 1: validate form and send OTP
 async function initiateSignup(){
   const fname=document.getElementById('signup-fname').value.trim();
   const lname=document.getElementById('signup-lname').value.trim();
@@ -1696,15 +581,9 @@ async function initiateSignup(){
   const pass=document.getElementById('signup-pass').value;
   const prof=document.getElementById('signup-prof').value;
   const err=document.getElementById('signup-error');
-  if(!fname||!lname||!email||!pass||!prof){
-    err.textContent='Please fill in all fields.';err.classList.add('show');return;
-  }
-  if(pass.length<8){
-    err.textContent='Password must be at least 8 characters.';err.classList.add('show');return;
-  }
-  if(!email.includes('@')){
-    err.textContent='Please enter a valid email address.';err.classList.add('show');return;
-  }
+  if(!fname||!lname||!email||!pass||!prof){err.textContent='Please fill in all fields.';err.classList.add('show');return;}
+  if(pass.length<8){err.textContent='Password must be at least 8 characters.';err.classList.add('show');return;}
+  if(!email.includes('@')){err.textContent='Please enter a valid email address.';err.classList.add('show');return;}
   err.classList.remove('show');
   const btn=document.querySelector('#signup-step1 .auth-btn');
   if(btn){btn.textContent='Sending OTP...';btn.disabled=true;}
@@ -1717,15 +596,10 @@ async function initiateSignup(){
     startTimer('signup', 120);
     setTimeout(()=>document.getElementById('signup-otp-boxes').querySelector('.otp-box').focus(),100);
     if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
-  }catch(e){
-    err.textContent = e.message||'Failed to send OTP. Please try again.';
-    err.classList.add('show');
-  }finally{
-    if(btn){btn.textContent='Continue →';btn.disabled=false;}
-  }
+  }catch(e){err.textContent = e.message||'Failed to send OTP. Please try again.';err.classList.add('show');}
+  finally{if(btn){btn.textContent='Continue →';btn.disabled=false;}}
 }
 
-// Step 2: verify OTP and create account
 async function doSignup(){
   const fname=document.getElementById('signup-fname').value.trim();
   const lname=document.getElementById('signup-lname').value.trim();
@@ -1738,30 +612,16 @@ async function doSignup(){
   const btn=document.querySelector('#signup-step2 .auth-btn');
   if(btn){btn.textContent='Creating account...';btn.disabled=true;}
   try{
-    // Verify OTP + create account in one call
-    const res = await apiCall('/auth/email/otp/verify','POST',{
-      phone:'email:'+email, code:otp,
-      is_signup:true, fname, lname, profession:prof
-    });
-    // Then set password separately
+    const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:true, fname, lname, profession:prof});
     await apiCall('/auth/set-password','POST',{email, password:pass},{auth:false,token:res.token});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    const userData = {
-      ...res.user, fname, lname, name:fname+' '+lname,
-      queryCount:res.user.query_count||0,
-      queryLimit:res.user.query_limit||10,
-    };
+    const userData = {...res.user, fname, lname, name:fname+' '+lname, queryCount:res.user.query_count||0, queryLimit:res.user.query_limit||10};
     localStorage.setItem('gm_user', JSON.stringify(userData));
     showToast('Account created! Welcome to GSTMind.');
     showPage('app');
-  }catch(e){
-    err.textContent=e.message||'Invalid OTP. Please try again.';
-    err.classList.add('show');
-    clearOTPBoxes('signup');
-  }finally{
-    if(btn){btn.textContent='Verify & Create Account';btn.disabled=false;}
-  }
+  }catch(e){err.textContent=e.message||'Invalid OTP. Please try again.';err.classList.add('show');clearOTPBoxes('signup');}
+  finally{if(btn){btn.textContent='Verify & Create Account';btn.disabled=false;}}
 }
 
 async function doLogin(){
@@ -1775,74 +635,36 @@ async function doLogin(){
     const res = await apiCall('/auth/login/email','POST',{email,password:pass});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    // Map server snake_case → app camelCase
-    const userData = {
-      ...res.user,
-      queryCount: res.user.query_count || 0,
-      queryLimit: res.user.query_limit || 10,
-    };
+    const userData = {...res.user, queryCount: res.user.query_count || 0, queryLimit: res.user.query_limit || 10};
     localStorage.setItem('gm_user', JSON.stringify(userData));
     err.classList.remove('show');
     showToast('Welcome back, '+(res.user.fname||'')+'!');
-    // Fetch fresh user data from server to get accurate query count
     try{
       const freshUser = await apiCall('/auth/me','GET',null,true);
-      const freshData = {
-        ...userData,
-        queryCount: freshUser.query_count || userData.queryCount,
-        queryLimit: freshUser.query_limit || userData.queryLimit,
-        plan: freshUser.plan || userData.plan,
-      };
+      const freshData = {...userData, queryCount: freshUser.query_count || userData.queryCount, queryLimit: freshUser.query_limit || userData.queryLimit, plan: freshUser.plan || userData.plan};
       localStorage.setItem('gm_user', JSON.stringify(freshData));
-    } catch(e){ /* use login data if fetch fails */ }
+    } catch(e){}
     showPage('app');
-  } catch(e){
-    err.textContent = e.message==='Invalid email or password' ? 'Incorrect email or password.' : (e.message||'Login failed.');
-    err.classList.add('show');
-  } finally {
-    if(btn){btn.textContent='Log in';btn.disabled=false;}
-  }
+  } catch(e){err.textContent = e.message==='Invalid email or password' ? 'Incorrect email or password.' : (e.message||'Login failed.');err.classList.add('show');}
+  finally {if(btn){btn.textContent='Log in';btn.disabled=false;}}
 }
 
-function doLogout(){
-  hideSettings();
-  authToken = '';
-  localStorage.removeItem('gm_token');
-  localStorage.removeItem('gm_user');
-  showPage('landing');
-  showToast('Logged out successfully.');
-}
+function doLogout(){hideSettings();authToken='';localStorage.removeItem('gm_token');localStorage.removeItem('gm_user');showPage('landing');showToast('Logged out successfully.');}
 
-
-// ════════════════════════════════
-// APP STATE
-// ════════════════════════════════
 const API = 'https://web-production-399b0.up.railway.app';
 let docs=[],history=[],mode='query',busy=false,attachedFile=null;
-
-// Load KB docs from admin localStorage
-try{
-  const kbRaw = localStorage.getItem('gm_admin_kb');
-  if(kbRaw){ docs = JSON.parse(kbRaw); }
-} catch(e){ docs=[]; }
+try{const kbRaw = localStorage.getItem('gm_admin_kb');if(kbRaw){ docs = JSON.parse(kbRaw); }} catch(e){ docs=[]; }
 let authToken = localStorage.getItem('gm_token')||'';
 
-// ── API HELPER ──
 async function apiCall(endpoint, method='GET', body=null, auth=false, retry=true){
   const headers = {'Content-Type':'application/json'};
   if(auth && authToken) headers['Authorization'] = 'Bearer ' + authToken;
   const opts = {method, headers, mode:'cors'};
   if(body) opts.body = JSON.stringify(body);
   let res;
-  try {
-    res = await fetch(API + endpoint, opts);
-  } catch(e) {
-    // Retry once after 3 seconds (Railway cold start can take a moment)
-    if(retry){
-      showToast('Server starting up, retrying...');
-      await new Promise(r=>setTimeout(r,3000));
-      return apiCall(endpoint, method, body, auth, false);
-    }
+  try{ res = await fetch(API + endpoint, opts); }
+  catch(e){
+    if(retry){showToast('Server starting up, retrying...');await new Promise(r=>setTimeout(r,3000));return apiCall(endpoint, method, body, auth, false);}
     throw new Error('Cannot reach server. Please check your internet connection and try again.');
   }
   let data;
@@ -1851,136 +673,38 @@ async function apiCall(endpoint, method='GET', body=null, auth=false, retry=true
   return data;
 }
 const FREE_LIMIT=10;
-
 const BUILTIN=[];
 
-// Read prompts from admin settings if available
-function getPrompt(type){
-  return localStorage.getItem('gm_prompt_'+type) || DEFAULT_PROMPTS[type];
-}
-const DEFAULT_PROMPTS={
-  query:`You are GSTMind, an expert AI legal research assistant for Indian GST law, built for Chartered Accountants and tax professionals. You write with the authority of a senior tax advocate — precise, structured, and citation-backed.
+function getPrompt(type){return localStorage.getItem('gm_prompt_'+type) || DEFAULT_PROMPTS[type];}
+const DEFAULT_PROMPTS={query:'',draft:''};
 
-RULES:
-1. Answer using ONLY the knowledge base documents provided below. If the answer is not in the documents, say: "This specific issue is not addressed in the available documents. Please refer to the relevant CBIC Circular or primary legislation directly."
-2. Cite sources inline using superscript numbers ¹ ² ³ — place them immediately after the cited fact.
-3. Begin with CONFIDENCE: HIGH / MEDIUM / LOW on the very first line.
-   HIGH = directly stated in Act/Rule/Notification
-   MEDIUM = from Circular/FAQ/AAR ruling
-   LOW = interpretive — professional verification recommended
-4. Never guess or use knowledge beyond the provided documents.
-5. Always cite exact provision numbers: "Section 54(3) of the CGST Act, 2017¹"
-6. Structure your answer naturally: Legal Position → Applicable Provision → Conditions/Exceptions → Practical Implication → Conclusion
-
-FORMAT (follow exactly):
-CONFIDENCE: [HIGH/MEDIUM/LOW]
-
-[Your answer in flowing professional paragraphs with inline citations¹ ² ³]
-
-REFERENCES:
-1. [Document Name] — [Section/Paragraph]
-2. [Document Name] — [Section/Paragraph]`,
-
-  draft:`You are GSTMind, an expert GST consultant AI helping a Chartered Accountant draft a formal, professional reply to a GST notice.
-
-STEP 1 — IDENTIFY THE NOTICE TYPE from the text or document provided:
-- Show Cause Notice (SCN) under Section 73 or 74 of CGST Act
-- Demand & Recovery — Section 73 (non-fraud, 3-year limit) or Section 74 (fraud/suppression, 5-year limit)
-- ITC Mismatch — GSTR-2A/2B vs GSTR-3B, Rule 36(4), Section 16(2)(c), or Rule 42/43
-- Scrutiny notice under Section 61 of CGST Act
-- Any other departmental communication
-
-STEP 2 — DRAFT A FORMAL REPLY structured as a legal letter:
-
-To,
-The [Designation],
-[Office Name]
-
-Subject: Reply to [Notice Type] — Ref. No. ___ dated ___
-
-Sir/Madam,
-
-1. REFERENCE TO NOTICE
-[Reference clearly]
-
-2. BRIEF FACTS
-[Concise facts]
-
-3. LEGAL SUBMISSIONS
-[Numbered submissions with superscript footnotes¹ ² ³ for every citation. Complete professional paragraphs.]
-
-4. RECONCILIATION / EXPLANATION (if applicable)
-[Address discrepancies]
-
-5. PRAYER
-[Request for dropping proceedings with legal basis]
-
-Yours faithfully,
-[Authorised Signatory]
-GSTIN: ___________
-
-RULES: Draft ONLY from KNOWLEDGE BASE. Formal legal language. Superscript footnotes¹ inline. Flag unverified arguments as [REQUIRES VERIFICATION]. End with disclaimer line starting with ⚠.
-
-OUTPUT FORMAT:
-NOTICE TYPE IDENTIFIED: [Type]
-CONFIDENCE: [HIGH/MEDIUM/LOW]
-
-DRAFT REPLY:
-[Full formal letter with footnotes]
-
-REFERENCES:
-1. [Document] — [Section]
-2. [Document] — [Section]`
-};
-
-// ════════════════════════════════
-// INIT APP
-// ════════════════════════════════
 function initApp(){
   const user=JSON.parse(localStorage.getItem('gm_user')||'null');
   if(!user){showPage('login');return;}
-  // Restore sidebar state
-  if(localStorage.getItem('gm_sidebar_collapsed')==='1'){
-    const sb=document.getElementById('appSidebar');
-    if(sb)sb.classList.add('collapsed');
-  }
-
-  // Set user info
+  if(localStorage.getItem('gm_sidebar_collapsed')==='1'){const sb=document.getElementById('appSidebar');if(sb)sb.classList.add('collapsed');}
   const initials=(user.fname?.[0]||'')+(user.lname?.[0]||'');
   document.getElementById('userAvatar').textContent=initials||'U';
   document.getElementById('userName').textContent=user.name||'User';
   document.getElementById('emptyGreet').textContent=`Good day, ${user.fname||''}! How can I help you?`;
-
-  // Plan badge
   const planEl=document.getElementById('userPlanBadge');
   if(user.plan==='pro'){planEl.textContent='Professional';planEl.className='user-plan';}
   else if(user.plan==='unlimited'){planEl.textContent='Unlimited';planEl.className='user-plan unlimited';}
   else{planEl.textContent='Free Trial';planEl.className='user-plan free';}
-
-  // Query meter
   updateQueryMeter(user);
-
-  // API key
-  const key=localStorage.getItem('gm_key')||user.apiKey||'';
   document.getElementById('stg-name').textContent=user.name;
   document.getElementById('stg-email').textContent=user.email;
   document.getElementById('stg-prof').textContent=user.prof||'—';
   document.getElementById('stg-plan').textContent=user.plan==='pro'?'Professional':user.plan==='unlimited'?'Unlimited':'Free Trial (10 queries)';
-
-  renderBuiltin();
-  updateKBUI(kbDocs||[]);
+  updateKBUI([]);
   renderTrendingChips();
   loadChatHistory();
-
-  // Show/hide trial bar
   const tw=document.getElementById('trialWarning');
   if(tw)tw.style.display=user.plan==='free'?'flex':'none';
 }
 
 function updateQueryMeter(user){
   if(!user)user=JSON.parse(localStorage.getItem('gm_user')||'{}');
-  const qc=user.queryCount||0;
-  const ql=user.queryLimit||10;
+  const qc=user.queryCount||0;const ql=user.queryLimit||10;
   const pct=Math.min(100,Math.round((qc/ql)*100));
   document.getElementById('queryMeterCount').textContent=user.plan==='unlimited'?`${qc} used`:`${qc}/${ql}`;
   document.getElementById('queryMeterFill').style.width=pct+'%';
@@ -1992,40 +716,20 @@ function updateQueryMeter(user){
 function getUser(){return JSON.parse(localStorage.getItem('gm_user')||'{}');}
 function saveUser(u){localStorage.setItem('gm_user',JSON.stringify(u));}
 
-// ════════════════════════════════
-// MODALS
-// ════════════════════════════════
-
-
-// ── HISTORY COMPRESSION ──
-// Keeps last 2 turns verbatim (critical for follow-up context)
-// Older turns: keep user messages full, trim long assistant responses
-// This preserves conversational context while saving 50-60% history tokens
 function compressHistory(hist){
-  if(hist.length <= 4) return hist; // short conversation — send everything
-
-  const recent = hist.slice(-4);    // last 2 turns verbatim
-  const older = hist.slice(-8, -4); // older turns — compress assistant responses
-
+  if(hist.length <= 4) return hist;
+  const recent = hist.slice(-4);
+  const older = hist.slice(-8, -4);
   const compressed = older.map(msg => {
-    if(msg.role === 'user') return msg; // always keep user messages full
-    // Trim long assistant responses to first 400 chars
+    if(msg.role === 'user') return msg;
     const content = typeof msg.content === 'string' ? msg.content : '';
     if(content.length <= 600) return msg;
-    return {
-      ...msg,
-      content: content.slice(0, 500) + '... [continued]'
-    };
+    return {...msg, content: content.slice(0, 500) + '... [continued]'};
   });
-
   return [...compressed, ...recent];
 }
 
-
-function showLoginOTP(){
-  const sec = document.getElementById('login-otp-section');
-  if(sec) sec.style.display = sec.style.display==='none' ? 'block' : 'none';
-}
+function showLoginOTP(){const sec = document.getElementById('login-otp-section');if(sec) sec.style.display = sec.style.display==='none' ? 'block' : 'none';}
 
 async function sendLoginEmailOTP(){
   const email = document.getElementById('login-email').value.trim();
@@ -2041,11 +745,8 @@ async function sendLoginEmailOTP(){
     startTimer('loginotp', 120);
     setTimeout(()=>document.getElementById('login-otp-boxes').querySelector('.otp-box').focus(),100);
     if(res.dev_otp) showToast('Dev OTP: '+res.dev_otp);
-  }catch(e){
-    showToast(e.message||'Failed to send OTP');
-  }finally{
-    if(btn){btn.textContent='Send OTP to Email';btn.disabled=false;}
-  }
+  }catch(e){showToast(e.message||'Failed to send OTP');}
+  finally{if(btn){btn.textContent='Send OTP to Email';btn.disabled=false;}}
 }
 
 async function verifyLoginEmailOTP(){
@@ -2056,62 +757,33 @@ async function verifyLoginEmailOTP(){
     const res = await apiCall('/auth/email/otp/verify','POST',{phone:'email:'+email, code:otp, is_signup:false});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    const userData = {
-      ...res.user,
-      queryCount:res.user.query_count||0,
-      queryLimit:res.user.query_limit||10,
-    };
+    const userData = {...res.user, queryCount:res.user.query_count||0, queryLimit:res.user.query_limit||10};
     localStorage.setItem('gm_user', JSON.stringify(userData));
     showToast('Welcome back, '+(res.user.fname||'')+'!');
     showPage('app');
-  }catch(e){
-    showToast(e.message||'Invalid OTP');
-    clearOTPBoxes('loginotp');
-  }
+  }catch(e){showToast(e.message||'Invalid OTP');clearOTPBoxes('loginotp');}
 }
-
 
 async function doTestLogin(){
   const pass = document.getElementById('test-pass-input').value;
   if(!pass){ showToast('Enter test password'); return; }
   try{
-    const res = await apiCall('/auth/test/login','POST',{
-      email:'test@gstmind.in',
-      password: pass
-    });
+    const res = await apiCall('/auth/test/login','POST',{email:'test@gstmind.in', password: pass});
     authToken = res.token;
     localStorage.setItem('gm_token', authToken);
-    localStorage.setItem('gm_user', JSON.stringify({
-      ...res.user,
-      queryCount: 0,
-      queryLimit: 99999,
-    }));
+    localStorage.setItem('gm_user', JSON.stringify({...res.user, queryCount: 0, queryLimit: 99999}));
     showToast('Test login successful — unlimited access');
     showPage('app');
-  }catch(e){
-    showToast(e.message||'Invalid test password');
-  }
+  }catch(e){showToast(e.message||'Invalid test password');}
 }
 
-function showForgotModal(){
-  document.getElementById('forgotModal').classList.add('show');
-}
-
-function toggleSidebar(){
-  const sb = document.getElementById('appSidebar');
-  if(!sb) return;
-  const collapsed = sb.classList.toggle('collapsed');
-  localStorage.setItem('gm_sidebar_collapsed', collapsed?'1':'0');
-}
-
+function showForgotModal(){document.getElementById('forgotModal').classList.add('show');}
+function toggleSidebar(){const sb = document.getElementById('appSidebar');if(!sb) return;const collapsed = sb.classList.toggle('collapsed');localStorage.setItem('gm_sidebar_collapsed', collapsed?'1':'0');}
 function showUpgrade(){document.getElementById('upgradeModal').classList.add('show');}
 function hideUpgrade(){document.getElementById('upgradeModal').classList.remove('show');}
 function showSettings(){document.getElementById('settingsModal').classList.add('show');}
 function hideSettings(){document.getElementById('settingsModal').classList.remove('show');}
 
-// ════════════════════════════════
-// MODE
-// ════════════════════════════════
 function setMode(m,btn){
   mode=m;
   document.querySelectorAll('.mode-pill').forEach(b=>b.classList.remove('active'));
@@ -2121,344 +793,15 @@ function setMode(m,btn){
   else{nb.classList.add('show');document.getElementById('qi').placeholder='Paste notice text or use 📎 to upload a notice photo/PDF...';}
 }
 
-// ════════════════════════════════
-// KB
-// ════════════════════════════════
-
-function onKBFile(e){
-  Array.from(e.target.files).forEach(f=>{
-    const r=new FileReader();r.onload=ev=>pushDoc(f.name,ev.target.result,f.name.endsWith('.pdf')?'PDF':'Text');r.readAsText(f);
-  });e.target.value='';
-}
-function addKBDoc(){
-  const txt=document.getElementById('kbPaste').value.trim();
-  const name=document.getElementById('kbName').value.trim()||'Document '+(docs.length+1);
-  if(!txt){showToast('Please paste some text first.');return;}
-  pushDoc(name,txt,'Pasted');
-  document.getElementById('kbPaste').value='';
-  document.getElementById('kbName').value='';
-}
-function pushDoc(name,content,type){
-  docs.push({id:Date.now()+Math.random(),name,content,type,chunks:chunkText(content)});
-  renderDocs();updateKBUI(kbDocs||[]);showToast('Added: '+name);
-}
-function delDoc(id){docs=docs.filter(d=>d.id!==id);invalidateChunkCache();renderDocs();updateKBUI(kbDocs||[]);}
-function renderDocs(){
-  const list=document.getElementById('docList');
-  document.getElementById('docCount').textContent=docs.length;
-  if(!docs.length){list.innerHTML='<div style="font-size:11.5px;color:var(--light)">No documents added yet.</div>';return;}
-  list.innerHTML=docs.map(d=>`<div class="doc-card"><div style="flex:1;min-width:0"><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">${d.chunks.length} chunks · ${d.type}</div></div><button class="doc-del" onclick="delDoc(${d.id})">✕</button></div>`).join('');
-}
-function renderBuiltin(){
-  document.getElementById('builtinList').innerHTML='<div style="font-size:12px;color:var(--light);padding:8px">All documents loaded from server knowledge base.</div>';
-}
 function updateKBUI(docs){
   const hint=document.getElementById('docHint');
   if(!hint) return;
   if(docs && docs.length > 0){
     const chunks = docs.reduce((s,d)=>s+(d.chunk_count||d.chunks||0),0);
     hint.textContent = `${docs.length} doc${docs.length!==1?'s':''} · ${chunks.toLocaleString()} chunks in KB`;
-  } else {
-    hint.textContent = 'Knowledge base loading...';
-  }
+  } else { hint.textContent = 'Knowledge base loading...'; }
 }
 
-// ════════════════════════════════════════════════════════════════
-// BEST-IN-CLASS RAG ENGINE
-// Techniques: Semantic chunking · Parent-child retrieval ·
-//             BM25 scoring · GST query expansion · 
-//             Hierarchical context assembly
-// ════════════════════════════════════════════════════════════════
-
-// ── GST SYNONYM MAP — expands queries before search ──
-const GST_SYNONYMS = {
-  'itc':['input tax credit','input credit','tax credit','credit','itc'],
-  'input tax credit':['itc','input credit','credit'],
-  'rcm':['reverse charge','reverse charge mechanism','rcm'],
-  'reverse charge':['rcm','reverse charge mechanism'],
-  'gstr':['gst return','return','gstr'],
-  'gstr1':['gstr-1','outward supplies','sales return'],
-  'gstr3b':['gstr-3b','monthly return','summary return'],
-  'gstr9':['gstr-9','annual return'],
-  'e-way bill':['eway bill','e way bill','eway','waybill'],
-  'eway':['e-way bill','e way bill','waybill'],
-  'hsn':['harmonised system','tariff heading','hsn code','chapter heading'],
-  'sac':['service accounting code','service code','sac'],
-  'zero rated':['zero-rated','zero rate','0%','nil rated','exempt'],
-  'nil rated':['nil','zero rated','exempt','0%'],
-  'exempt':['exemption','exempted','nil','zero rated'],
-  'place of supply':['pos','place of supply','supply location'],
-  'pos':['place of supply','supply location'],
-  'registration':['gstin','gst number','taxpayer registration'],
-  'gstin':['registration','gst number','gst registration'],
-  'invoice':['tax invoice','bill','invoice','document','debit note','credit note'],
-  'debit note':['debit','dn','amendment','upward revision'],
-  'credit note':['credit','cn','amendment','downward revision'],
-  'composition':['composition scheme','composition dealer','small taxpayer'],
-  'refund':['refund claim','excess credit','accumulated credit','igst refund'],
-  'export':['export of goods','zero rated','lut','letter of undertaking'],
-  'lut':['letter of undertaking','bond','export bond'],
-  'sez':['special economic zone','sez unit','sez developer'],
-  'works contract':['construction','works contract service','immovable property'],
-  'demand':['demand notice','scn','show cause','tax demand','adjudication'],
-  'scn':['show cause notice','demand','adjudication'],
-  'penalty':['penalty','fine','late fee','interest','offence'],
-  'interest':['interest','delay','late payment'],
-  'audit':['gst audit','audit','scrutiny','inspection'],
-  'section 16':['itc eligibility','input tax credit','16(2)','16(4)'],
-  'section 17':['blocked credit','17(5)','apportionment'],
-  'section 73':['demand non fraud','3 year','normal period'],
-  'section 74':['demand fraud','5 year','wilful misstatement','suppression'],
-  'rule 42':['itc reversal exempt','proportionate reversal','42'],
-  'rule 43':['capital goods reversal','43'],
-  'rule 36':['invoice upload','gstr-2b','36(4)'],
-  'annual return':['gstr-9','gstr9','reconciliation','annual'],
-  'reconciliation':['gstr-9c','audit report','reconciliation statement'],
-  'composite supply':['principal supply','composite'],
-  'mixed supply':['mixed','higher rate','bundled'],
-  'supplier':['seller','vendor','provider','registered person'],
-  'recipient':['buyer','purchaser','receiver'],
-};
-
-// ── SEMANTIC CHUNKING ──
-// Strategy: Split at natural legal boundaries (sections, paragraphs)
-// NOT at arbitrary word counts. Legal context must stay intact.
-// Two levels: FINE chunks for retrieval + COARSE parent for full context.
-function semanticChunk(doc) {
-  const text = doc.content || doc.text || '';
-  const docMeta = `[${doc.name}${doc.date ? ' | ' + doc.date : ''}]`;
-
-  // ── Level 1: Split at major section boundaries first ──
-  // Patterns: "Section X", "Para X.", "X. Heading", "\n\n" (paragraph breaks)
-  const SECTION_PATTERNS = [
-    /(?=\n\s*(?:Section|Sec\.)\s*\d+[A-Z]?[\s\(\-])/gi,  // "Section 16", "Sec. 16A"
-    /(?=\n\s*\d+[A-Z]?[\s\(\.]\s+[A-Z])/g,                 // "16. Heading" or "16A. "
-    /(?=\n\s*(?:Para(?:graph)?|Clause|Rule|Article)\s*\d)/gi, // "Para 2", "Rule 42"
-    /(?=\n\s*\(\s*[ivxlcdmIVXLCDM]+\s*\))/g,               // "(i)", "(ii)", "(iv)"
-  ];
-
-  // Split into coarse blocks first (paragraphs)
-  let coarseBlocks = text
-    .split(/\n{2,}/)                          // split at blank lines
-    .map(b => b.trim())
-    .filter(b => b.length > 80);               // discard tiny fragments
-
-  // If coarse blocks are too large (>800 words), split at section markers
-  const fineChunks = [];
-  const parentMap = []; // maps fine chunk → parent coarse block
-
-  coarseBlocks.forEach((block, blockIdx) => {
-    const words = block.split(/\s+/).length;
-    if (words <= 300) {
-      // Small block — use as-is
-      fineChunks.push({ text: docMeta + '\n' + block, parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
-    } else {
-      // Large block — split further at sentence boundaries, keeping ~200-word windows
-      const sentences = block.match(/[^.!?]+[.!?]+/g) || [block];
-      let window = '';
-      let windowWords = 0;
-      let overlap = '';
-
-      sentences.forEach(sent => {
-        const sw = sent.split(/\s+/).length;
-        window += sent + ' ';
-        windowWords += sw;
-
-        if (windowWords >= 200) {
-          fineChunks.push({ text: docMeta + '\n' + window.trim(), parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
-          // Overlap: keep last 2 sentences for context continuity
-          const sentArr = window.match(/[^.!?]+[.!?]+/g) || [];
-          overlap = sentArr.slice(-2).join(' ');
-          window = overlap + ' ';
-          windowWords = overlap.split(/\s+/).length;
-        }
-      });
-      // Push remaining
-      if (window.trim().length > 60) {
-        fineChunks.push({ text: docMeta + '\n' + window.trim(), parent: block, docName: doc.name, docDate: doc.date||'', docType: doc.type||'' });
-      }
-    }
-  });
-
-  return fineChunks;
-}
-
-// ── CHUNK CACHE — pre-index all docs on load ──
-let _chunkCache = null;
-let _chunkCacheDocCount = 0;
-
-function getChunkIndex() {
-  const allDocs = [...docs]; // All KB now from Supabase via backend
-  // Rebuild if docs changed
-  if (_chunkCache && _chunkCacheDocCount === allDocs.length) return _chunkCache;
-
-  const index = [];
-  allDocs.forEach(d => {
-    const chunks = semanticChunk(d);
-    chunks.forEach(ch => {
-      // Pre-tokenize for fast retrieval
-      const tokens = tokenize(ch.text);
-      const tf = buildTF(tokens);
-      index.push({ ...ch, tokens, tf });
-    });
-  });
-
-  _chunkCache = index;
-  _chunkCacheDocCount = allDocs.length;
-  return index;
-}
-
-// ── TOKENIZATION ──
-// Keep legal terms intact: "16(2)(b)", "rule42", "section73"
-const STOP_WORDS = new Set([
-  // Only true stop words — no legal terms
-  'the','and','for','not','any','all','been','into','also',
-  'both','its','their','this','that','with','from','have','will',
-  'were','was','are','would','could','being',
-  'there','here','then','than','thus','said',
-  'each','some','over','upon','very','well','even',
-  // Keep: 'may','shall','does','which','where','when','what','how','who'
-  // These appear in legal provisions and help match
-]);
-
-function tokenize(text) {
-  return text.toLowerCase()
-    .replace(/section/g, 'section')  // keep "section" — crucial for GST
-    .split(/[\s,;:]+/)
-    .map(w => w.replace(/^[^\w]+|[^\w]+$/g,''))
-    .filter(w => w.length > 1 && !STOP_WORDS.has(w));
-}
-
-function buildTF(tokens) {
-  const tf = {};
-  tokens.forEach(t => { tf[t] = (tf[t]||0) + 1; });
-  return tf;
-}
-
-// ── QUERY EXPANSION ──
-// "ITC reversal" → ["itc","input tax credit","credit","reversal","reverse"]
-function expandQuery(q) {
-  const base = q.toLowerCase();
-  const terms = new Set(tokenize(base));
-
-  // Add synonyms from GST_SYNONYMS map
-  Object.entries(GST_SYNONYMS).forEach(([key, syns]) => {
-    if (base.includes(key)) {
-      syns.forEach(s => tokenize(s).forEach(t => terms.add(t)));
-    }
-  });
-
-  // Add abbreviation expansions
-  const abbrevs = {
-    'itc':'input tax credit','rcm':'reverse charge mechanism',
-    'lut':'letter undertaking','sez':'special economic zone',
-    'hsn':'harmonised system nomenclature','gst':'goods services tax',
-    'cgst':'central goods services tax','igst':'integrated goods services tax',
-    'sgst':'state goods services tax','utgst':'union territory goods services tax',
-    'gstr':'goods services tax return','scn':'show cause notice',
-    'aar':'advance ruling authority','aaar':'appellate advance ruling',
-  };
-  Object.entries(abbrevs).forEach(([abbr, expansion]) => {
-    if (terms.has(abbr)) tokenize(expansion).forEach(t => terms.add(t));
-  });
-
-  return terms;
-}
-
-// ── BM25-STYLE SCORING ──
-// Better than simple keyword count — accounts for term frequency and document length
-function bm25Score(queryTerms, chunkTF, chunkTokenCount, avgDocLen = 150) {
-  const k1 = 1.5, b = 0.75;
-  let score = 0;
-  queryTerms.forEach(term => {
-    const tf = chunkTF[term] || 0;
-    if (tf === 0) return;
-    // Partial match bonus — "credit" matches "creditworthy"
-    const partialMatches = Object.keys(chunkTF).filter(t => t.includes(term) || term.includes(t));
-    const effectiveTF = tf + partialMatches.length * 0.3;
-    const normalizedTF = (effectiveTF * (k1 + 1)) / (effectiveTF + k1 * (1 - b + b * chunkTokenCount / avgDocLen));
-    score += normalizedTF;
-  });
-  return score;
-}
-
-// ── RETRIEVE — Main retrieval function ──
-// Returns top chunks with parent context for maximum answer quality
-// ── CHUNK COMPRESSION ──
-// Removes redundant whitespace and repeated phrases to save tokens
-// Quality is unchanged — same legal content, fewer words
-function compressChunk(text){
-  return text
-    .replace(/\[.*?\]\n/g, '')           // remove doc meta header if present
-    .replace(/[ \t]+/g, ' ')              // collapse multiple spaces
-    .replace(/\n{3,}/g, '\n\n')           // max 2 newlines
-    .replace(/\n /g, '\n')               // remove indentation
-    // Shorten very common legal phrases that appear repeatedly
-    .replace(/of the Central Goods and Services Tax Act, 2017/g, 'CGST Act')
-    .replace(/of the Integrated Goods and Services Tax Act, 2017/g, 'IGST Act')
-    .replace(/of the CGST Act, 2017/g, 'CGST Act')
-    .replace(/of the IGST Act, 2017/g, 'IGST Act')
-    .replace(/input tax credit/gi, 'ITC')
-    .replace(/reverse charge mechanism/gi, 'RCM')
-    .replace(/registered person/g, 'taxpayer')
-    .trim();
-}
-
-function retrieve(q, topK = 10) {
-  if (!q || q.trim().length < 2) return [];
-
-  const index = getChunkIndex();
-  if (!index.length) return [];
-
-  const queryTerms = expandQuery(q);
-  if (!queryTerms.size) return [];
-
-  const avgLen = index.reduce((s, c) => s + c.tokens.length, 0) / index.length;
-
-  // Score all chunks
-  const scored = index.map(ch => ({
-    ...ch,
-    score: bm25Score(queryTerms, ch.tf, ch.tokens.length, avgLen)
-  })).filter(ch => ch.score > 0);
-
-  scored.sort((a, b) => b.score - a.score);
-
-  // ── SMART THRESHOLD — only include genuinely relevant chunks ──
-  // Top score sets the bar — chunks scoring below 25% of top are noise
-  // This prevents sending irrelevant chunks that waste tokens
-  const topScore = scored.length > 0 ? scored[0].score : 0;
-  const threshold = topScore * 0.25; // must be at least 25% as relevant as top chunk
-
-  const result = [];
-  const usedParents = new Set();
-
-  for (const ch of scored) {
-    if (result.length >= topK) break;
-    // Stop including chunks once they drop below relevance threshold
-    if (ch.score < threshold && result.length >= 3) break;
-
-    const parentKey = ch.docName + '||' + ch.parent.slice(0, 50);
-    if (!usedParents.has(parentKey)) {
-      usedParents.add(parentKey);
-      result.push({
-        doc: ch.docName,
-        docDate: ch.docDate,
-        docType: ch.docType,
-        chunk: ch.parent,
-        score: ch.score
-      });
-    }
-  }
-
-  return result;
-}
-
-// ── INVALIDATE chunk cache when docs change ──
-function invalidateChunkCache() { _chunkCache = null; }
-
-// ════════════════════════════════
-// ATTACHMENT
-// ════════════════════════════════
 function onNoticeUpload(e){
   const file=e.target.files[0];if(!file)return;
   const isPDF=file.type==='application/pdf';
@@ -2475,6 +818,7 @@ function onNoticeUpload(e){
   };
   reader.readAsDataURL(file);e.target.value='';
 }
+
 function renderAttachPreview(){
   if(!attachedFile){document.getElementById('attachPreview').classList.remove('show');document.getElementById('attachChips').innerHTML='';return;}
   document.getElementById('attachPreview').classList.add('show');
@@ -2483,48 +827,29 @@ function renderAttachPreview(){
 }
 function clearAttach(){attachedFile=null;renderAttachPreview();}
 
-// ════════════════════════════════
-// CHAT
-// ════════════════════════════════
 function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 function autoR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-function useChip(el){document.getElementById('qi').value=el.textContent.replace(/^\d+/,'').replace(/\d+×$/,'').trim();send();}
+
 function newChat(){
   history=[];
-  // Start new chat session
   currentChatId = 'c'+Date.now();
   currentChatTitle = '';
   currentChatQueryCount = 0;
-  document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState">
-    <div class="empty-icon"><span>G</span></div>
-    <div class="empty-title" id="emptyGreet">How can I help you today?</div>
-    <div class="empty-sub">Ask any GST research question, or switch to Notice Draft mode and upload a notice for a formal reply draft.</div>
-    <div class="trending-wrap">
-      <div class="trending-label">Frequently asked</div>
-      <div class="chip-grid" id="trendingChips"></div>
-    </div>
-  </div>`;
+  document.getElementById('msgs').innerHTML=`<div class="empty" id="emptyState"><div class="empty-icon"><span>G</span></div><div class="empty-title" id="emptyGreet">How can I help you today?</div><div class="empty-sub">Ask any GST research question, or switch to Notice Draft mode and upload a notice for a formal reply draft.</div><div class="trending-wrap"><div class="trending-label">Frequently asked</div><div class="chip-grid" id="trendingChips"></div></div></div>`;
   renderTrendingChips();
 }
 
 async function send(){
   if(busy)return;
   const user=getUser();
-  if(user.plan==='free'&&(user.queryCount||0)>=(user.queryLimit||10)){
-    showUpgrade();
-    return;
-  }
-  // API key handled securely by backend server
+  if(user.plan==='free'&&(user.queryCount||0)>=(user.queryLimit||10)){showUpgrade();return;}
   const q=document.getElementById('qi').value.trim();
   if(!q&&!attachedFile){showToast('Please type a query or attach a notice file.');return;}
-
-
   const queryText=q||(mode==='draft'?'Please read this notice and draft a formal reply.':'Please analyse this document.');
   const currentAttach=attachedFile;
   document.getElementById('qi').value='';document.getElementById('qi').style.height='auto';
   clearAttach();removeEmpty();
   addUserRow(queryText,currentAttach);
-
   let msgContent;
   if(currentAttach){
     msgContent=[];
@@ -2532,32 +857,15 @@ async function send(){
     else{msgContent.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:currentAttach.base64}});}
     msgContent.push({type:'text',text:queryText});
   } else {msgContent=queryText;}
-
   history.push({role:'user',content:msgContent});
   addToHistory(queryText);
   busy=true;document.getElementById('sendBtn').disabled=true;
   const tid=addThinkRow();
-
-  // ── Backend handles ALL retrieval and system prompt building ──
-  // No client-side RAG — backend fetches from Supabase, builds context, calls Claude
   const isFollowUp = history.length > 2;
-  let retrieved = []; // will be populated from backend meta event
+  let retrieved = [];
   let hasRAG = false;
-
   try{
-    const res = await fetch(API+'/query',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
-      body:JSON.stringify({
-        messages: compressHistory(history),
-        system: mode === 'draft' ? getPrompt('draft') : '', // draft mode uses custom prompt
-        mode,
-        query_text: queryText,
-        is_followup: isFollowUp,
-        has_attachment: !!currentAttach
-      })
-    });
-
+    const res = await fetch(API+'/query',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({messages: compressHistory(history),system: mode === 'draft' ? getPrompt('draft') : '',mode,query_text: queryText,is_followup: isFollowUp,has_attachment: !!currentAttach})});
     if(!res.ok){
       const data = await res.json().catch(()=>({}));
       delEl(tid);
@@ -2566,7 +874,6 @@ async function send(){
       addErrMsg('Error '+(res.status)+': '+(data.detail||'Something went wrong. Please try again.'));
       busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
-    // Check content type — if not event-stream, backend may have returned JSON error
     const ct = res.headers.get('content-type')||'';
     if(!ct.includes('event-stream')){
       const text = await res.text().catch(()=>'');
@@ -2576,75 +883,42 @@ async function send(){
       addErrMsg(detail);
       busy=false;document.getElementById('sendBtn').disabled=false;return;
     }
-
-    // ── STREAMING RESPONSE — Claude.ai style ──
     delEl(tid);
-
-    // Create the message row immediately
     const msgId = 'm'+Date.now();
     const streamDiv = document.createElement('div');
     streamDiv.className = 'msg-row bot';
     streamDiv.id = msgId;
-    streamDiv.innerHTML = `
-      <div class="msg-inner">
-        <div class="av">G</div>
-        <div class="msg-body" id="mb_${msgId}">
-          <div class="stream-bubble" id="sb_${msgId}"></div>
-        </div>
-      </div>`;
+    streamDiv.innerHTML = `<div class="msg-inner"><div class="av">G</div><div class="msg-body" id="mb_${msgId}"><div class="stream-bubble" id="sb_${msgId}"></div></div></div>`;
     msgsEl().appendChild(streamDiv);
     scrollBot();
-
     const streamEl = document.getElementById('sb_'+msgId);
     let fullText = '';
     let queryCountFromServer = null;
-
-    // ══════════════════════════════════════════════════════
-    // CLAUDE.AI-STYLE SMOOTH STREAMING
-    // ══════════════════════════════════════════════════════
     const streamTextNode = document.createTextNode('');
     const streamPre = document.createElement('div');
     streamPre.className = 'stream-raw';
     streamPre.appendChild(streamTextNode);
     streamEl.appendChild(streamPre);
-
     const tokenQueue = [];
     let rafId = null;
     let streamDone = false;
     let lastScrollTime = 0;
-
     const CHARS_PER_FRAME = 8;
-
     function drainQueue(){
       if(tokenQueue.length === 0){
-        if(streamDone){
-          finalizeStream();
-          return;
-        }
-        rafId = null;
-        return;
+        if(streamDone){finalizeStream();return;}
+        rafId = null;return;
       }
       let charsThisFrame = 0;
       while(tokenQueue.length > 0 && charsThisFrame < CHARS_PER_FRAME){
         const token = tokenQueue[0];
-        if(charsThisFrame + token.length <= CHARS_PER_FRAME){
-          streamTextNode.appendData(token);
-          fullText += token;
-          tokenQueue.shift();
-          charsThisFrame += token.length;
-        } else {
-          const part = token.slice(0, CHARS_PER_FRAME - charsThisFrame);
-          streamTextNode.appendData(part);
-          fullText += part;
-          tokenQueue[0] = token.slice(CHARS_PER_FRAME - charsThisFrame);
-          charsThisFrame = CHARS_PER_FRAME;
-        }
+        if(charsThisFrame + token.length <= CHARS_PER_FRAME){streamTextNode.appendData(token);fullText += token;tokenQueue.shift();charsThisFrame += token.length;}
+        else {const part = token.slice(0, CHARS_PER_FRAME - charsThisFrame);streamTextNode.appendData(part);fullText += part;tokenQueue[0] = token.slice(CHARS_PER_FRAME - charsThisFrame);charsThisFrame = CHARS_PER_FRAME;}
       }
       const now = Date.now();
       if(now - lastScrollTime > 200){ lastScrollTime = now; scrollBot(); }
       rafId = requestAnimationFrame(drainQueue);
     }
-
     function finalizeStream(){
       streamDiv.style.transition = 'opacity 0.15s';
       streamDiv.style.opacity = '0';
@@ -2657,18 +931,15 @@ async function send(){
         scrollBot();
       }, 150);
     }
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-
     while(true){
       const {done, value} = await reader.read();
       if(done) break;
       buffer += decoder.decode(value, {stream:true});
       const lines = buffer.split('\n');
       buffer = lines.pop();
-
       for(const line of lines){
         if(!line.startsWith('data: ')) continue;
         const raw = line.slice(6).trim();
@@ -2678,43 +949,23 @@ async function send(){
           if(event.type === 'meta'){
             queryCountFromServer = event.query_count;
             if(event.sources && event.sources.length > 0){
-              retrieved = event.sources.map(s => ({doc: s.doc, score: s.score, url: s.url||'', pages: Array.isArray(s.pages)?s.pages:[], doc_number: s.doc_number||'', year: s.year||'', doc_type: s.doc_type||'', cbic_url: s.cbic_url||'', chunk:'', docDate:'', docType:''}));
+              retrieved = event.sources.map(s => ({doc: s.doc, score: s.score, url: s.url||'', pages: Array.isArray(s.pages)?s.pages:[], doc_number: s.doc_number||'', year: s.year||'', doc_type: s.doc_type||'', chunk:'', docDate:'', docType:''}));
               hasRAG = true;
             }
-          } else if(event.type === 'text'){
-            if(event.text){
-              tokenQueue.push(event.text);
-              if(!rafId) rafId = requestAnimationFrame(drainQueue);
-            }
-          } else if(event.type === 'done'){
-            break;
-          } else if(event.type === 'waiting'){
-            if(streamEl) streamEl.textContent = '⏱ High traffic — retrying in ' + event.seconds + 's...';
-          } else if(event.type === 'error'){
-            streamDiv.remove();
-            if(event.message === 'rate_limit'){
-              addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');
-            } else {
-              addErrMsg('Error: ' + (event.message||'Please try again.'));
-            }
-          }
+          } else if(event.type === 'text'){if(event.text){tokenQueue.push(event.text);if(!rafId) rafId = requestAnimationFrame(drainQueue);}}
+          else if(event.type === 'done'){break;}
+          else if(event.type === 'waiting'){if(streamEl) streamEl.textContent = '⏱ High traffic — retrying in ' + event.seconds + 's...';}
+          else if(event.type === 'error'){streamDiv.remove();if(event.message === 'rate_limit'){addErrMsg('⏱ Too many requests — please wait 30 seconds and try again.');} else {addErrMsg('Error: ' + (event.message||'Please try again.'));}}
         } catch(e){}
       }
     }
-
     streamDone = true;
     if(!rafId && tokenQueue.length === 0) finalizeStream();
-
     user.queryCount = queryCountFromServer || (user.queryCount||0)+1;
     saveUser(user); updateQueryMeter(user);
     if(user.plan==='free'&&user.queryCount>=FREE_LIMIT) setTimeout(showUpgrade,1200);
     else if(user.plan==='free'&&user.queryCount>=FREE_LIMIT-3) showToast(`${FREE_LIMIT-user.queryCount} free quer${FREE_LIMIT-user.queryCount===1?'y':'ies'} remaining`);
-
-  }catch(e){
-    delEl(tid);
-    console.error('Query error:', e.message);
-    addErrMsg('Connection error — '+e.message+'. Please try again.');
-  }
+  }catch(e){delEl(tid);console.error('Query error:', e.message);addErrMsg('Connection error — '+e.message+'. Please try again.');}
   busy=false;document.getElementById('sendBtn').disabled=false;
 }
 
@@ -2725,22 +976,11 @@ let currentChatQueryCount = 0;
 function addToHistory(q){
   logQuery(q);
   currentChatQueryCount++;
-  if(currentChatQueryCount === 1){
-    currentChatTitle = q.length > 48 ? q.slice(0,48)+'…' : q;
-    renderChatInSidebar();
-  } else {
-    const item = document.getElementById('chat_'+currentChatId);
-    if(item){
-      const meta = item.querySelector('.hist-m');
-      if(meta) meta.textContent = currentChatQueryCount+' queries · '+getCurrentTime();
-    }
-  }
+  if(currentChatQueryCount === 1){currentChatTitle = q.length > 48 ? q.slice(0,48)+'…' : q;renderChatInSidebar();}
+  else {const item = document.getElementById('chat_'+currentChatId);if(item){const meta = item.querySelector('.hist-m');if(meta) meta.textContent = currentChatQueryCount+' queries · '+getCurrentTime();}}
 }
 
-function getCurrentTime(){
-  const now=new Date();
-  return now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-}
+function getCurrentTime(){const now=new Date();return now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');}
 
 function renderChatInSidebar(){
   const list=document.getElementById('histList');
@@ -2751,9 +991,7 @@ function renderChatInSidebar(){
   const d=document.createElement('div');
   d.className='hist-item';
   d.id='chat_'+currentChatId;
-  d.innerHTML=`
-    <div class="hist-q">${esc(currentChatTitle)}</div>
-    <div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
+  d.innerHTML=`<div class="hist-q">${esc(currentChatTitle)}</div><div class="hist-m">${currentChatQueryCount} quer${currentChatQueryCount===1?'y':'ies'} · ${getCurrentTime()}</div>`;
   d.onclick=()=>{};
   list.prepend(d);
   if(list.children.length>30)list.removeChild(list.lastChild);
@@ -2781,33 +1019,20 @@ function loadChatHistory(){
       const d=document.createElement('div');
       d.className='hist-item';
       d.id='chat_'+ch.id;
-      d.innerHTML=`
-        <div class="hist-q">${esc(ch.title)}</div>
-        <div class="hist-m">${ch.count} quer${ch.count===1?'y':'ies'} · ${ch.date||ch.time}</div>`;
+      d.innerHTML=`<div class="hist-q">${esc(ch.title)}</div><div class="hist-m">${ch.count} quer${ch.count===1?'y':'ies'} · ${ch.date||ch.time}</div>`;
       d.onclick=()=>{};
       list.appendChild(d);
     });
   }catch(e){}
 }
 
-const DEFAULT_POPULAR = [
-  'Time limit for ITC under Section 16(4)?',
-  'Is GST applicable on liquidated damages?',
-  'Penalty for non-filing of GSTR-3B?',
-  'Zero-rated supply under IGST Act?',
-  'ITC reversal under Rule 42 — how calculated?',
-  'Place of supply for export of services?',
-  'Section 73 vs 74 — what is the difference?',
-  'Can ITC be claimed on works contract services?',
-  'GSTR-9 annual return filing deadline?',
-  'RCM applicability on legal services?'
-];
+const DEFAULT_POPULAR = ['Time limit for ITC under Section 16(4)?','Is GST applicable on liquidated damages?','Penalty for non-filing of GSTR-3B?','Zero-rated supply under IGST Act?','ITC reversal under Rule 42 — how calculated?','Place of supply for export of services?','Section 73 vs 74 — what is the difference?','Can ITC be claimed on works contract services?','GSTR-9 annual return filing deadline?','RCM applicability on legal services?'];
 
 function logQuery(q){
   if(q.length < 15) return;
   if(q.startsWith('Please read this notice')) return;
   if(q.startsWith('Please analyse this')) return;
-  const clean = q.endsWith('…') ? q : q;
+  const clean = q;
   const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
   log[clean] = (log[clean]||0) + 1;
   const entries = Object.entries(log).sort((a,b)=>b[1]-a[1]).slice(0,50);
@@ -2817,9 +1042,7 @@ function logQuery(q){
 function getTopQueries(n=8){
   const log = JSON.parse(localStorage.getItem('gm_query_log')||'{}');
   const entries = Object.entries(log).sort((a,b)=>b[1]-a[1]);
-  if(entries.length >= 4){
-    return entries.slice(0,n).map(([q,cnt])=>({q,cnt,real:true}));
-  }
+  if(entries.length >= 4){return entries.slice(0,n).map(([q,cnt])=>({q,cnt,real:true}));}
   const realKeys = new Set(entries.map(e=>e[0]));
   const defaults = DEFAULT_POPULAR.filter(d=>!realKeys.has(d)).slice(0,n-entries.length);
   const realItems = entries.slice(0,n).map(([q,cnt])=>({q,cnt,real:true}));
@@ -2841,9 +1064,6 @@ function renderTrendingChips(){
 
 function useChipText(q){ document.getElementById('qi').value=q; send(); }
 
-// ════════════════════════════════
-// RENDER
-// ════════════════════════════════
 const msgsEl=()=>document.getElementById('msgs');
 const scrollBot=()=>{const m=msgsEl();m.scrollTop=m.scrollHeight;};
 function removeEmpty(){const e=document.getElementById('emptyState');if(e)e.remove();}
@@ -2857,37 +1077,13 @@ function addUserRow(txt,attach){
   msgsEl().appendChild(d);scrollBot();
 }
 
-
-function formatStreaming(text){
-  if(!text) return '';
-  let t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  t = t.replace(/\*\*([^*\n]+?)\*\*/g,'<strong>$1</strong>');
-  t = t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
-  t = t.replace(/^###\s+(.+)$/gm,'<div class="sh3">$1</div>');
-  t = t.replace(/^##\s+(.+)$/gm,'<div class="sh2">$1</div>');
-  t = t.replace(/^#\s+(.+)$/gm,'<div class="sh1">$1</div>');
-  const _supMap = {'¹':1,'²':2,'³':3,'⁴':4,'⁵':5,'⁶':6,'⁷':7,'⁸':8,'⁹':9};
-  t = t.replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g, (_m, ch) => `<a href="#" class="cite-link" onclick="return scrollToRef(event,${_supMap[ch]},this)"><sup>${ch}</sup></a>`);
-  t = t.replace(/\[(\d{1,2})\]/g, (_m, n) => `<a href="#" class="cite-link" onclick="return scrollToRef(event,${parseInt(n,10)},this)"><sup>[${n}]</sup></a>`);
-  t = t.replace(/^[\*\-]\s+(.+)$/gm,'<div class="sbul">$1</div>');
-  t = t.replace(/^(\d+)\.\s+(.+)$/gm,'<div class="sbul"><span style="opacity:.5;margin-right:6px">$1.</span>$2</div>');
-  t = t.replace(/\n\n/g,'<div style="height:8px"></div>');
-  t = t.replace(/\n/g,'<br>');
-  return t;
-}
-
 function addThinkRow(){
   const id='tk'+Date.now();
   const d=document.createElement('div');d.className='msg-row bot';d.id=id;
   d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body"><div class="think-bub"><div class="think-dots"><span></span><span></span><span></span></div><span class="think-txt" id="thinkTxt">Searching knowledge base…</span></div></div></div>`;
   const thinkMsgs = ['Searching knowledge base…','Analyzing GST provisions…','Checking relevant circulars…','Cross-referencing sections…','Reviewing applicable rules…','Drafting legal analysis…'];
   let thinkIdx = 0;
-  const thinkInterval = setInterval(()=>{
-    thinkIdx = (thinkIdx+1) % thinkMsgs.length;
-    const el = document.getElementById('thinkTxt');
-    if(el) el.textContent = thinkMsgs[thinkIdx];
-    else clearInterval(thinkInterval);
-  }, 1800);
+  const thinkInterval = setInterval(()=>{thinkIdx = (thinkIdx+1) % thinkMsgs.length;const el = document.getElementById('thinkTxt');if(el) el.textContent = thinkMsgs[thinkIdx];else clearInterval(thinkInterval);}, 1800);
   d._thinkInterval = thinkInterval;
   msgsEl().appendChild(d);scrollBot();return id;
 }
@@ -2906,14 +1102,11 @@ function renderBotRow(raw,hasRAG,retrieved){
     .replace(/^\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/im, '')
     .replace(/\n\s*(ANSWER|DRAFT REPLY|LEGAL ANALYSIS|RESPONSE)\s*:\s*/gi, '\n')
     .trim();
-
   const cc=conf==='HIGH'?'conf-H':conf==='LOW'?'conf-L':'conf-M';
   const cl=conf==='HIGH'?'HIGH CONFIDENCE':conf==='LOW'?'LOW — VERIFY':'MEDIUM CONFIDENCE';
-
   let noticeTag='';
   const ntm=answer.match(/NOTICE TYPE IDENTIFIED\s*:\s*([^\n]+)/i);
   if(ntm){noticeTag=`<div class="notice-type-tag">Identified: ${esc(ntm[1].trim())}</div>`;answer=answer.replace(/NOTICE TYPE IDENTIFIED\s*:[^\n]+\n?/i,'').trim();}
-
   let refsHtml='';
   if(refs.length>0){
     refsHtml=`<div class="refs-wrap"><div class="refs-label">References</div>${refs.map(r=>`<div class="ref-item"><div class="ref-n">${esc(r.num)}</div><div class="ref-txt">${esc(r.text)}</div></div>`).join('')}</div>`;
@@ -2922,37 +1115,22 @@ function renderBotRow(raw,hasRAG,retrieved){
     retrieved.forEach(r=>{if(!seen.has(r.doc)){seen.add(r.doc);uniqueSrcs.push(r);}});
     if(uniqueSrcs.length){
       refsHtml=`<div class="refs-wrap"><div class="refs-label">Sources used</div>${uniqueSrcs.map((s,i)=>{
-        const baseUrl = s.url || s.cbic_url || '';
+        const baseUrl = s.url || '';
         const yearTag = s.year ? ` <span style="color:var(--text3);font-size:11px">(${esc(String(s.year))})</span>` : '';
         const docLabel = `${esc(s.doc)}${yearTag}`;
         const title = baseUrl
           ? `<a href="${baseUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">${docLabel}</a>`
           : `<strong>${docLabel}</strong>`;
-        let pageLinks = '';
-        if (Array.isArray(s.pages) && s.pages.length > 0 && baseUrl) {
-          pageLinks = ' &nbsp;·&nbsp; ' + s.pages.map(p =>
-            `<a href="${baseUrl}#page=${p}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline dotted;font-size:11px">p.&thinsp;${p}</a>`
-          ).join(', ');
-        }
-        return `<div class="ref-item"><div class="ref-n">${i+1}</div><div class="ref-txt">${title}${pageLinks}</div></div>`;
+        const pageText = (Array.isArray(s.pages) && s.pages.length > 0)
+          ? ` <span style="color:var(--text3);font-size:11px">— pp. ${s.pages.join(', ')}</span>`
+          : '';
+        return `<div class="ref-item"><div class="ref-n">${i+1}</div><div class="ref-txt">${title}${pageText}</div></div>`;
       }).join('')}</div>`;
     }
   }
-
   const msgId='m'+Date.now();
   const d=document.createElement('div');d.className='msg-row bot';d.id=msgId;
-  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body">
-    ${noticeTag}
-    <span class="conf ${cc}"><span class="conf-dot"></span>${cl}</span>
-    <div class="bubble">${fmt(answer)}</div>
-    ${refsHtml}
-    <div class="msg-acts">
-      <button class="act-btn" onclick="copyAns('${msgId}')">📋 Copy</button>
-      <button class="act-btn" onclick="downloadAns('${msgId}')">⬇ Download</button>
-      <button class="act-btn" onclick="shareWA('${msgId}')">💬 WhatsApp</button>
-      <button class="act-btn" onclick="shareEmail('${msgId}')">✉ Email</button>
-    </div>
-  </div></div>`;
+  d.innerHTML=`<div class="msg-inner"><div class="av">G</div><div class="msg-body">${noticeTag}<span class="conf ${cc}"><span class="conf-dot"></span>${cl}</span><div class="bubble">${fmt(answer)}</div>${refsHtml}<div class="msg-acts"><button class="act-btn" onclick="copyAns('${msgId}')">📋 Copy</button><button class="act-btn" onclick="downloadAns('${msgId}')">⬇ Download</button><button class="act-btn" onclick="shareWA('${msgId}')">💬 WhatsApp</button><button class="act-btn" onclick="shareEmail('${msgId}')">✉ Email</button></div></div></div>`;
   msgsEl().appendChild(d);scrollBot();
 }
 
@@ -2978,17 +1156,8 @@ function downloadAns(id){
   a.download=`GSTMind_${mode}_${Date.now()}.txt`;a.click();
   showToast('Downloaded');
 }
-function shareWA(id){
-  const text=getContent(id);
-  const msg=`*GSTMind — GST Research Output*\n\n${text.slice(0,800)}${text.length>800?'\n\n_[Full answer in GSTMind app]_':''}\n\n_⚠ Research only. Not legal advice. Verify with primary legislation._\n_GSTMind — GST AI Research Platform_`;
-  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-}
-function shareEmail(id){
-  const text=getContent(id);
-  const sub='GSTMind Research Output';
-  const body=`GSTMind Research Output\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n${text}\n\nDisclaimer: For research purposes only. Not legal advice. Verify with primary legislation.\n\nGSTMind — GST AI Research Platform`;
-  window.location.href=`mailto:?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;
-}
+function shareWA(id){const text=getContent(id);const msg=`*GSTMind — GST Research Output*\n\n${text.slice(0,800)}${text.length>800?'\n\n_[Full answer in GSTMind app]_':''}\n\n_⚠ Research only. Not legal advice. Verify with primary legislation._\n_GSTMind — GST AI Research Platform_`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+function shareEmail(id){const text=getContent(id);const sub='GSTMind Research Output';const body=`GSTMind Research Output\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n${text}\n\nDisclaimer: For research purposes only. Not legal advice. Verify with primary legislation.\n\nGSTMind — GST AI Research Platform`;window.location.href=`mailto:?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;}
 
 function fmt(s){
   const lines = esc(s).split('\n');
@@ -3006,25 +1175,13 @@ function fmt(s){
   return out.join('')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>')
-    .replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g,(m)=>{const map={'¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};return `<sup class="fn">${map[m]||m}</sup>`;})
-    .replace(/\[(\d+)\]/g,'<sup class="fn">$1</sup>')
+    .replace(/([¹²³⁴⁵⁶⁷⁸⁹])/g,(m)=>{const map={'¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};const n=parseInt(map[m]||'1',10);return `<a href="#" class="cite-link" onclick="return scrollToRef(event,${n},this)"><sup class="fn">${map[m]||m}</sup></a>`;})
+    .replace(/\[(\d+)\]/g,(_m,n)=>`<a href="#" class="cite-link" onclick="return scrollToRef(event,${parseInt(n,10)},this)"><sup class="fn">${n}</sup></a>`)
     .replace(/⚠ This draft is prepared for review([^<\n]*)/g,'<div class="draft-disclaimer">⚠ This draft is prepared for review$1</div>');
 }
 
-function toggleTheme(){
-  document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('gm_theme', isDark ? 'dark' : 'light');
-  document.querySelectorAll('.theme-toggle').forEach(btn => { btn.textContent = isDark ? '☀️' : '🌙'; });
-}
-function loadTheme(){
-  const saved = localStorage.getItem('gm_theme');
-  if(saved === 'dark'){
-    document.body.classList.add('dark-mode');
-    document.querySelectorAll('.theme-toggle').forEach(btn => btn.textContent = '☀️');
-  }
-}
-
+function toggleTheme(){document.body.classList.toggle('dark-mode');const isDark = document.body.classList.contains('dark-mode');localStorage.setItem('gm_theme', isDark ? 'dark' : 'light');document.querySelectorAll('.theme-toggle').forEach(btn => { btn.textContent = isDark ? '☀️' : '🌙'; });}
+function loadTheme(){const saved = localStorage.getItem('gm_theme');if(saved === 'dark'){document.body.classList.add('dark-mode');document.querySelectorAll('.theme-toggle').forEach(btn => btn.textContent = '☀️');}}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function scrollToRef(event, n, anchor){
@@ -3040,26 +1197,11 @@ function scrollToRef(event, n, anchor){
   return false;
 }
 
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 let currentOTP = {};
 let otpTimers = {};
-
 let forgotEmail = '';
-
-function showForgotPassword(){
-  document.getElementById('forgotModal').classList.add('show');
-  document.getElementById('forgotStep1').style.display='block';
-  document.getElementById('forgotStep2').style.display='none';
-  document.getElementById('forgotStep3').style.display='none';
-  document.getElementById('forgot-email').value='';
-  document.getElementById('forgotModalSub').textContent='Enter your registered email address.';
-}
 
 async function sendForgotOTP(){
   const email = document.getElementById('forgot-email').value.trim();
@@ -3076,25 +1218,15 @@ async function sendForgotOTP(){
     startTimer('forgot', 120);
     setTimeout(()=>document.getElementById('forgot-otp-boxes').querySelector('.otp-box').focus(),100);
     showToast('OTP sent to your email');
-  }catch(e){
-    showToast(e.message||'Failed to send OTP. Please try again.','error');
-  }finally{
-    if(btn){btn.textContent='Send Reset OTP';btn.disabled=false;}
-  }
+  }catch(e){showToast(e.message||'Failed to send OTP. Please try again.','error');}
+  finally{if(btn){btn.textContent='Send Reset OTP';btn.disabled=false;}}
 }
 
 async function verifyForgotOTPAndNext(){
   const entered = getOTPValue('forgot');
   if(entered.length !== 6){showToast('Please enter the complete 6-digit OTP.');return;}
-  try{
-    await apiCall('/auth/forgot/verify','POST',{email:forgotEmail, otp:entered});
-    currentOTP['forgot'] = {verified:true};
-    document.getElementById('forgotStep2').style.display='none';
-    document.getElementById('forgotStep3').style.display='block';
-  }catch(e){
-    showToast(e.message||'Invalid OTP. Please try again.');
-    clearOTPBoxes('forgot');
-  }
+  try{await apiCall('/auth/forgot/verify','POST',{email:forgotEmail, otp:entered});currentOTP['forgot'] = {verified:true};document.getElementById('forgotStep2').style.display='none';document.getElementById('forgotStep3').style.display='block';}
+  catch(e){showToast(e.message||'Invalid OTP. Please try again.');clearOTPBoxes('forgot');}
 }
 
 async function resetPassword(){
@@ -3105,16 +1237,9 @@ async function resetPassword(){
   if(!currentOTP['forgot']?.verified){showToast('Please verify OTP first.');return;}
   const btn = document.querySelector('#forgotStep3 .auth-btn');
   if(btn){btn.textContent='Resetting...';btn.disabled=true;}
-  try{
-    await apiCall('/auth/forgot/reset','POST',{email:forgotEmail, new_password:newPass});
-    document.getElementById('forgotModal').classList.remove('show');
-    showToast('Password reset successfully. Please log in.');
-    showPage('login');
-  }catch(e){
-    showToast(e.message||'Failed to reset password. Please try again.');
-  }finally{
-    if(btn){btn.textContent='Reset Password';btn.disabled=false;}
-  }
+  try{await apiCall('/auth/forgot/reset','POST',{email:forgotEmail, new_password:newPass});document.getElementById('forgotModal').classList.remove('show');showToast('Password reset successfully. Please log in.');showPage('login');}
+  catch(e){showToast(e.message||'Failed to reset password. Please try again.');}
+  finally{if(btn){btn.textContent='Reset Password';btn.disabled=false;}}
 }
 
 function otpInput(el, prefix) {
@@ -3125,15 +1250,9 @@ function otpInput(el, prefix) {
     const idx = boxes.indexOf(el);
     if(idx < boxes.length - 1) boxes[idx+1].focus();
     if(boxes.every(b => b.value)) {
-      setTimeout(() => {
-        if(prefix==='loginotp') verifyLoginEmailOTP();
-        else if(prefix==='signup') doSignup();
-        else if(prefix==='forgot') verifyForgotOTPAndNext();
-      }, 300);
+      setTimeout(() => {if(prefix==='loginotp') verifyLoginEmailOTP();else if(prefix==='signup') doSignup();else if(prefix==='forgot') verifyForgotOTPAndNext();}, 300);
     }
-  } else {
-    el.classList.remove('filled');
-  }
+  } else { el.classList.remove('filled'); }
 }
 
 function otpKeydown(e, el, prefix) {
@@ -3144,13 +1263,8 @@ function otpKeydown(e, el, prefix) {
   }
 }
 
-function getOTPValue(prefix) {
-  return [...document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box')].map(b=>b.value).join('');
-}
-
-function clearOTPBoxes(prefix) {
-  document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box').forEach(b=>{b.value='';b.classList.remove('filled');});
-}
+function getOTPValue(prefix) {return [...document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box')].map(b=>b.value).join('');}
+function clearOTPBoxes(prefix) {document.getElementById(prefix+'-otp-boxes').querySelectorAll('.otp-box').forEach(b=>{b.value='';b.classList.remove('filled');});}
 
 function startTimer(prefix, seconds) {
   clearInterval(otpTimers[prefix]);
@@ -3163,10 +1277,7 @@ function startTimer(prefix, seconds) {
     remaining--;
     const ce = document.getElementById(prefix+'-timer-count');
     if(ce) ce.textContent = remaining;
-    if(remaining <= 0) {
-      clearInterval(otpTimers[prefix]);
-      wrapEl.innerHTML = `<span class="auth-link" onclick="${prefix==='loginotp'?'sendLoginEmailOTP':prefix==='signup'?'initiateSignup':'sendForgotOTP'}()">Resend OTP</span>`;
-    }
+    if(remaining <= 0) {clearInterval(otpTimers[prefix]);wrapEl.innerHTML = `<span class="auth-link" onclick="${prefix==='loginotp'?'sendLoginEmailOTP':prefix==='signup'?'initiateSignup':'sendForgotOTP'}()">Resend OTP</span>`;}
   }, 1000);
 }
 
@@ -3177,98 +1288,23 @@ window.onload=async ()=>{
   const user = JSON.parse(localStorage.getItem('gm_user')||'null');
   if(token && user){
     authToken = token;
-    try{
-      const fresh = await apiCall('/auth/me','GET',null,true);
-      localStorage.setItem('gm_user', JSON.stringify(fresh));
-      showPage('app');
-    } catch(e){
-      localStorage.removeItem('gm_token');
-      localStorage.removeItem('gm_user');
-      showPage('landing');
-    }
+    try{const fresh = await apiCall('/auth/me','GET',null,true);localStorage.setItem('gm_user', JSON.stringify(fresh));showPage('app');}
+    catch(e){localStorage.removeItem('gm_token');localStorage.removeItem('gm_user');showPage('landing');}
   }
 };
-</script>
 
-
-<script>
 function isMobile(){ return window.innerWidth <= 768; }
-
-function toggleSidebarMobile(){
-  const sb = document.getElementById('appSidebar');
-  const ov = document.getElementById('sidebarOverlay');
-  const isOpen = sb.classList.contains('mobile-open');
-  if(isOpen){
-    sb.classList.remove('mobile-open');
-    ov.classList.remove('show');
-  } else {
-    sb.classList.add('mobile-open');
-    ov.classList.add('show');
-  }
-}
-
-function closeSidebar(){
-  const sb = document.getElementById('appSidebar');
-  const ov = document.getElementById('sidebarOverlay');
-  sb.classList.remove('mobile-open');
-  ov.classList.remove('show');
-}
-
+function toggleSidebarMobile(){const sb = document.getElementById('appSidebar');const ov = document.getElementById('sidebarOverlay');const isOpen = sb.classList.contains('mobile-open');if(isOpen){sb.classList.remove('mobile-open');ov.classList.remove('show');} else {sb.classList.add('mobile-open');ov.classList.add('show');}}
+function closeSidebar(){const sb = document.getElementById('appSidebar');const ov = document.getElementById('sidebarOverlay');sb.classList.remove('mobile-open');ov.classList.remove('show');}
 function handleResize(){
   const btn = document.getElementById('mobileMenuBtn');
   const sb = document.getElementById('appSidebar');
-  if(window.innerWidth <= 768){
-    if(btn) btn.style.display = 'flex';
-    if(!sb.classList.contains('mobile-open')){
-      sb.classList.remove('collapsed');
-    }
-  } else {
-    if(btn) btn.style.display = 'none';
-    closeSidebar();
-    if(localStorage.getItem('gm_sidebar_collapsed')==='1'){
-      sb.classList.add('collapsed');
-    }
-  }
+  if(window.innerWidth <= 768){if(btn) btn.style.display = 'flex';if(!sb.classList.contains('mobile-open')){sb.classList.remove('collapsed');}}
+  else {if(btn) btn.style.display = 'none';closeSidebar();if(localStorage.getItem('gm_sidebar_collapsed')==='1'){sb.classList.add('collapsed');}}
 }
-
-function handleInputFocus(){
-  if(!isMobile()) return;
-  setTimeout(()=>{
-    const qi = document.getElementById('qi');
-    if(qi) qi.scrollIntoView({behavior:'smooth', block:'nearest'});
-  }, 300);
-}
-
-const _origToggle = typeof toggleSidebar === 'function' ? toggleSidebar : null;
-function toggleSidebar(){
-  if(isMobile()){
-    toggleSidebarMobile();
-    return;
-  }
-  if(_origToggle) _origToggle();
-  else {
-    const sb = document.getElementById('appSidebar');
-    sb.classList.toggle('collapsed');
-    localStorage.setItem('gm_sidebar_collapsed', sb.classList.contains('collapsed') ? '1' : '0');
-  }
-}
-
+function handleInputFocus(){if(!isMobile()) return;setTimeout(()=>{const qi = document.getElementById('qi');if(qi) qi.scrollIntoView({behavior:'smooth', block:'nearest'});}, 300);}
 window.addEventListener('resize', handleResize);
-window.addEventListener('load', ()=>{
-  handleResize();
-  const qi = document.getElementById('qi');
-  if(qi) qi.addEventListener('focus', handleInputFocus);
-});
-
-function updateDocHint(count){
-  const el = document.getElementById('docHint');
-  if(!el) return;
-  if(count > 0){
-    el.textContent = count + ' doc' + (count!==1?'s':'') + ' in KB';
-  } else {
-    el.textContent = 'No docs in KB yet';
-  }
-}
+window.addEventListener('load', ()=>{handleResize();const qi = document.getElementById('qi');if(qi) qi.addEventListener('focus', handleInputFocus);});
 </script>
 
 </body>
