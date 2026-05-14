@@ -497,7 +497,6 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
             <button class="btn btn-ghost btn-sm" onclick="loadKBDocs()">↺ Refresh</button>
             <button class="btn btn-danger btn-sm" id="deleteSelBtn" style="display:none" onclick="deleteSelectedDocs()">🗑 Delete Selected</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAllDocs()">🗑 Delete All</button>
-            <button class="btn btn-ghost btn-sm" onclick="cleanupStorage()" title="Delete orphaned files from Gemini store to free up the 10 GB quota">🧹 Clean Up Storage</button>
           </div>
         </div>
 
@@ -627,16 +626,6 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
         <div id="promptsContainer">
           <div class="empty"><p>Loading prompts...</p></div>
         </div>
-
-        <div class="card" style="margin-top:16px">
-          <div class="card-title">Raw API Test (No System Prompt)</div>
-          <div class="card-sub">Calls Gemini File Search directly with NO system prompt. Use this to see what citations/chunks the API returns before our shaping layer.</div>
-          <div class="fg"><label>Query</label><input type="text" id="rawTestQuery" placeholder="e.g. What is the threshold for GST registration?"/></div>
-          <div class="fg"><label>Metadata filter (optional)</label><input type="text" id="rawTestFilter" placeholder='e.g. year=2024'/></div>
-          <div class="fg"><label>Model (optional)</label><input type="text" id="rawTestModel" placeholder="gemini-2.5-flash"/></div>
-          <button class="btn btn-primary" onclick="runRawTest()">Run Raw Test</button>
-          <div id="rawTestOut" style="margin-top:16px"></div>
-        </div>
       </div>
 
       <!-- ── SETTINGS ── -->
@@ -669,7 +658,6 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
           <div class="card-sub">Irreversible actions. Use with extreme caution.</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-danger" onclick="confirmAct('Reset ALL user query counts to zero?',resetQueryCounts)">Reset Query Counts</button>
-            <button class="btn btn-danger" onclick="forceDeleteStore()" title="Nuke the entire Gemini File Search store. Frees the full 10 GB quota. Requires manual env var update + re-sync afterward.">⚠ Force-Delete Gemini Store</button>
           </div>
         </div>
       </div>
@@ -1192,8 +1180,7 @@ function renderDocList(docs){
       ${d.last_error?`<span title="${esc(d.last_error)}" style="font-size:10px;color:var(--red);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="btn btn-sm">⚠ Error</span>`:''}
       <span class="badge badge-${statusCls[s]||'pending'}">${statusIcon[s]||'⏳'} ${s}</span>
       <div class="doc-actions">
-        ${s==='failed'?`<button id="retry-btn-${d.id}" class="btn btn-ghost btn-sm" onclick="reindexDoc('${d.id}')">↺ Retry</button>`:''}
-        ${s==='pending'?`<button class="btn btn-danger btn-sm" onclick="stopReindex()">⏹ Stop</button>`:''}
+        ${s==='failed'?`<button class="btn btn-ghost btn-sm" onclick="reindexDoc('${d.id}')">↺ Retry</button>`:''}
         <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">✕</button>
       </div>
     </div>`;
@@ -1218,40 +1205,11 @@ function updateDeleteBtn(){
 }
 
 async function reindexDoc(docId){
-  const btn=document.getElementById('retry-btn-'+docId);
-  if(btn){btn.disabled=true;btn.textContent='⏳';}
   try{
     await apiFetch('/kb/documents/'+docId+'/reindex','POST',{},true);
-    toast('Reindex started — indexing in background, takes 2–5 minutes','success');
-    _startReindexPoll(docId);
-  }catch(e){
-    toast('Error: '+e.message,'error');
-    if(btn){btn.disabled=false;btn.textContent='↺ Retry';}
-  }
-}
-
-function _startReindexPoll(docId){
-  let polls=0;
-  const iv=setInterval(async()=>{
-    polls++;
-    if(polls>72){clearInterval(iv);return;}
-    try{
-      const st=await apiFetch('/kb/reindex/status','GET',null,true);
-      if(!st.docs||!st.docs[docId]){
-        clearInterval(iv);
-        await loadKBDocs();
-        toast('Reindex complete','success');
-      }
-    }catch(e){clearInterval(iv);}
-  },5000);
-}
-
-async function stopReindex(){
-  try{
-    await apiFetch('/kb/reindex/stop','POST',{},true);
-    toast('Reindex stop requested','success');
-    setTimeout(loadKBDocs,2000);
-  }catch(e){toast('Error: '+e.message,'error');}
+    toast('Reindex triggered','success');
+    setTimeout(loadKBDocs, 1000);
+  }catch(e){ toast('Error: '+e.message,'error'); }
 }
 
 async function deleteDoc(docId){
@@ -1283,17 +1241,6 @@ async function deleteSelectedDocs(){
   });
 }
 
-async function cleanupStorage(){
-  confirmAct('Scan Gemini File Search store for orphaned files (uploaded but not referenced by any active DB row) and delete them? Your indexed documents are untouched. This frees up the 10 GB Gemini quota.', async()=>{
-    toast('Scanning Gemini store for orphans... this may take a minute', '');
-    try{
-      const r = await apiFetch('/kb/cleanup-storage','POST',null,true);
-      toast('✓ '+(r.message||`Deleted ${r.orphans_deleted||0} orphans`), 'success');
-      await loadKBStats();
-    }catch(e){ toast('Error: '+e.message,'error'); }
-  });
-}
-
 // ══════════════════════════════════════════════
 // DRIVE SYNC
 // ══════════════════════════════════════════════
@@ -1313,14 +1260,6 @@ async function loadSyncStatus(){
 
     // Latest DB run details
     const db = s.latest_db_run||{};
-    // If a sync is running, note that "Latest Run" shows last completed run
-    const lrCard = document.querySelector('#lr-scanned')?.closest('.card, .sync-card, [class*="card"]');
-    if(lrCard){
-      let lrTitle = lrCard.querySelector('h3,h4,.card-title,.panel-title');
-      if(lrTitle){
-        lrTitle.textContent = s.currently_running ? 'Latest Completed Run' : 'Latest Run';
-      }
-    }
     document.getElementById('lr-scanned').textContent = db.drive_scanned??'—';
     document.getElementById('lr-added').textContent = db.files_added??'—';
     document.getElementById('lr-deleted').textContent = db.files_deleted??'—';
@@ -1507,9 +1446,7 @@ async function loadPrompts(){
     (Array.isArray(settings)?settings:[]).forEach(s=>map[s.key]=s);
 
     const prompts=[
-      {key:'main_prompt',title:'Main Query Prompt',sub:'Controls how GSTMind answers GST queries. Changes apply immediately.'},
-      {key:'amendment_instruction',title:'Amendment Handling',sub:'How to handle Finance Act amendments and superseded circulars.'},
-      {key:'draft_prompt',title:'Notice Draft Prompt',sub:'Used when drafting replies to GST notices.'}
+      {key:'main_prompt',title:'GST Query Prompt',sub:'Controls how GSTMind answers queries. Saved to DB — changes apply immediately without redeployment.'}
     ];
 
     container.innerHTML = prompts.map(p=>{
@@ -1554,45 +1491,11 @@ async function savePrompt(key){
 }
 
 async function resetPrompt(key){
+  const def=_defaultPrompts[key]; if(!def){ toast('Default not loaded','error'); return; }
   const el=document.getElementById('prompt-'+key); if(!el)return;
-  try{
-    const fresh=await apiFetch('/settings/defaults','GET',null,true);
-    _defaultPrompts=fresh||_defaultPrompts;
-  }catch(e){ /* fall back to cached defaults */ }
-  const def=_defaultPrompts[key];
-  if(!def){ toast('Default not available from backend','error'); return; }
   el.value=def;
   await savePrompt(key);
   toast('Reset to default','success');
-}
-
-async function runRawTest(){
-  const q=(document.getElementById('rawTestQuery').value||'').trim();
-  if(!q){ toast('Enter a query','error'); return; }
-  const filter=(document.getElementById('rawTestFilter').value||'').trim();
-  const model=(document.getElementById('rawTestModel').value||'').trim();
-  const out=document.getElementById('rawTestOut');
-  out.innerHTML='<div class="empty"><p>Running...</p></div>';
-  const body={query:q};
-  if(filter) body.metadata_filter=filter;
-  if(model) body.model=model;
-  try{
-    const r=await apiFetch('/kb/test-query','POST',body,true);
-    const chunks=Array.isArray(r.chunks)?r.chunks:[];
-    const chunksHtml=chunks.map((c,i)=>`
-      <div class="sync-box" style="margin-bottom:8px">
-        <div class="sync-row"><span class="sync-lbl">#${i+1} Title</span><span class="sync-val">${esc(String(c.title||'—'))}</span></div>
-        <div class="sync-row"><span class="sync-lbl">Page</span><span class="sync-val">${esc(String(c.page_number??'—'))}</span></div>
-        <div class="sync-row"><span class="sync-lbl">Metadata</span><span class="sync-val" style="font-size:10px;word-break:break-all">${esc(JSON.stringify(c.custom_metadata||{}))}</span></div>
-        <div style="margin-top:6px;font-size:12px;color:var(--text2);white-space:pre-wrap;max-height:180px;overflow:auto;border-top:1px solid var(--bd);padding-top:6px">${esc(String(c.text_preview||''))}</div>
-      </div>`).join('');
-    out.innerHTML=`
-      <div class="card-title" style="font-size:14px">Answer</div>
-      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px;white-space:pre-wrap;margin-bottom:12px">${esc(String(r.answer_text||'(no answer)'))}</div>
-      <div class="card-title" style="font-size:14px">Chunks (${chunks.length})</div>
-      ${chunksHtml || '<div class="empty"><p>No chunks returned.</p></div>'}
-      <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--text2)">Raw first chunk JSON</summary><pre style="font-size:11px;background:var(--bg2);padding:8px;border-radius:6px;overflow:auto;max-height:300px">${esc(JSON.stringify(r.raw_first_chunk||{},null,2))}</pre></details>`;
-  }catch(e){ out.innerHTML='<div class="empty"><p>Error: '+esc(e.message)+'</p></div>'; }
 }
 
 // ══════════════════════════════════════════════
@@ -1604,43 +1507,6 @@ async function changePass(){
 
 async function resetQueryCounts(){
   toast('Reset query counts not yet implemented','error');
-}
-
-async function forceDeleteStore(){
-  const typed = prompt(
-    'NUCLEAR ACTION — this will:\n\n' +
-    '1. Delete the entire Gemini File Search store and ALL indexed documents\n' +
-    '2. Create a NEW empty store (with the same display name)\n' +
-    '3. Reset every gst_documents row so the admin UI shows everything as un-indexed\n' +
-    '4. The new store will have a different name — you MUST update the GEMINI_STORE_NAME env var on Railway and restart the service\n' +
-    '5. Then run "Trigger Sync" from the Drive Sync panel to re-upload everything\n\n' +
-    'There is NO undo. Frees the full 10 GB Gemini quota.\n\n' +
-    'Type DELETE EVERYTHING (all caps, exact) to proceed:'
-  );
-  if(typed !== 'DELETE EVERYTHING'){
-    if(typed !== null) toast('Confirmation phrase did not match. Aborted.','error');
-    return;
-  }
-  toast('Force-deleting store... this can take a minute','');
-  try{
-    const r = await apiFetch('/kb/force-delete-store','POST',{confirm:'DELETE EVERYTHING'},true);
-    const newStore = r.new_store || '(create failed — see response)';
-    alert(
-      '✓ Store deleted and replacement created.\n\n' +
-      'OLD store: ' + (r.deleted_store || '?') + '\n' +
-      'NEW store: ' + newStore + '\n\n' +
-      'NEXT STEPS:\n' +
-      '1. Update Railway env var GEMINI_STORE_NAME to:\n   ' + newStore + '\n' +
-      '2. Restart the Railway service\n' +
-      '3. Run "Trigger Sync" to repopulate from Drive\n\n' +
-      (r.create_error ? 'WARNING: replacement create failed: ' + r.create_error + '\nCreate one manually in the Gemini console.\n\n' : '') +
-      (r.db_reset === false ? 'WARNING: DB reset failed: ' + (r.db_reset_error || '?') + '\n' : '')
-    );
-    toast('Done. See alert for next steps.','success');
-    await loadKBStats();
-  }catch(e){
-    toast('Error: '+e.message,'error');
-  }
 }
 
 // ══════════════════════════════════════════════
